@@ -1,0 +1,3605 @@
+{
+  "2": {
+    "inputs": {
+      "scale_factor": 1.5000000000000002,
+      "blur_strength": 2,
+      "radius": 7,
+      "eps": 0.01,
+      "resolution": 512,
+      "image": [
+        "259",
+        0
+      ]
+    },
+    "class_type": "TTPlanet_TileGF_Preprocessor",
+    "_meta": {
+      "title": "TTPlanet Tile GuidedFilter"
+    }
+  },
+  "3": {
+    "inputs": {
+      "control_net_name": "xinsir-tile-sdxl-1.0.safetensors"
+    },
+    "class_type": "ControlNetLoaderAdvanced",
+    "_meta": {
+      "title": "Load Advanced ControlNet Model 🛂🅐🅒🅝"
+    }
+  },
+  "16": {
+    "inputs": {
+      "target_side_length": [
+        "33",
+        0
+      ],
+      "image": [
+        "32",
+        0
+      ]
+    },
+    "class_type": "ImageResizeToPixelCount",
+    "_meta": {
+      "title": "📐 按边长调整图像大小"
+    }
+  },
+  "17": {
+    "inputs": {
+      "upscale_model": [
+        "22",
+        0
+      ],
+      "image": [
+        "149",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "使用模型放大图像"
+    }
+  },
+  "18": {
+    "inputs": {
+      "steps": [
+        "23",
+        0
+      ],
+      "end_at_step": [
+        "271",
+        0
+      ],
+      "cfg": 1,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "normalize": "disable",
+      "model": [
+        "139",
+        0
+      ],
+      "positive": [
+        "210",
+        0
+      ],
+      "negative": [
+        "182",
+        0
+      ],
+      "latent_image": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "BNK_Unsampler",
+    "_meta": {
+      "title": "Unsampler"
+    }
+  },
+  "20": {
+    "inputs": {
+      "image": [
+        "179",
+        0
+      ]
+    },
+    "class_type": "Get Image Size",
+    "_meta": {
+      "title": "Get Image Size"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model_name": "2xNomosUni_span_multijpg_ldl.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "加载放大模型"
+    }
+  },
+  "23": {
+    "inputs": {
+      "Number": "22"
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "32": {
+    "inputs": {
+      "upscale_model": [
+        "22",
+        0
+      ],
+      "image": [
+        "97",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "使用模型放大图像"
+    }
+  },
+  "33": {
+    "inputs": {
+      "Number": "3200"
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "34": {
+    "inputs": {
+      "width": [
+        "245",
+        0
+      ],
+      "height": [
+        "245",
+        1
+      ],
+      "interpolation": "nearest",
+      "method": "stretch",
+      "condition": "always",
+      "multiple_of": 0,
+      "image": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "ImageResize+",
+    "_meta": {
+      "title": "🔧 Image Resize"
+    }
+  },
+  "35": {
+    "inputs": {
+      "image": "$35-0",
+      "block": false,
+      "restore_mask": "never",
+      "images": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "PreviewBridge",
+    "_meta": {
+      "title": "Preview Bridge (Image)"
+    }
+  },
+  "36": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_rspcp_00001_.png&type=temp&subfolder=&rand=0.8138191474655312"
+          },
+          {
+            "name": "B",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_rspcp_00002_.png&type=temp&subfolder=&rand=0.9869680703761821"
+          }
+        ]
+      },
+      "image_a": [
+        "16",
+        0
+      ],
+      "image_b": [
+        "259",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)",
+    "_meta": {
+      "title": "Image Comparer (rgthree)"
+    }
+  },
+  "52": {
+    "inputs": {
+      "scale": 1.5,
+      "adaptive_scale": 0,
+      "unet_block": "middle",
+      "unet_block_id": 0,
+      "sigma_start": -1,
+      "sigma_end": -1,
+      "rescale": 0,
+      "rescale_mode": "full",
+      "unet_block_list": "",
+      "model": [
+        "201",
+        0
+      ]
+    },
+    "class_type": "PerturbedAttention",
+    "_meta": {
+      "title": "Perturbed-Attention Guidance (Advanced)"
+    }
+  },
+  "55": {
+    "inputs": {
+      "select": 1,
+      "sel_mode": true,
+      "input1": [
+        "138",
+        0
+      ],
+      "input2": [
+        "502",
+        0
+      ]
+    },
+    "class_type": "LatentSwitch",
+    "_meta": {
+      "title": "Switch (latent/legacy)"
+    }
+  },
+  "61": {
+    "inputs": {
+      "width": [
+        "20",
+        0
+      ],
+      "height": [
+        "20",
+        1
+      ],
+      "interpolation": "bilinear",
+      "method": "stretch",
+      "condition": "always",
+      "multiple_of": 0,
+      "image": [
+        "98",
+        0
+      ]
+    },
+    "class_type": "ImageResize+",
+    "_meta": {
+      "title": "🔧 Image Resize"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model_name": "2xNomosUni_span_multijpg_ldl.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "加载放大模型"
+    }
+  },
+  "64": {
+    "inputs": {
+      "pixels": [
+        "65",
+        0
+      ],
+      "vae": [
+        "227",
+        2
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "65": {
+    "inputs": {
+      "image": "$65-0",
+      "block": false,
+      "restore_mask": "never",
+      "images": [
+        "61",
+        0
+      ]
+    },
+    "class_type": "PreviewBridge",
+    "_meta": {
+      "title": "Preview Bridge (Image)"
+    }
+  },
+  "97": {
+    "inputs": {
+      "image": "$97-0",
+      "block": false,
+      "restore_mask": "never",
+      "images": [
+        "193",
+        5
+      ]
+    },
+    "class_type": "PreviewBridge",
+    "_meta": {
+      "title": "Preview Bridge (Image)"
+    }
+  },
+  "98": {
+    "inputs": {
+      "upscale_model": [
+        "63",
+        0
+      ],
+      "image": [
+        "262",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "使用模型放大图像"
+    }
+  },
+  "138": {
+    "inputs": {
+      "image": "pasted/image (2).png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "139": {
+    "inputs": {
+      "ckpt_name": "440112.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Checkpoint加载器（简易）"
+    }
+  },
+  "143": {
+    "inputs": {
+      "value": "a*b",
+      "a": [
+        "177",
+        0
+      ],
+      "b": [
+        "181",
+        0
+      ]
+    },
+    "class_type": "SimpleMath+",
+    "_meta": {
+      "title": "🔧 Simple Math"
+    }
+  },
+  "144": {
+    "inputs": {
+      "value": "a*b",
+      "a": [
+        "177",
+        1
+      ],
+      "b": [
+        "181",
+        0
+      ]
+    },
+    "class_type": "SimpleMath+",
+    "_meta": {
+      "title": "🔧 Simple Math"
+    }
+  },
+  "145": {
+    "inputs": {
+      "action": "append",
+      "tidy_tags": "yes",
+      "text_a": [
+        "803",
+        0
+      ],
+      "text_b": [
+        "208",
+        0
+      ],
+      "text_c": "",
+      "result": "Masterpiece, Best Quality, Ultra Fine, Ultra Realistic, (Realism: 1.2), 16K, High Detail, High Resolution, (Extremely Fine: 1.2), Crazy Detail, Sharp Focus, Realistic Accuracy, Photography, Creative Composition, Epic, Gorgeous, (Cinematic Grain:1.2), Venue Landscape, Real Photo,intricate textures,(cinematic lighting:1.4),Unreal Engine 5,"
+  
+    },
+    "class_type": "StringFunction|pysssss",
+    "_meta": {
+      "title": "String Function 🐍"
+    }
+  },
+  "149": {
+    "inputs": {
+      "target_side_length": [
+        "153",
+        0
+      ],
+      "image": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "ImageResizeToPixelCount",
+    "_meta": {
+      "title": "📐 按边长调整图像大小"
+    }
+  },
+  "150": {
+    "inputs": {
+      "any_02": [
+        "167",
+        0
+      ]
+    },
+    "class_type": "Any Switch (rgthree)",
+    "_meta": {
+      "title": "Any Switch (rgthree)"
+    }
+  },
+  "151": {
+    "inputs": {
+      "any_02": [
+        "166",
+        0
+      ]
+    },
+    "class_type": "Any Switch (rgthree)",
+    "_meta": {
+      "title": "Any Switch (rgthree)"
+    }
+  },
+  "153": {
+    "inputs": {
+      "Number": "1920"
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "166": {
+    "inputs": {
+      "Number": "0.18"
+    },
+    "class_type": "Float",
+    "_meta": {
+      "title": "Float"
+    }
+  },
+  "167": {
+    "inputs": {
+      "pixels": [
+        "149",
+        0
+      ],
+      "vae": [
+        "227",
+        2
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "176": {
+    "inputs": {
+      "value": "a*b",
+      "a": [
+        "177",
+        1
+      ],
+      "b": [
+        "181",
+        0
+      ]
+    },
+    "class_type": "SimpleMath+",
+    "_meta": {
+      "title": "🔧 Simple Math"
+    }
+  },
+  "177": {
+    "inputs": {
+      "image": [
+        "149",
+        0
+      ]
+    },
+    "class_type": "ImageGenResolutionFromImage",
+    "_meta": {
+      "title": "Generation Resolution From Image"
+    }
+  },
+  "179": {
+    "inputs": {
+      "target_side_length": [
+        "257",
+        0
+      ],
+      "image": [
+        "98",
+        0
+      ]
+    },
+    "class_type": "ImageResizeToPixelCount",
+    "_meta": {
+      "title": "📐 按边长调整图像大小"
+    }
+  },
+  "180": {
+    "inputs": {
+      "value": "a*b",
+      "a": [
+        "177",
+        0
+      ],
+      "b": [
+        "181",
+        0
+      ]
+    },
+    "class_type": "SimpleMath+",
+    "_meta": {
+      "title": "🔧 Simple Math"
+    }
+  },
+  "181": {
+    "inputs": {
+      "value": 4
+    },
+    "class_type": "ImpactInt",
+    "_meta": {
+      "title": "ImpactInt"
+    }
+  },
+  "182": {
+    "inputs": {
+      "width": [
+        "143",
+        0
+      ],
+      "height": [
+        "144",
+        0
+      ],
+      "crop_w": 0,
+      "crop_h": 0,
+      "target_width": [
+        "143",
+        0
+      ],
+      "target_height": [
+        "144",
+        0
+      ],
+      "text_g": [
+        "207",
+        0
+      ],
+      "text_l": [
+        "207",
+        0
+      ],
+      "clip": [
+        "247",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncodeSDXL",
+    "_meta": {
+      "title": "CLIP文本编码SDXL"
+    }
+  },
+  "183": {
+    "inputs": {
+      "stop_at_clip_layer": -2,
+      "clip": [
+        "227",
+        1
+      ]
+    },
+    "class_type": "CLIPSetLastLayer",
+    "_meta": {
+      "title": "设置CLIP最后一层"
+    }
+  },
+  "186": {
+    "inputs": {
+      "image": "4cb0b4cfd8bb408f3793402557c40937.jpg"
+    },
+    "class_type": "Load Image",
+    "_meta": {
+      "title": "Load Image (Soze)"
+    }
+  },
+  "187": {
+    "inputs": {
+      "axis": "x",
+      "image": [
+        "186",
+        0
+      ]
+    },
+    "class_type": "ImageFlip+",
+    "_meta": {
+      "title": "🔧 Image Flip"
+    }
+  },
+  "190": {
+    "inputs": {
+      "images": [
+        "192",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "191": {
+    "inputs": {
+      "width": [
+        "219",
+        0
+      ],
+      "height": [
+        "219",
+        1
+      ],
+      "interpolation": "nearest",
+      "method": "stretch",
+      "condition": "always",
+      "multiple_of": 0,
+      "image": [
+        "192",
+        0
+      ]
+    },
+    "class_type": "ImageResize+",
+    "_meta": {
+      "title": "🔧 Image Resize"
+    }
+  },
+  "192": {
+    "inputs": {
+      "select": 1,
+      "sel_mode": false,
+      "input1": [
+        "248",
+        0
+      ],
+      "input2": [
+        "500",
+        0
+      ]
+    },
+    "class_type": "ImpactSwitch",
+    "_meta": {
+      "title": "Switch (Any)"
+    }
+  },
+  "193": {
+    "inputs": {
+      "seed": 755698385400488,
+      "steps": 20,
+      "cfg": 16,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "sgm_uniform",
+      "denoise": [
+        "151",
+        0
+      ],
+      "preview_method": "none",
+      "vae_decode": "true",
+      "model": [
+        "713",
+        0
+      ],
+      "positive": [
+        "676",
+        0
+      ],
+      "negative": [
+        "676",
+        1
+      ],
+      "latent_image": [
+        "150",
+        0
+      ],
+      "optional_vae": [
+        "227",
+        2
+      ]
+    },
+    "class_type": "KSampler (Efficient)",
+    "_meta": {
+      "title": "KSampler (Efficient)"
+    }
+  },
+  "201": {
+    "inputs": {
+      "tonemap_multiplier": 0.05,
+      "rescale_multiplier": 1,
+      "model": [
+        "247",
+        0
+      ]
+    },
+    "class_type": "TonemapNoiseWithRescaleCFG",
+    "_meta": {
+      "title": "TonemapNoiseWithRescaleCFG"
+    }
+  },
+  "204": {
+    "inputs": {
+      "add_noise": "disable",
+      "noise_seed": 550729177329390,
+      "steps": [
+        "23",
+        0
+      ],
+      "cfg": 1,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "start_at_step": [
+        "271",
+        0
+      ],
+      "end_at_step": 10000,
+      "return_with_leftover_noise": "disable",
+      "preview_method": "auto",
+      "vae_decode": "true (tiled)",
+      "model": [
+        "247",
+        0
+      ],
+      "positive": [
+        "252",
+        0
+      ],
+      "negative": [
+        "252",
+        0
+      ],
+      "latent_image": [
+        "18",
+        0
+      ],
+      "optional_vae": [
+        "227",
+        2
+      ]
+    },
+    "class_type": "KSampler Adv. (Efficient)",
+    "_meta": {
+      "title": "KSampler Adv. (Efficient)"
+    }
+  },
+  "205": {
+    "inputs": {
+      "images": [
+        "204",
+        5
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "207": {
+    "inputs": {
+      "negative": "distorted edges,"
+    },
+    "class_type": "easy negative",
+    "_meta": {
+      "title": "负面提示词"
+    }
+  },
+  "208": {
+    "inputs": {
+      "positive": "Masterpiece, Best Quality, Ultra Fine, Ultra Realistic, (Realism: 1.2), 16K, High Detail, High Resolution, (Extremely Fine: 1.2), Crazy Detail, Sharp Focus, Realistic Accuracy, Photography, Creative Composition, Epic, Gorgeous, (Cinematic Grain:1.2),  Venue Landscape, Real Photo,intricate textures,(cinematic lighting:1.4),Unreal Engine 5,"
+    },
+    "class_type": "easy positive",
+    "_meta": {
+      "title": "正面提示词"
+    }
+  },
+  "210": {
+    "inputs": {
+      "width": [
+        "180",
+        0
+      ],
+      "height": [
+        "176",
+        0
+      ],
+      "crop_w": 0,
+      "crop_h": 0,
+      "target_width": [
+        "180",
+        0
+      ],
+      "target_height": [
+        "176",
+        0
+      ],
+      "text_g": [
+        "145",
+        0
+      ],
+      "text_l": [
+        "145",
+        0
+      ],
+      "clip": [
+        "247",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncodeSDXL",
+    "_meta": {
+      "title": "CLIP文本编码SDXL"
+    }
+  },
+  "219": {
+    "inputs": {
+      "image": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "Get Image Size",
+    "_meta": {
+      "title": "Get Image Size"
+    }
+  },
+  "227": {
+    "inputs": {
+      "ckpt_name": "440111.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Checkpoint加载器（简易）"
+    }
+  },
+  "229": {
+    "inputs": {
+      "start_percent": 0,
+      "end_percent": 0.8500000000000002,
+      "strength_start": 0.3500000000000001,
+      "strength_end": 0.10000000000000002,
+      "interpolation": "linear",
+      "intervals": 50,
+      "null_latent_kf_strength": 0,
+      "inherit_missing": true,
+      "print_keyframes": false
+    },
+    "class_type": "ACN_TimestepKeyframeInterpolation",
+    "_meta": {
+      "title": "Timestep Keyframe Interp. 🛂🅐🅒🅝"
+    }
+  },
+  "245": {
+    "inputs": {
+      "image": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "Get Image Size",
+    "_meta": {
+      "title": "Get Image Size"
+    }
+  },
+  "247": {
+    "inputs": {
+      "PowerLoraLoaderHeaderWidget": {
+        "type": "PowerLoraLoaderHeaderWidget"
+      },
+      "lora_1": {
+        "on": true,
+        "lora": "440111-01.safetensors",
+        "strength": 0.4
+      },
+      "➕ Add Lora": "",
+      "model": [
+        "227",
+        0
+      ],
+      "clip": [
+        "183",
+        0
+      ]
+    },
+    "class_type": "Power Lora Loader (rgthree)",
+    "_meta": {
+      "title": "Power Lora Loader (rgthree)"
+    }
+  },
+  "248": {
+    "inputs": {
+      "select": 2,
+      "sel_mode": false,
+      "input1": [
+        "186",
+        0
+      ],
+      "input2": [
+        "187",
+        0
+      ]
+    },
+    "class_type": "ImpactSwitch",
+    "_meta": {
+      "title": "Switch (Any)"
+    }
+  },
+  "250": {
+    "inputs": {
+      "base_multiplier": 1,
+      "flip_weights": false,
+      "uncond_multiplier": 0.010000000000000002
+    },
+    "class_type": "ScaledSoftControlNetWeights",
+    "_meta": {
+      "title": "Scaled Soft Weights 🛂🅐🅒🅝"
+    }
+  },
+  "252": {
+    "inputs": {
+      "strength": 0.8500000000000002,
+      "start_percent": 0,
+      "end_percent": 0.9000000000000002,
+      "positive": [
+        "676",
+        0
+      ],
+      "negative": [
+        "676",
+        1
+      ],
+      "control_net": [
+        "3",
+        0
+      ],
+      "image": [
+        "2",
+        0
+      ],
+      "timestep_kf": [
+        "229",
+        0
+      ],
+      "weights_override": [
+        "250",
+        0
+      ]
+    },
+    "class_type": "ACN_AdvancedControlNetApply",
+    "_meta": {
+      "title": "Apply Advanced ControlNet 🛂🅐🅒🅝"
+    }
+  },
+  "254": {
+    "inputs": {
+      "seed": 533177652763953
+    },
+    "class_type": "Seed Everywhere",
+    "_meta": {
+      "title": "Seed Everywhere"
+    }
+  },
+  "257": {
+    "inputs": {
+      "Number": "2880"
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "259": {
+    "inputs": {
+      "method": "wavelet",
+      "image_output": "Preview",
+      "save_prefix": "ComfyUI",
+      "image_ref": [
+        "35",
+        0
+      ],
+      "image_target": [
+        "34",
+        0
+      ]
+    },
+    "class_type": "easy imageColorMatch",
+    "_meta": {
+      "title": "图像颜色匹配"
+    }
+  },
+  "262": {
+    "inputs": {
+      "mode": "soft_light",
+      "blur_sigma": 1,
+      "blend_factor": 0.5,
+      "image_output": "Preview",
+      "save_prefix": "ComfyUI",
+      "target": [
+        "97",
+        0
+      ],
+      "source": [
+        "265",
+        0
+      ],
+      "mask": [
+        "824",
+        0
+      ]
+    },
+    "class_type": "easy imageDetailTransfer",
+    "_meta": {
+      "title": "图像细节迁移"
+    }
+  },
+  "265": {
+    "inputs": {
+      "width": 2048,
+      "height": 2048,
+      "upscale_method": "lanczos",
+      "keep_proportion": true,
+      "divisible_by": 2,
+      "crop": "disabled",
+      "image": [
+        "837",
+        0
+      ],
+      "width_input": [
+        "266",
+        0
+      ],
+      "height_input": [
+        "266",
+        1
+      ]
+    },
+    "class_type": "ImageResizeKJ",
+    "_meta": {
+      "title": "Resize Image (deprecated)"
+    }
+  },
+  "266": {
+    "inputs": {
+      "image": [
+        "97",
+        0
+      ]
+    },
+    "class_type": "easy imageSize",
+    "_meta": {
+      "title": "图像尺寸"
+    }
+  },
+  "271": {
+    "inputs": {
+      "Number": "12"
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "286": {
+    "inputs": {
+      "text": [
+        "145",
+        0
+      ],
+      "clip": [
+        "247",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "287": {
+    "inputs": {
+      "text": [
+        "207",
+        0
+      ],
+      "clip": [
+        "247",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "295": {
+    "inputs": {
+      "positive": ""
+    },
+    "class_type": "easy positive",
+    "_meta": {
+      "title": "正面提示词"
+    }
+  },
+  "300": {
+    "inputs": {
+      "mask": [
+        "824",
+        0
+      ]
+    },
+    "class_type": "MaskPreview+",
+    "_meta": {
+      "title": "🔧 Mask Preview"
+    }
+  },
+  "330": {
+    "inputs": {
+      "upscale_model": [
+        "334",
+        0
+      ],
+      "image": [
+        "355",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "使用模型放大图像"
+    }
+  },
+  "331": {
+    "inputs": {
+      "images": [
+        "332",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "332": {
+    "inputs": {
+      "size": [
+        "791",
+        0
+      ],
+      "interpolation_mode": "bicubic",
+      "image": [
+        "204",
+        5
+      ]
+    },
+    "class_type": "JWImageResizeByLongerSide",
+    "_meta": {
+      "title": "Image Resize by Longer Side"
+    }
+  },
+  "333": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "megapixels": 8.000000000000002,
+      "image": [
+        "204",
+        5
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "334": {
+    "inputs": {
+      "model_name": "2xNomosUni_span_multijpg_ldl.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "加载放大模型"
+    }
+  },
+  "335": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "336": {
+    "inputs": {
+      "width_factor": [
+        "338",
+        0
+      ],
+      "height_factor": [
+        "340",
+        0
+      ],
+      "overlap_rate": 0.10000000000000002,
+      "image": [
+        "380",
+        0
+      ]
+    },
+    "class_type": "TTP_Tile_image_size",
+    "_meta": {
+      "title": "TTP_Tile_image_size"
+    }
+  },
+  "337": {
+    "inputs": {
+      "tile_width": [
+        "336",
+        0
+      ],
+      "tile_height": [
+        "336",
+        1
+      ],
+      "image": [
+        "380",
+        0
+      ]
+    },
+    "class_type": "TTP_Image_Tile_Batch",
+    "_meta": {
+      "title": "TTP_Image_Tile_Batch"
+    }
+  },
+  "338": {
+    "inputs": {
+      "expression": "a/1024\n",
+      "a": [
+        "380",
+        1
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "339": {
+    "inputs": {
+      "expression": "(a+b)/22\n\n",
+      "a": [
+        "338",
+        1
+      ],
+      "b": [
+        "340",
+        1
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "340": {
+    "inputs": {
+      "expression": "a/1024+0.5\n\n",
+      "a": [
+        "380",
+        2
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "341": {
+    "inputs": {
+      "expression": "a+b",
+      "a": [
+        "340",
+        0
+      ],
+      "b": [
+        "340",
+        0
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "342": {
+    "inputs": {
+      "cmp": "a <= b",
+      "a": [
+        "339",
+        1
+      ],
+      "b": [
+        "166",
+        0
+      ]
+    },
+    "class_type": "ImpactCompare",
+    "_meta": {
+      "title": "ImpactCompare"
+    }
+  },
+  "343": {
+    "inputs": {
+      "Number": "3"
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "344": {
+    "inputs": {
+      "image": [
+        "337",
+        0
+      ]
+    },
+    "class_type": "easy imageBatchToImageList",
+    "_meta": {
+      "title": "图像批次到图像列表"
+    }
+  },
+  "345": {
+    "inputs": {
+      "evaluate": [
+        "342",
+        0
+      ],
+      "on_true": [
+        "339",
+        1
+      ],
+      "on_false": [
+        "166",
+        0
+      ]
+    },
+    "class_type": "SimpleCondition+",
+    "_meta": {
+      "title": "🔧 Simple Condition"
+    }
+  },
+  "346": {
+    "inputs": {
+      "output_path": "",
+      "filename_prefix": "two",
+      "filename_delimiter": "_",
+      "filename_number_padding": 4,
+      "filename_number_start": "false",
+      "extension": "jpg",
+      "dpi": 300,
+      "quality": 100,
+      "optimize_image": "false",
+      "lossless_webp": "false",
+      "overwrite_mode": "false",
+      "show_history": "false",
+      "show_history_by_prefix": "true",
+      "embed_workflow": "false",
+      "show_previews": "true",
+      "images": [
+        "835",
+        0
+      ]
+    },
+    "class_type": "Image Save",
+    "_meta": {
+      "title": "Image Save"
+    }
+  },
+  "347": {
+    "inputs": {
+      "images": [
+        "379",
+        5
+      ]
+    },
+    "class_type": "easy imageListToImageBatch",
+    "_meta": {
+      "title": "图像列表到图像批次"
+    }
+  },
+  "349": {
+    "inputs": {
+      "purge_cache": true,
+      "purge_models": false,
+      "anything": [
+        "346",
+        0
+      ]
+    },
+    "class_type": "PurgeVRAM",
+    "_meta": {
+      "title": "PurgeVRAM"
+    }
+  },
+  "351": {
+    "inputs": {
+      "cmp": "a >= b",
+      "a": [
+        "341",
+        0
+      ],
+      "b": [
+        "343",
+        0
+      ]
+    },
+    "class_type": "ImpactCompare",
+    "_meta": {
+      "title": "ImpactCompare"
+    }
+  },
+  "352": {
+    "inputs": {
+      "text_input": "",
+      "task": "detailed_caption",
+      "fill_mask": true,
+      "keep_model_loaded": false,
+      "max_new_tokens": 1024,
+      "num_beams": 3,
+      "do_sample": true,
+      "output_mask_select": "",
+      "seed": 98801350863311,
+      "image": [
+        "357",
+        0
+      ],
+      "florence2_model": [
+        "638",
+        0
+      ]
+    },
+    "class_type": "Florence2Run",
+    "_meta": {
+      "title": "Florence2Run"
+    }
+  },
+  "353": {
+    "inputs": {
+      "mode": "always",
+      "volume": 0.5,
+      "file": "goodidear.MP3",
+      "any": [
+        "835",
+        0
+      ]
+    },
+    "class_type": "PlaySound|pysssss",
+    "_meta": {
+      "title": "PlaySound 🐍"
+    }
+  },
+  "354": {
+    "inputs": {
+      "unet_name": "440-01-008.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "355": {
+    "inputs": {
+      "sharpen_radius": 1,
+      "sigma": 0.5,
+      "alpha": 0.8,
+      "image": [
+        "333",
+        0
+      ]
+    },
+    "class_type": "ImageSharpen",
+    "_meta": {
+      "title": "锐化图像"
+    }
+  },
+  "356": {
+    "inputs": {
+      "images": [
+        "379",
+        5
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "357": {
+    "inputs": {
+      "evaluate": [
+        "351",
+        0
+      ],
+      "on_true": [
+        "344",
+        0
+      ],
+      "on_false": [
+        "337",
+        0
+      ]
+    },
+    "class_type": "SimpleCondition+",
+    "_meta": {
+      "title": "🔧 Simple Condition"
+    }
+  },
+  "358": {
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp8_e4m3fn.safetensors",
+      "type": "flux",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "双CLIP加载器"
+    }
+  },
+  "360": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_yygcp_00001_.png&type=temp&subfolder=&rand=0.8117706416536601"
+          },
+          {
+            "name": "B",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_yygcp_00002_.png&type=temp&subfolder=&rand=0.529512033786806"
+          }
+        ]
+      },
+      "image_a": [
+        "204",
+        5
+      ],
+      "image_b": [
+        "835",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)",
+    "_meta": {
+      "title": "Image Comparer (rgthree)"
+    }
+  },
+  "365": {
+    "inputs": {
+      "images": [
+        "357",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "369": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_ilkty_00001_.png&type=temp&subfolder=&rand=0.3682423932972121"
+          },
+          {
+            "name": "B",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_ilkty_00002_.png&type=temp&subfolder=&rand=0.8707301649910382"
+          }
+        ]
+      },
+      "image_a": [
+        "835",
+        0
+      ],
+      "image_b": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)",
+    "_meta": {
+      "title": "Image Comparer (rgthree)"
+    }
+  },
+  "371": {
+    "inputs": {
+      "text_0": "The image shows a white building with a tree on the left side and a light blue sky in the background. The sky is filled with white clouds, creating a beautiful contrast between the bright blue sky and the white building.",
+      "text_1": "The image shows a low angle view of a white building with a blue sky in the background. The building has a white facade with glass windows, and the sky is a bright blue color.",
+      "text_2": "The image shows a close up of a white building with a triangular roof and a yellow and black facade. The building is surrounded by a clear blue sky, with no clouds in sight.",
+      "text_3": "The image shows a close up of a building with a blue sky in the background. On the left side of the image, there is a grey-colored structure, and on the right side there is another building. At the bottom of the picture, there appears to be a metal structure.",
+      "text_4": "The image shows a large white building with a lot of cars parked in front of it, surrounded by lush green bushes. In the foreground, there is a road leading up to the building, and in the background, there are trees and a clear blue sky. People can be seen walking in the distance.",
+      "text_5": "The image shows a large white building with a large group of people walking in front of it. At the bottom of the image there is a road with some plants in the middle and a tree on the left side. The building has many glass windows that are reflecting the trees and the sky in the background.",
+      "text_6": "The image shows a group of people walking in front of a large building with a yellow and black facade. The people are walking on the road in the foreground, with some of them carrying bags. In the background, there are some bushes and the reflection of trees and the sky can be seen on the left side of the building. The sky is visible at the top of the image.",
+      "text_7": "The image shows a large building with a lot of people walking in front of it. The building has a white facade and is surrounded by a black surface. On the right side of the image there is a tree, and on the left side there is another building. The sky is visible at the top of the building.",
+      "text": [
+        "352",
+        2
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "372": {
+    "inputs": {
+      "conditioning": [
+        "374",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "条件零化"
+    }
+  },
+  "374": {
+    "inputs": {
+      "clip_l": [
+        "371",
+        0
+      ],
+      "t5xxl": [
+        "371",
+        0
+      ],
+      "guidance": 2.5,
+      "clip": [
+        "386",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncodeFlux",
+    "_meta": {
+      "title": "CLIP文本编码Flux"
+    }
+  },
+  "375": {
+    "inputs": {
+      "max_shift": 1.15,
+      "base_shift": 0.5,
+      "width": [
+        "376",
+        0
+      ],
+      "height": [
+        "376",
+        1
+      ],
+      "model": [
+        "386",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingFlux",
+    "_meta": {
+      "title": "采样算法（Flux）"
+    }
+  },
+  "376": {
+    "inputs": {
+      "image": [
+        "337",
+        0
+      ]
+    },
+    "class_type": "easy imageSize",
+    "_meta": {
+      "title": "图像尺寸"
+    }
+  },
+  "377": {
+    "inputs": {
+      "pixels": [
+        "357",
+        0
+      ],
+      "vae": [
+        "335",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "378": {
+    "inputs": {
+      "noise_seed": 272169771071199,
+      "noise_strength": 0.08,
+      "normalize": "false",
+      "latent": [
+        "377",
+        0
+      ]
+    },
+    "class_type": "InjectLatentNoise+",
+    "_meta": {
+      "title": "🔧 Inject Latent Noise"
+    }
+  },
+  "379": {
+    "inputs": {
+      "seed": 1064871242566295,
+      "steps": 10,
+      "cfg": 0.8,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": [
+        "345",
+        0
+      ],
+      "preview_method": "auto",
+      "vae_decode": "true (tiled)",
+      "model": [
+        "375",
+        0
+      ],
+      "positive": [
+        "374",
+        0
+      ],
+      "negative": [
+        "372",
+        0
+      ],
+      "latent_image": [
+        "378",
+        0
+      ],
+      "optional_vae": [
+        "335",
+        0
+      ]
+    },
+    "class_type": "KSampler (Efficient)",
+    "_meta": {
+      "title": "KSampler (Efficient)"
+    }
+  },
+  "380": {
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "upscale_method": "lanczos",
+      "keep_proportion": true,
+      "divisible_by": 2,
+      "crop": "disabled",
+      "image": [
+        "330",
+        0
+      ],
+      "get_image_size": [
+        "332",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJ",
+    "_meta": {
+      "title": "Resize Image (deprecated)"
+    }
+  },
+  "381": {
+    "inputs": {
+      "padding": 128,
+      "tiles": [
+        "347",
+        0
+      ],
+      "positions": [
+        "337",
+        1
+      ],
+      "original_size": [
+        "337",
+        2
+      ],
+      "grid_size": [
+        "337",
+        3
+      ]
+    },
+    "class_type": "TTP_Image_Assy",
+    "_meta": {
+      "title": "TTP_Image_Assy"
+    }
+  },
+  "386": {
+    "inputs": {
+      "PowerLoraLoaderHeaderWidget": {
+        "type": "PowerLoraLoaderHeaderWidget"
+      },
+      "lora_1": {
+        "on": true,
+        "lora": "440-01-008-01.safetensors",
+        "strength": 0.4
+      },
+      "lora_2": {
+        "on": true,
+        "lora": "440-01-008-02.safetensors",
+        "strength": 0.8
+      },
+      "lora_3": {
+        "on": true,
+        "lora": "440-01-008-03.safetensors",
+        "strength": 0.33
+      },
+      "lora_4": {
+        "on": false,
+        "lora": "FLUX\\flux-鸟瞰图-v2_flux-鸟瞰图-v2.safetensors",
+        "strength": 0.3
+      },
+      "➕ Add Lora": "",
+      "model": [
+        "354",
+        0
+      ],
+      "clip": [
+        "358",
+        0
+      ]
+    },
+    "class_type": "Power Lora Loader (rgthree)",
+    "_meta": {
+      "title": "Power Lora Loader (rgthree)"
+    }
+  },
+  "500": {
+    "inputs": {
+      "mode": "incremental_image",
+      "seed": 521060189788198,
+      "index": 0,
+      "label": "Batch 001",
+      "path": "C:\\Users\\Administrator\\Desktop\\参考图\\选来参考",
+      "pattern": "*",
+      "allow_RGBA_output": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "Load Image Batch",
+    "_meta": {
+      "title": "Load Image Batch"
+    }
+  },
+  "502": {
+    "inputs": {
+      "mode": "incremental_image",
+      "seed": 521060189788198,
+      "index": 0,
+      "label": "Batch 001",
+      "path": "V:\\IPA\\IPA_test",
+      "pattern": "*",
+      "allow_RGBA_output": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "Load Image Batch",
+    "_meta": {
+      "title": "Load Image Batch"
+    }
+  },
+  "638": {
+    "inputs": {
+      "model": "gokaygokay/Florence-2-Flux-Large",
+      "precision": "fp16",
+      "attention": "sdpa",
+      "convert_to_safetensors": false
+    },
+    "class_type": "DownloadAndLoadFlorence2Model",
+    "_meta": {
+      "title": "DownloadAndLoadFlorence2Model"
+    }
+  },
+  "658": {
+    "inputs": {
+      "images": [
+        "689",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "659": {
+    "inputs": {
+      "base_multiplier": 0.8250000000000002,
+      "uncond_multiplier": 0.5000000000000001
+    },
+    "class_type": "ACN_ScaledSoftControlNetWeights",
+    "_meta": {
+      "title": "Scaled Soft Weights 🛂🅐🅒🅝"
+    }
+  },
+  "660": {
+    "inputs": {
+      "strength": 0.5000000000000001,
+      "start_percent": 0,
+      "end_percent": 0.5,
+      "positive": [
+        "286",
+        0
+      ],
+      "negative": [
+        "287",
+        0
+      ],
+      "control_net": [
+        "665",
+        0
+      ],
+      "image": [
+        "689",
+        0
+      ],
+      "weights_override": [
+        "659",
+        0
+      ]
+    },
+    "class_type": "ACN_AdvancedControlNetApply",
+    "_meta": {
+      "title": "Apply Advanced ControlNet 🛂🅐🅒🅝"
+    }
+  },
+  "661": {
+    "inputs": {
+      "strength": 0.8500000000000002,
+      "start_percent": 0.30000000000000004,
+      "end_percent": 0.8500000000000002,
+      "positive": [
+        "660",
+        0
+      ],
+      "negative": [
+        "660",
+        1
+      ],
+      "control_net": [
+        "665",
+        0
+      ],
+      "image": [
+        "687",
+        0
+      ],
+      "weights_override": [
+        "664",
+        0
+      ]
+    },
+    "class_type": "ACN_AdvancedControlNetApply",
+    "_meta": {
+      "title": "Apply Advanced ControlNet 🛂🅐🅒🅝"
+    }
+  },
+  "662": {
+    "inputs": {
+      "images": [
+        "687",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "664": {
+    "inputs": {
+      "base_multiplier": 0.8250000000000001,
+      "uncond_multiplier": 0.5000000000000001
+    },
+    "class_type": "ACN_ScaledSoftControlNetWeights",
+    "_meta": {
+      "title": "Scaled Soft Weights 🛂🅐🅒🅝"
+    }
+  },
+  "665": {
+    "inputs": {
+      "control_net_name": "mistoLine_rank256.safetensors"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "加载ControlNet模型"
+    }
+  },
+  "666": {
+    "inputs": {
+      "base_multiplier": 1,
+      "uncond_multiplier": 0.01
+    },
+    "class_type": "ACN_ScaledSoftControlNetWeights",
+    "_meta": {
+      "title": "Scaled Soft Weights 🛂🅐🅒🅝"
+    }
+  },
+  "667": {
+    "inputs": {
+      "base_multiplier": 1,
+      "uncond_multiplier": 0.010000000000000002
+    },
+    "class_type": "ACN_ScaledSoftControlNetWeights",
+    "_meta": {
+      "title": "Scaled Soft Weights 🛂🅐🅒🅝"
+    }
+  },
+  "668": {
+    "inputs": {
+      "base_multiplier": 0.8250000000000001,
+      "uncond_multiplier": 0
+    },
+    "class_type": "ACN_ScaledSoftControlNetWeights",
+    "_meta": {
+      "title": "Scaled Soft Weights 🛂🅐🅒🅝"
+    }
+  },
+  "669": {
+    "inputs": {
+      "base_multiplier": 1,
+      "uncond_multiplier": 0.010000000000000002
+    },
+    "class_type": "ACN_ScaledSoftControlNetWeights",
+    "_meta": {
+      "title": "Scaled Soft Weights 🛂🅐🅒🅝"
+    }
+  },
+  "670": {
+    "inputs": {
+      "preprocessor": "DepthAnythingV2Preprocessor",
+      "resolution": 1920,
+      "image": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "AIO_Preprocessor",
+    "_meta": {
+      "title": "AIO Aux Preprocessor"
+    }
+  },
+  "671": {
+    "inputs": {
+      "type": "depth",
+      "control_net": [
+        "672",
+        0
+      ]
+    },
+    "class_type": "SetUnionControlNetType",
+    "_meta": {
+      "title": "设置UnionControlNet类型"
+    }
+  },
+  "672": {
+    "inputs": {
+      "control_net_name": "xinsir-controlnet-union-sdxl-1.0_promax.safetensors",
+      "model": [
+        "52",
+        0
+      ]
+    },
+    "class_type": "DiffControlNetLoader",
+    "_meta": {
+      "title": "加载ControlNet模型（diff）"
+    }
+  },
+  "675": {
+    "inputs": {
+      "strength": 1,
+      "start_percent": 0,
+      "end_percent": 0.5,
+      "positive": [
+        "210",
+        0
+      ],
+      "negative": [
+        "182",
+        0
+      ],
+      "control_net": [
+        "665",
+        0
+      ],
+      "image": [
+        "689",
+        0
+      ],
+      "timestep_kf": [
+        "801",
+        0
+      ],
+      "weights_override": [
+        "667",
+        0
+      ]
+    },
+    "class_type": "ACN_AdvancedControlNetApply",
+    "_meta": {
+      "title": "Apply Advanced ControlNet 🛂🅐🅒🅝"
+    }
+  },
+  "676": {
+    "inputs": {
+      "strength": 1,
+      "start_percent": 0,
+      "end_percent": 1,
+      "positive": [
+        "683",
+        0
+      ],
+      "negative": [
+        "683",
+        1
+      ],
+      "control_net": [
+        "671",
+        0
+      ],
+      "image": [
+        "670",
+        0
+      ],
+      "timestep_kf": [
+        "799",
+        0
+      ],
+      "weights_override": [
+        "669",
+        0
+      ]
+    },
+    "class_type": "ACN_AdvancedControlNetApply",
+    "_meta": {
+      "title": "Apply Advanced ControlNet 🛂🅐🅒🅝"
+    }
+  },
+  "682": {
+    "inputs": {
+      "images": [
+        "670",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "683": {
+    "inputs": {
+      "strength": 1,
+      "start_percent": 0.5000000000000001,
+      "end_percent": 1,
+      "positive": [
+        "675",
+        0
+      ],
+      "negative": [
+        "675",
+        1
+      ],
+      "control_net": [
+        "665",
+        0
+      ],
+      "image": [
+        "687",
+        0
+      ],
+      "timestep_kf": [
+        "800",
+        0
+      ],
+      "weights_override": [
+        "666",
+        0
+      ]
+    },
+    "class_type": "ACN_AdvancedControlNetApply",
+    "_meta": {
+      "title": "Apply Advanced ControlNet 🛂🅐🅒🅝"
+    }
+  },
+  "686": {
+    "inputs": {
+      "brightness": 0.8000000000000002,
+      "contrast": 2.0000000000000004,
+      "saturation": 1,
+      "image": [
+        "691",
+        0
+      ]
+    },
+    "class_type": "LayerColor: Brightness & Contrast",
+    "_meta": {
+      "title": "LayerColor: Brightness & Contrast"
+    }
+  },
+  "687": {
+    "inputs": {
+      "enhance": "sharp",
+      "images": [
+        "686",
+        0
+      ]
+    },
+    "class_type": "LayerFilter: Sharp & Soft",
+    "_meta": {
+      "title": "LayerFilter: Sharp & Soft"
+    }
+  },
+  "688": {
+    "inputs": {
+      "brightness": 1.5000000000000002,
+      "contrast": 2.0000000000000004,
+      "saturation": 1,
+      "image": [
+        "692",
+        0
+      ]
+    },
+    "class_type": "LayerColor: Brightness & Contrast",
+    "_meta": {
+      "title": "LayerColor: Brightness & Contrast"
+    }
+  },
+  "689": {
+    "inputs": {
+      "enhance": "very soft",
+      "images": [
+        "688",
+        0
+      ]
+    },
+    "class_type": "LayerFilter: Sharp & Soft",
+    "_meta": {
+      "title": "LayerFilter: Sharp & Soft"
+    }
+  },
+  "690": {
+    "inputs": {
+      "strength": 0.7500000000000001,
+      "start_percent": 0,
+      "end_percent": 0.65,
+      "positive": [
+        "661",
+        0
+      ],
+      "negative": [
+        "661",
+        1
+      ],
+      "control_net": [
+        "671",
+        0
+      ],
+      "image": [
+        "670",
+        0
+      ],
+      "weights_override": [
+        "668",
+        0
+      ]
+    },
+    "class_type": "ACN_AdvancedControlNetApply",
+    "_meta": {
+      "title": "Apply Advanced ControlNet 🛂🅐🅒🅝"
+    }
+  },
+  "691": {
+    "inputs": {
+      "merge_with_lineart": "lineart_standard",
+      "resolution": 2048,
+      "lineart_lower_bound": 0.6000000000000001,
+      "lineart_upper_bound": 0.5000000000000001,
+      "object_min_size": 36,
+      "object_connectivity": 1,
+      "image": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "AnyLineArtPreprocessor_aux",
+    "_meta": {
+      "title": "AnyLine Lineart"
+    }
+  },
+  "692": {
+    "inputs": {
+      "guassian_sigma": 8.000000000000002,
+      "intensity_threshold": 16,
+      "resolution": 2048,
+      "image": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "LineartStandardPreprocessor",
+    "_meta": {
+      "title": "Standard Lineart"
+    }
+  },
+  "696": {
+    "inputs": {
+      "interpolation": "LANCZOS",
+      "crop_position": "pad",
+      "sharpening": 0.20000000000000004,
+      "image": [
+        "698",
+        0
+      ]
+    },
+    "class_type": "PrepImageForClipVision",
+    "_meta": {
+      "title": "Prep Image For ClipVision"
+    }
+  },
+  "697": {
+    "inputs": {
+      "preset": "PLUS (high strength)",
+      "model": [
+        "52",
+        0
+      ]
+    },
+    "class_type": "IPAdapterUnifiedLoader",
+    "_meta": {
+      "title": "IPAdapter Unified Loader"
+    }
+  },
+  "698": {
+    "inputs": {
+      "brightness": 0,
+      "contrast": 1.0500000000000003,
+      "saturation": 1,
+      "sharpness": 1.2000000000000002,
+      "blur": 0,
+      "gaussian_blur": 0,
+      "edge_enhance": 0,
+      "detail_enhance": "false",
+      "image": [
+        "702",
+        0
+      ]
+    },
+    "class_type": "Image Filter Adjustments",
+    "_meta": {
+      "title": "Image Filter Adjustments"
+    }
+  },
+  "700": {
+    "inputs": {
+      "0layer Weight": 0,
+      "1layer Weight": 0,
+      "2layer Weight": 0,
+      "3layer Weight": 0,
+      "4layer Weight": 0,
+      "5layer Weight": 0,
+      "6layer Weight": 1,
+      "7layer Weight": 0,
+      "8layer Weight": 0,
+      "9layer Weight": 0,
+      "10layer Weight": 0,
+      "11layer Weight": 0,
+      "Random": "No",
+      "seed": -903885701103371
+    },
+    "class_type": "EGIPAdapter_Mad_AssistantV6",
+    "_meta": {
+      "title": "IPAdapter Mad Assistant V6"
+    }
+  },
+  "702": {
+    "inputs": {
+      "size": 1536,
+      "interpolation_mode": "bilinear",
+      "image": [
+        "191",
+        0
+      ]
+    },
+    "class_type": "JWImageResizeByLongerSide",
+    "_meta": {
+      "title": "Image Resize by Longer Side"
+    }
+  },
+  "703": {
+    "inputs": {
+      "interpolation": "LANCZOS",
+      "crop_position": "pad",
+      "sharpening": 0.20000000000000004,
+      "image": [
+        "704",
+        0
+      ]
+    },
+    "class_type": "PrepImageForClipVision",
+    "_meta": {
+      "title": "Prep Image For ClipVision"
+    }
+  },
+  "704": {
+    "inputs": {
+      "brightness": 0,
+      "contrast": 1.0500000000000003,
+      "saturation": 1,
+      "sharpness": 1.2000000000000002,
+      "blur": 0,
+      "gaussian_blur": 0,
+      "edge_enhance": 0,
+      "detail_enhance": "false",
+      "image": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "Image Filter Adjustments",
+    "_meta": {
+      "title": "Image Filter Adjustments"
+    }
+  },
+  "705": {
+    "inputs": {
+      "weight": 1.0000000000000002,
+      "weight_faceidv2": 1,
+      "weight_type": "linear",
+      "combine_embeds": "concat",
+      "start_at": 0,
+      "end_at": 1,
+      "embeds_scaling": "V only",
+      "layer_weights": [
+        "706",
+        0
+      ],
+      "model": [
+        "697",
+        0
+      ],
+      "ipadapter": [
+        "697",
+        1
+      ],
+      "image": [
+        "703",
+        0
+      ],
+      "image_negative": [
+        "708",
+        0
+      ],
+      "clip_vision": [
+        "707",
+        0
+      ]
+    },
+    "class_type": "IPAdapterMS",
+    "_meta": {
+      "title": "IPAdapter Mad Scientist"
+    }
+  },
+  "706": {
+    "inputs": {
+      "0layer Weight": 1,
+      "1layer Weight": 1,
+      "2layer Weight": 1,
+      "3layer Weight": 1,
+      "4layer Weight": 1,
+      "5layer Weight": 1,
+      "6layer Weight": 0.1,
+      "7layer Weight": 1,
+      "8layer Weight": 1,
+      "9layer Weight": 1,
+      "10layer Weight": 1,
+      "11layer Weight": 1,
+      "Random": "No",
+      "seed": 645666709407338
+    },
+    "class_type": "EGIPAdapter_Mad_AssistantV6",
+    "_meta": {
+      "title": "IPAdapter Mad Assistant V6"
+    }
+  },
+  "707": {
+    "inputs": {
+      "clip_name": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+    },
+    "class_type": "CLIPVisionLoader",
+    "_meta": {
+      "title": "加载CLIP视觉"
+    }
+  },
+  "708": {
+    "inputs": {
+      "type": "gaussian",
+      "strength": 0.25000000000000006,
+      "blur": 0,
+      "image_optional": [
+        "702",
+        0
+      ]
+    },
+    "class_type": "IPAdapterNoise",
+    "_meta": {
+      "title": "IPAdapter Noise"
+    }
+  },
+  "709": {
+    "inputs": {
+      "size": 1536,
+      "interpolation_mode": "bilinear",
+      "image": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "JWImageResizeByLongerSide",
+    "_meta": {
+      "title": "Image Resize by Longer Side"
+    }
+  },
+  "710": {
+    "inputs": {
+      "type": "gaussian",
+      "strength": 0.15000000000000002,
+      "blur": 0,
+      "image_optional": [
+        "709",
+        0
+      ]
+    },
+    "class_type": "IPAdapterNoise",
+    "_meta": {
+      "title": "IPAdapter Noise"
+    }
+  },
+  "711": {
+    "inputs": {
+      "weight": 0.7000000000000002,
+      "weight_faceidv2": 1,
+      "weight_type": "linear",
+      "combine_embeds": "concat",
+      "start_at": 0,
+      "end_at": 1,
+      "embeds_scaling": "V only",
+      "layer_weights": [
+        "700",
+        0
+      ],
+      "model": [
+        "705",
+        0
+      ],
+      "ipadapter": [
+        "697",
+        1
+      ],
+      "image": [
+        "696",
+        0
+      ],
+      "image_negative": [
+        "710",
+        0
+      ],
+      "clip_vision": [
+        "707",
+        0
+      ]
+    },
+    "class_type": "IPAdapterMS",
+    "_meta": {
+      "title": "IPAdapter Mad Scientist"
+    }
+  },
+  "713": {
+    "inputs": {
+      "weight": 0.9000000000000001,
+      "style_boost": 1.0000000000000002,
+      "combine_embeds": "concat",
+      "start_at": 0.020000000000000004,
+      "end_at": 0.8500000000000002,
+      "embeds_scaling": "K+V",
+      "model": [
+        "711",
+        0
+      ],
+      "ipadapter": [
+        "697",
+        1
+      ],
+      "image": [
+        "696",
+        0
+      ],
+      "clip_vision": [
+        "707",
+        0
+      ]
+    },
+    "class_type": "IPAdapterPreciseStyleTransfer",
+    "_meta": {
+      "title": "IPAdapter Precise Style Transfer"
+    }
+  },
+  "784": {
+    "inputs": {
+      "unet_name": "330100-08.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "785": {
+    "inputs": {
+      "lora_name": "330100-08-01.safetensors",
+      "strength_model": 1.0000000000000002,
+      "model": [
+        "784",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "787": {
+    "inputs": {
+      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "wan",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "788": {
+    "inputs": {
+      "vae_name": "wan_2.1_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "789": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_phmti_00001_.png&type=temp&subfolder=&rand=0.7808158729726726"
+          },
+          {
+            "name": "B",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_phmti_00002_.png&type=temp&subfolder=&rand=0.7267633243582554"
+          }
+        ]
+      },
+      "image_a": [
+        "836",
+        0
+      ],
+      "image_b": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)",
+    "_meta": {
+      "title": "Image Comparer (rgthree)"
+    }
+  },
+  "791": {
+    "inputs": {
+      "Number": "4500"
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "794": {
+    "inputs": {
+      "purge_cache": true,
+      "purge_models": false,
+      "anything": [
+        "795",
+        0
+      ]
+    },
+    "class_type": "PurgeVRAM",
+    "_meta": {
+      "title": "PurgeVRAM"
+    }
+  },
+  "795": {
+    "inputs": {
+      "output_path": "",
+      "filename_prefix": "two",
+      "filename_delimiter": "_",
+      "filename_number_padding": 4,
+      "filename_number_start": "false",
+      "extension": "jpg",
+      "dpi": 300,
+      "quality": 100,
+      "optimize_image": "false",
+      "lossless_webp": "false",
+      "overwrite_mode": "false",
+      "show_history": "false",
+      "show_history_by_prefix": "true",
+      "embed_workflow": "false",
+      "show_previews": "true",
+      "images": [
+        "836",
+        0
+      ]
+    },
+    "class_type": "Image Save",
+    "_meta": {
+      "title": "Image Save"
+    }
+  },
+  "799": {
+    "inputs": {
+      "start_percent": 0,
+      "end_percent": 0.65,
+      "strength_start": 0.75,
+      "strength_end": 0.45,
+      "interpolation": "linear",
+      "intervals": 50,
+      "null_latent_kf_strength": 0,
+      "inherit_missing": true,
+      "print_keyframes": false
+    },
+    "class_type": "ACN_TimestepKeyframeInterpolation",
+    "_meta": {
+      "title": "Timestep Keyframe Interp. 🛂🅐🅒🅝"
+    }
+  },
+  "800": {
+    "inputs": {
+      "start_percent": 0.5,
+      "end_percent": 1,
+      "strength_start": 0.65,
+      "strength_end": 0.25,
+      "interpolation": "linear",
+      "intervals": 50,
+      "null_latent_kf_strength": 0,
+      "inherit_missing": true,
+      "print_keyframes": false
+    },
+    "class_type": "ACN_TimestepKeyframeInterpolation",
+    "_meta": {
+      "title": "Timestep Keyframe Interp. 🛂🅐🅒🅝"
+    }
+  },
+  "801": {
+    "inputs": {
+      "start_percent": 0,
+      "end_percent": 0.5,
+      "strength_start": 0.95,
+      "strength_end": 0.65,
+      "interpolation": "linear",
+      "intervals": 50,
+      "null_latent_kf_strength": 0,
+      "inherit_missing": true,
+      "print_keyframes": false
+    },
+    "class_type": "ACN_TimestepKeyframeInterpolation",
+    "_meta": {
+      "title": "Timestep Keyframe Interp. 🛂🅐🅒🅝"
+    }
+  },
+  "803": {
+    "inputs": {
+      "from_translate": "chinese",
+      "to_translate": "english",
+      "text": [
+        "295",
+        0
+      ]
+    },
+    "class_type": "ArgosTranslateTextNode",
+    "_meta": {
+      "title": "Argos Translate Text Node"
+    }
+  },
+  "814": {
+    "inputs": {
+      "value": "a*0.25+0.15",
+      "a": [
+        "166",
+        0
+      ]
+    },
+    "class_type": "SimpleMath+",
+    "_meta": {
+      "title": "🔧 Simple Math"
+    }
+  },
+  "815": {
+    "inputs": {
+      "evaluate": [
+        "816",
+        0
+      ],
+      "on_true": [
+        "166",
+        0
+      ],
+      "on_false": [
+        "814",
+        1
+      ]
+    },
+    "class_type": "SimpleCondition+",
+    "_meta": {
+      "title": "🔧 Simple Condition"
+    }
+  },
+  "816": {
+    "inputs": {
+      "cmp": "a <= b",
+      "a": [
+        "166",
+        0
+      ],
+      "b": [
+        "817",
+        0
+      ]
+    },
+    "class_type": "ImpactCompare",
+    "_meta": {
+      "title": "ImpactCompare"
+    }
+  },
+  "817": {
+    "inputs": {
+      "value": 0.15
+    },
+    "class_type": "easy float",
+    "_meta": {
+      "title": "浮点数"
+    }
+  },
+  "821": {
+    "inputs": {
+      "width": [
+        "266",
+        0
+      ],
+      "height": [
+        "266",
+        1
+      ],
+      "color": "#FFFFFF"
+    },
+    "class_type": "LayerUtility: ColorImage",
+    "_meta": {
+      "title": "LayerUtility: ColorImage"
+    }
+  },
+  "823": {
+    "inputs": {
+      "channel": "red",
+      "image": [
+        "821",
+        0
+      ]
+    },
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "图像转换为遮罩"
+    }
+  },
+  "824": {
+    "inputs": {
+      "any_02": [
+        "823",
+        0
+      ]
+    },
+    "class_type": "Any Switch (rgthree)",
+    "_meta": {
+      "title": "Any Switch (rgthree)"
+    }
+  },
+  "826": {
+    "inputs": {
+      "brightness": 0,
+      "contrast": 1,
+      "saturation": 0.85,
+      "sharpness": 1,
+      "blur": 0,
+      "gaussian_blur": 0,
+      "edge_enhance": 0,
+      "detail_enhance": "false",
+      "image": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "Image Filter Adjustments",
+    "_meta": {
+      "title": "Image Filter Adjustments"
+    }
+  },
+  "835": {
+    "inputs": {
+      "method": "adain",
+      "image_output": "Preview",
+      "save_prefix": "ComfyUI",
+      "image_ref": [
+        "55",
+        0
+      ],
+      "image_target": [
+        "381",
+        0
+      ]
+    },
+    "class_type": "easy imageColorMatch",
+    "_meta": {
+      "title": "图像颜色匹配"
+    }
+  },
+  "836": {
+    "inputs": {
+      "method": "adain",
+      "image_output": "Hide",
+      "save_prefix": "ComfyUI",
+      "image_ref": [
+        "55",
+        0
+      ],
+      "image_target": [
+        "792:1249",
+        0
+      ]
+    },
+    "class_type": "easy imageColorMatch",
+    "_meta": {
+      "title": "图像颜色匹配"
+    }
+  },
+  "837": {
+    "inputs": {
+      "black_level": 0,
+      "mid_level": 115,
+      "white_level": 255,
+      "image": [
+        "826",
+        0
+      ]
+    },
+    "class_type": "Image Levels Adjustment",
+    "_meta": {
+      "title": "Image Levels Adjustment"
+    }
+  },
+  "792:1209": {
+    "inputs": {
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8,
+      "samples": [
+        "792:1227",
+        0
+      ],
+      "vae": [
+        "788",
+        0
+      ]
+    },
+    "class_type": "VAEDecodeTiled",
+    "_meta": {
+      "title": "VAE解码（分块）"
+    }
+  },
+  "792:1211": {
+    "inputs": {
+      "size": [
+        "791",
+        0
+      ],
+      "interpolation_mode": "bicubic",
+      "image": [
+        "380",
+        0
+      ]
+    },
+    "class_type": "JWImageResizeByLongerSide",
+    "_meta": {
+      "title": "Image Resize by Longer Side"
+    }
+  },
+  "792:1212": {
+    "inputs": {
+      "upscale_method": "bicubic",
+      "megapixels": 10.000000000000002,
+      "image": [
+        "380",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "792:1213": {
+    "inputs": {
+      "sharpen_radius": 1,
+      "sigma": 0.15,
+      "alpha": 0.8,
+      "image": [
+        "792:1212",
+        0
+      ]
+    },
+    "class_type": "ImageSharpen",
+    "_meta": {
+      "title": "锐化图像"
+    }
+  },
+  "792:1214": {
+    "inputs": {
+      "images": [
+        "792:1211",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "792:1215": {
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "upscale_method": "lanczos",
+      "keep_proportion": true,
+      "divisible_by": 2,
+      "crop": 0,
+      "image": [
+        "792:1239",
+        0
+      ],
+      "get_image_size": [
+        "792:1211",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJ",
+    "_meta": {
+      "title": "Resize Image (deprecated)"
+    }
+  },
+  "792:1216": {
+    "inputs": {
+      "expression": "a/1024\n",
+      "a": [
+        "792:1215",
+        1
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "792:1217": {
+    "inputs": {
+      "expression": "(a+b)/22\n\n",
+      "a": [
+        "792:1216",
+        1
+      ],
+      "b": [
+        "792:1219",
+        1
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "792:1218": {
+    "inputs": {
+      "expression": "a+b",
+      "a": [
+        "792:1219",
+        0
+      ],
+      "b": [
+        "792:1219",
+        0
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "792:1219": {
+    "inputs": {
+      "expression": "a/1024+0.5\n\n",
+      "a": [
+        "792:1215",
+        2
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "792:1220": {
+    "inputs": {
+      "cmp": "a <= b",
+      "a": [
+        "792:1217",
+        1
+      ],
+      "b": [
+        "815",
+        0
+      ]
+    },
+    "class_type": "ImpactCompare",
+    "_meta": {
+      "title": "ImpactCompare"
+    }
+  },
+  "792:1221": {
+    "inputs": {
+      "Number": "3"
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "792:1222": {
+    "inputs": {
+      "cmp": "a >= b",
+      "a": [
+        "792:1218",
+        0
+      ],
+      "b": [
+        "792:1221",
+        0
+      ]
+    },
+    "class_type": "ImpactCompare",
+    "_meta": {
+      "title": "ImpactCompare"
+    }
+  },
+  "792:1223": {
+    "inputs": {
+      "image": [
+        "792:1224",
+        0
+      ]
+    },
+    "class_type": "easy imageBatchToImageList",
+    "_meta": {
+      "title": "图像批次到图像列表"
+    }
+  },
+  "792:1224": {
+    "inputs": {
+      "tile_width": [
+        "792:1248",
+        0
+      ],
+      "tile_height": [
+        "792:1248",
+        1
+      ],
+      "image": [
+        "792:1215",
+        0
+      ]
+    },
+    "class_type": "TTP_Image_Tile_Batch",
+    "_meta": {
+      "title": "TTP_Image_Tile_Batch"
+    }
+  },
+  "792:1226": {
+    "inputs": {
+      "conditioning": [
+        "792:1235",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "条件零化"
+    }
+  },
+  "792:1227": {
+    "inputs": {
+      "noise": [
+        "792:1229",
+        0
+      ],
+      "guider": [
+        "792:1244",
+        0
+      ],
+      "sampler": [
+        "792:1245",
+        0
+      ],
+      "sigmas": [
+        "792:1246",
+        0
+      ],
+      "latent_image": [
+        "792:1252",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "792:1228": {
+    "inputs": {
+      "evaluate": [
+        "792:1220",
+        0
+      ],
+      "on_true": [
+        "792:1217",
+        1
+      ],
+      "on_false": [
+        "815",
+        0
+      ]
+    },
+    "class_type": "SimpleCondition+",
+    "_meta": {
+      "title": "🔧 Simple Condition"
+    }
+  },
+  "792:1229": {
+    "inputs": {
+      "noise_seed": [
+        "792:1238",
+        0
+      ]
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "792:1230": {
+    "inputs": {
+      "model_name": "2xNomosUni_span_multijpg_ldl.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "加载放大模型"
+    }
+  },
+  "792:1235": {
+    "inputs": {
+      "text": [
+        "792:1257",
+        0
+      ],
+      "clip": [
+        "787",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "792:1237": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "792:1238": {
+    "inputs": {
+      "seed": 77568848744669
+    },
+    "class_type": "Seed (rgthree)",
+    "_meta": {
+      "title": "Seed (rgthree)"
+    }
+  },
+  "792:1240": {
+    "inputs": {
+      "images": [
+        "792:1239",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "792:1243": {
+    "inputs": {
+      "images": [
+        "792:1209",
+        0
+      ]
+    },
+    "class_type": "easy imageListToImageBatch",
+    "_meta": {
+      "title": "图像列表到图像批次"
+    }
+  },
+  "792:1244": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "785",
+        0
+      ],
+      "positive": [
+        "792:1235",
+        0
+      ],
+      "negative": [
+        "792:1226",
+        0
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG引导器"
+    }
+  },
+  "792:1245": {
+    "inputs": {
+      "detail_amount": 0.5,
+      "start": 0.2,
+      "end": 0.8,
+      "bias": 0.5,
+      "exponent": 1,
+      "start_offset": 0,
+      "end_offset": 0,
+      "fade": 0,
+      "smooth": true,
+      "cfg_scale_override": 0,
+      "sampler": [
+        "792:1237",
+        0
+      ]
+    },
+    "class_type": "DetailDaemonSamplerNode",
+    "_meta": {
+      "title": "Detail Daemon Sampler"
+    }
+  },
+  "792:1246": {
+    "inputs": {
+      "scheduler": "kl_optimal",
+      "steps": 4,
+      "denoise": [
+        "792:1228",
+        0
+      ],
+      "model": [
+        "785",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "基本调度器"
+    }
+  },
+  "792:1248": {
+    "inputs": {
+      "width_factor": [
+        "792:1216",
+        0
+      ],
+      "height_factor": [
+        "792:1219",
+        0
+      ],
+      "overlap_rate": 0.1,
+      "image": [
+        "792:1215",
+        0
+      ]
+    },
+    "class_type": "TTP_Tile_image_size",
+    "_meta": {
+      "title": "TTP_Tile_image_size"
+    }
+  },
+  "792:1249": {
+    "inputs": {
+      "padding": 256,
+      "tiles": [
+        "792:1243",
+        0
+      ],
+      "positions": [
+        "792:1224",
+        1
+      ],
+      "original_size": [
+        "792:1224",
+        2
+      ],
+      "grid_size": [
+        "792:1224",
+        3
+      ]
+    },
+    "class_type": "TTP_Image_Assy",
+    "_meta": {
+      "title": "TTP_Image_Assy"
+    }
+  },
+  "792:1252": {
+    "inputs": {
+      "pixels": [
+        "792:1241",
+        0
+      ],
+      "vae": [
+        "788",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "792:1258": {
+    "inputs": {
+      "model": "glm-4v-flash",
+      "user_prompt": "Provide a detailed description of this image as if someone could see it with their own eyes simply by listening to your words. Answer in English.",
+      "image": [
+        "792:1241",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ZhipuGLM4V",
+    "_meta": {
+      "title": "图层工具：ZhipuGLM4V（高级）"
+    }
+  },
+  "792:1257": {
+    "inputs": {
+      "text_0": "The image depicts a clear, expansive sky that transitions from a light blue at the horizon to a deeper blue higher up. The sky is devoid of clouds, giving an impression of calm and serenity. In the lower left corner, there's a portion of a tree with lush green leaves, suggesting it might be spring or summer. The foliage appears dense and vibrant against the backdrop of the sky. On the right side of the image, part of a white building is visible; only the top edge can be seen, indicating that the photo was taken from a low angle looking upwards. The overall composition creates a sense of openness and tranquility.",
+      "text_1": "The image depicts the top portion of a modern building set against a clear, bright blue sky. The building's facade is predominantly white, featuring clean, straight lines and a minimalist design. A row of rectangular windows runs horizontally across the upper part of the structure, allowing natural light into the interior spaces. The windows are evenly spaced, contributing to the building's sleek and orderly appearance. The sky above is devoid of clouds, creating a serene backdrop that emphasizes the building's contemporary aesthetic. The overall scene conveys a sense of simplicity and elegance, highlighting the architectural details of the building while maintaining harmony with its surroundings.",
+      "text_2": "The image depicts the upper portion of a modern architectural structure, set against a clear blue sky. The building features clean, sharp lines and an angular design that gives it a contemporary look. The facade is primarily composed of white panels, which create a sleek and minimalist appearance. There are several horizontal windows visible on one side of the building, allowing natural light to enter the interior spaces. The roof extends outward at certain angles, forming overhangs that add depth and dimension to the overall structure. The glass elements reflect the sunlight, adding a dynamic quality to the scene. The contrast between the stark white walls and the vibrant blue sky enhances the visual impact of the architecture.",
+      "text_3": "The image presents an expansive view of the sky, which is clear and bathed in a serene blue hue, devoid of any clouds or obstructions. The horizon line is not visible, giving the impression that the sky stretches endlessly into the distance. In the lower portion of the image, there are two distinct structures. On the left side, we can observe part of a building with a modern architectural design; its roof has a sharp, angular edge that slopes downwards towards the right, creating a dynamic visual effect. The structure's color appears to be a neutral tone, possibly gray or white, blending harmoniously with the sky. On the far right, another building is partially visible; only its upper section is shown, featuring a flat rooftop with horizontal lines that add texture and depth to the scene. This building also seems to share a similar color palette with the first one, maintaining a cohesive aesthetic throughout the composition. Overall, the image conveys a sense of openness and tranquility, emphasizing the vastness of the sky against the minimalist presence of the buildings.",
+      "text_4": "The image depicts an outdoor scene on what appears to be a sunny day, given the bright lighting and clear sky. In the foreground, there is a paved area with several cars parked or moving along it. The pavement looks slightly wet, possibly from recent rain.\n\nTo the right side of the image stands a modern building with large glass windows reflecting the surroundings. The architecture features clean lines and a minimalist design, suggesting a contemporary style. People can be seen walking near the entrance of the building, indicating that it might be a public or commercial space.\n\nOn the left side, lush green trees provide shade and add a natural element to the urban setting. These trees are evenly spaced and contribute to the overall aesthetic appeal of the area. The combination of nature and modern architecture creates a harmonious balance between the built environment and the natural world.",
+      "text_5": "The image depicts a modern architectural structure characterized by its sleek, minimalist design. The building's facade is composed predominantly of large glass windows arranged in a grid-like pattern, reflecting the surrounding environment and creating an interplay between transparency and opacity. The upper section of the building features a white paneling that contrasts sharply with the reflective glass below.\n\nIn front of the building, there is a well-maintained green hedge running parallel to the sidewalk, adding a touch of nature to the urban setting. A group of people can be seen walking along the pathway, some appearing to be engaged in conversation while others are simply strolling leisurely. Their presence adds a dynamic element to the otherwise static scene.\n\nThe ground appears to be paved, likely made of asphalt or concrete, which complements the modern aesthetic of the building. The overall atmosphere conveyed by the image is one of contemporary elegance and tranquility, with the juxtaposition of natural elements against the backdrop of cutting-edge architecture.",
+      "text_6": "The image depicts a modern architectural structure characterized by its sleek, angular design and a combination of materials that include glass and metal panels. The building's facade features large reflective glass windows on the left side, allowing for natural light to penetrate the interior spaces while offering views from within. On the right side, there is a striking yellow panel that adds a pop of color against the otherwise neutral tones of the structure.\n\nIn front of the building, several people are walking across a spacious plaza area. The individuals appear to be casually dressed, suggesting a relaxed atmosphere. Some are carrying bags or backpacks, indicating they might be students or commuters. The ground is paved, and there are some green bushes or shrubs along the edge of the walkway, adding a touch of nature to the urban setting.\n\nThe lighting suggests it is either early morning or late afternoon, as the shadows are long and the sunlight has a warm quality. The overall scene conveys a sense of activity and movement, typical of a bustling educational or commercial environment.",
+      "text_7": "The image depicts a modern architectural structure characterized by sleek, horizontal lines and a combination of glass and metallic panels. The building has multiple levels, each featuring large windows that reflect the surrounding environment. The facade is composed of alternating bands of reflective metal and glass, giving it a dynamic and contemporary appearance.\n\nIn front of the building, there's an open plaza area where several people are walking or standing. Some individuals appear to be engaged in conversation, while others are simply passing through. The ground looks slightly wet, suggesting recent rain, which adds a subtle sheen to the pavement.\n\nTo the right side of the image, there's a tree providing some greenery amidst the urban setting. The sky above is clear and blue, indicating fair weather. Overall, the scene conveys a sense of modernity and activity within an urban landscape.",
+      "text": [
+        "792:1258",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "792:1241": {
+    "inputs": {
+      "evaluate": [
+        "792:1222",
+        0
+      ],
+      "on_true": [
+        "792:1223",
+        0
+      ],
+      "on_false": [
+        "792:1224",
+        0
+      ]
+    },
+    "class_type": "SimpleCondition+",
+    "_meta": {
+      "title": "🔧 Simple Condition"
+    }
+  },
+  "792:1239": {
+    "inputs": {
+      "upscale_model": [
+        "792:1230",
+        0
+      ],
+      "image": [
+        "792:1213",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "使用模型放大图像"
+    }
+  }
+}

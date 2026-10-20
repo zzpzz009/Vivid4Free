@@ -1,0 +1,61 @@
+{
+  "name": "archviz-web-client",
+  "version": "3.0.13",
+  "description": "ArchViz Generator Web Client - AI-powered architectural visualization",
+  "scripts": {
+    "start": "vite",
+    "dev": "node scripts/ensure-dev-port.mjs && vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run --passWithNoTests",
+    "test:ui": "vitest --ui",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "lint": "eslint src tests --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "check:lines": "node scripts/check-file-lines.mjs",
+    "typecheck": "vue-tsc --noEmit --skipLibCheck",
+    "format": "prettier --write src/"
+  },
+  "keywords": [
+    "architecture",
+    "rendering",
+    "ai",
+    "vue",
+    "web"
+  ],
+  "author": "ArchViz Generator Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-vue": "^4.6.0",
+    "@vitest/ui": "^0.34.0",
+    "@vue/eslint-config-typescript": "^12.0.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.17.0",
+    "jsonwebtoken": "^9.0.2",
+    "playwright": "^1.55.0",
+    "prettier": "^3.0.0",
+    "typescript": "5.6.2",
+    "vue-tsc": "2.0.29",
+    "vitest": "^0.34.0"
+  },
+  "dependencies": {
+    "@headlessui/vue": "^1.7.23",
+    "@tailwindcss/forms": "^0.5.10",
+    "autoprefixer": "^10.4.21",
+    "axios": "^1.12.2",
+    "element-plus": "^2.11.4",
+    "pinia": "^3.0.3",
+    "postcss": "^8.5.6",
+    "sass": "^1.93.2",
+    "tailwindcss": "^3.4.17",
+    "vite": "^4.5.0",
+    "vue": "^3.5.17",
+    "vue-router": "^4.5.1"
+  }
+}

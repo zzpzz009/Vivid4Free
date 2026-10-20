@@ -1,0 +1,320 @@
+{
+  "source": "G:\\Agent\\Vivida4free\\vivid模型\\VIVID放大工作流正式版.json",
+  "source_sha256": "27dc2ac321dbd8ce5494396c1c2c7dbed5c4e19d22b438e055a45f9fa4289272",
+  "source_nodes": 83,
+  "api_nodes": 63,
+  "node_pins": {
+    "VAELoader": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "TTP_Image_Tile_Batch": {
+      "cnr_id": "comfyui_ttp_toolset",
+      "ver": "1.0.5"
+    },
+    "ShowText|pysssss": {
+      "cnr_id": "comfyui-custom-scripts",
+      "ver": "bbda5e52ad580c13ceaa53136d9c2bed9137bd2e"
+    },
+    "FluxGuidance": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "DualCLIPLoader": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "TTP_Tile_image_size": {
+      "cnr_id": "comfyui_ttp_toolset",
+      "ver": "1.0.5"
+    },
+    "TTP_Image_Assy": {
+      "cnr_id": "comfyui_ttp_toolset",
+      "ver": "1.0.5"
+    },
+    "VAEEncode": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "UpscaleModelLoader": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "ImageUpscaleWithModel": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "easy imageBatchToImageList": {
+      "cnr_id": "comfyui-easy-use",
+      "ver": "31fde1ae34900ef999b027a4e587513e13b45542"
+    },
+    "easy imageListToImageBatch": {
+      "cnr_id": "comfyui-easy-use",
+      "ver": "31fde1ae34900ef999b027a4e587513e13b45542"
+    },
+    "LoadImage": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "ModelSamplingFlux": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "ImageScaleToTotalPixels": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "ImageResizeKJ": {
+      "cnr_id": "comfyui-kjnodes",
+      "ver": "665f59fae3d855b459c0fb7542c5121adf044833"
+    },
+    "MathExpression|pysssss": {
+      "cnr_id": "comfyui-custom-scripts",
+      "ver": "bbda5e52ad580c13ceaa53136d9c2bed9137bd2e"
+    },
+    "If ANY execute A else B": {
+      "cnr_id": "eden",
+      "ver": "0f4320122950e493b44abb0f0a242e9cea2ef564"
+    },
+    "easy float": {
+      "cnr_id": "comfyui-easy-use",
+      "ver": "31fde1ae34900ef999b027a4e587513e13b45542"
+    },
+    "ImpactCompare": {
+      "cnr_id": "comfyui-impact-pack",
+      "ver": "808b0dedf03534a2594ecb60a9d6305a044efdc2"
+    },
+    "JWImageResizeByLongerSide": {
+      "cnr_id": "jameswalker-nodes",
+      "ver": "36454f91606bbff4fc36d90234981ca4a47e2695"
+    },
+    "Int": {
+      "cnr_id": "comfyliterals",
+      "ver": "bdddb08ca82d90d75d97b1d437a652e0284a32ac"
+    },
+    "UNETLoader": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "ConditioningZeroOut": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "easy imageSize": {
+      "cnr_id": "comfyui-easy-use",
+      "ver": "0daf114fe8870aeacfea484aa59e7f9973b91cd5",
+      "aux_id": "yolain/ComfyUI-Easy-Use"
+    },
+    "ImageSharpen": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.26"
+    },
+    "KSampler (Efficient)": {
+      "cnr_id": "efficiency-nodes-comfyui",
+      "ver": "3ead4afd120833f3bffdefeca0d6545df8051798",
+      "aux_id": "jags111/efficiency-nodes-comfyui"
+    },
+    "CLIPTextEncodeFlux": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.40"
+    },
+    "InjectLatentNoise+": {
+      "cnr_id": "comfyui_essentials",
+      "ver": "f320ada61353c14e9d506592e20397398be6b952",
+      "aux_id": "cubiq/ComfyUI_essentials"
+    },
+    "LoraLoaderModelOnly": {
+      "cnr_id": "comfy-core",
+      "ver": "0.3.59"
+    },
+    "PatchModelPatcherOrder": {
+      "cnr_id": "comfyui-kjnodes",
+      "ver": "1.1.7"
+    },
+    "PathchSageAttentionKJ": {
+      "cnr_id": "comfyui-kjnodes",
+      "ver": "1.1.7"
+    },
+    "LayerUtility: ZhipuGLM4V": {
+      "cnr_id": "ComfyUI_LayerStyle_Advance",
+      "ver": "89aadaa6c0b8c9adfab86f5d0196f1d13383d47c"
+    },
+    "ImageScaleBy": {
+      "cnr_id": "comfy-core",
+      "ver": "0.7.0"
+    },
+    "ImageResizeToPixelCount": {},
+    "easy imageColorMatch": {
+      "cnr_id": "comfyui-easy-use",
+      "ver": "4738313b64ea3c15a74df3dbed27b5391ffc78c6"
+    },
+    "LayerUtility: NumberCalculatorV2": {
+      "cnr_id": "comfyui_layerstyle",
+      "ver": "42ccdd8f75ab312285eaa77073a5cc20bdba484c"
+    },
+    "ImageResize+": {
+      "cnr_id": "comfyui_essentials",
+      "ver": "1.1.0"
+    },
+    "GetImageSize+": {
+      "cnr_id": "comfyui_essentials",
+      "ver": "1.1.0"
+    },
+    "SeedVR2LoadVAEModel": {
+      "cnr_id": "seedvr2_videoupscaler",
+      "ver": "2.5.10",
+      "aux_id": "numz/ComfyUI-SeedVR2_VideoUpscaler"
+    },
+    "SeedVR2LoadDiTModel": {
+      "cnr_id": "seedvr2_videoupscaler",
+      "ver": "2.5.10",
+      "aux_id": "numz/ComfyUI-SeedVR2_VideoUpscaler"
+    },
+    "SeedVR2VideoUpscaler": {
+      "cnr_id": "seedvr2_videoupscaler",
+      "ver": "2.5.10",
+      "aux_id": "numz/ComfyUI-SeedVR2_VideoUpscaler"
+    },
+    "ImageResizer": {
+      "ver": "830c906612e27ffeb449e2dce5ad3992b2c700f9",
+      "aux_id": "sh570655308/Comfyui-RayNodes"
+    },
+    "Image Save": {
+      "cnr_id": "was-node-suite-comfyui",
+      "ver": "bb34bd429ab74a22a7f58551429a0f3046e1464e"
+    }
+  },
+  "required_node_types": [
+    "CLIPTextEncodeFlux",
+    "ConditioningZeroOut",
+    "DualCLIPLoader",
+    "FluxGuidance",
+    "GetImageSize+",
+    "If ANY execute A else B",
+    "ImageResize+",
+    "ImageResizeKJ",
+    "ImageResizeToPixelCount",
+    "ImageResizer",
+    "ImageScaleBy",
+    "ImageScaleToTotalPixels",
+    "ImageSharpen",
+    "ImageUpscaleWithModel",
+    "ImpactCompare",
+    "InjectLatentNoise+",
+    "JWImageResizeByLongerSide",
+    "KSampler (Efficient)",
+    "LayerUtility: NumberCalculatorV2",
+    "LoadImage",
+    "LoraLoaderModelOnly",
+    "MathExpression|pysssss",
+    "ModelSamplingFlux",
+    "PatchModelPatcherOrder",
+    "PathchSageAttentionKJ",
+    "PrimitiveInt",
+    "SaveImage",
+    "SeedVR2LoadDiTModel",
+    "SeedVR2LoadVAEModel",
+    "SeedVR2VideoUpscaler",
+    "ShowText|pysssss",
+    "TTP_Image_Assy",
+    "TTP_Image_Tile_Batch",
+    "TTP_Tile_image_size",
+    "UNETLoader",
+    "UpscaleModelLoader",
+    "VAEEncode",
+    "VAELoader",
+    "VividLocalCaption",
+    "easy float",
+    "easy imageBatchToImageList",
+    "easy imageColorMatch",
+    "easy imageListToImageBatch",
+    "easy imageSize"
+  ],
+  "changes": [
+    "LayerUtility: ZhipuGLM4V node 138 replaced by existing VividLocalCaption; original prompt retained",
+    "Image Save node 287 replaced by core SaveImage; final image input connection retained",
+    "LoadImage node 48 uses the task-service alias vivid-main.png; upload-only field omitted",
+    "PreviewImage, Image Comparer, and bookmark UI nodes are omitted from the API output closure",
+    "Mode-4 nodes are bypassed when connected; disconnected bypass branches remain inactive",
+    "Primitive Int/easy float outputs remain nodes only when feeding wildcard sockets; typed numeric inputs stay constant-folded"
+  ],
+  "algorithm_nodes": {
+    "127": {
+      "type": "KSampler (Efficient)",
+      "widgets_values": [
+        1064871242566295,
+        "randomize",
+        4,
+        1,
+        "res_2s",
+        "beta",
+        0.25000000000000006,
+        "auto",
+        "true (tiled)"
+      ]
+    },
+    "271": {
+      "type": "SeedVR2VideoUpscaler",
+      "widgets_values": [
+        2794489657,
+        "fixed",
+        1280,
+        0,
+        1,
+        false,
+        "wavelet",
+        0,
+        0,
+        0,
+        0,
+        "cpu",
+        false
+      ]
+    },
+    "10": {
+      "type": "TTP_Image_Tile_Batch",
+      "widgets_values": [
+        1024,
+        1024
+      ]
+    },
+    "30": {
+      "type": "TTP_Tile_image_size",
+      "widgets_values": [
+        3,
+        3,
+        0.05
+      ]
+    },
+    "33": {
+      "type": "TTP_Image_Assy",
+      "widgets_values": [
+        128
+      ]
+    },
+    "261": {
+      "type": "TTP_Image_Assy",
+      "widgets_values": [
+        64
+      ]
+    }
+  },
+  "inactive_mode4_nodes": [
+    "151",
+    "152",
+    "153",
+    "157",
+    "288"
+  ],
+  "model_paths": {
+    "diffusion_models/flux.1-dev-SRPO-bf16.safetensors": "UNETLoader node 118",
+    "text_encoders/SD3/clip_l.safetensors": "DualCLIPLoader node 27 clip_name1",
+    "text_encoders/SD3/t5xxl_fp16.safetensors": "DualCLIPLoader node 27 clip_name2",
+    "vae/ae.safetensors": "VAELoader node 6",
+    "loras/FLUX/Flux Dev模型4步出图lora_Flux Dev模型4步出图lora_Flux Dev 4-step.safetensors": "LoraLoaderModelOnly node 132; original name retained",
+    "upscale_models/2xNomosUni_span_multijpg_ldl.pth": "UpscaleModelLoader node 37",
+    "SEEDVR2/seedvr2_ema_7b-Q8_K_M.gguf": "SeedVR2LoadDiTModel node 266",
+    "SEEDVR2/ema_vae_fp16.safetensors": "SeedVR2LoadVAEModel node 265"
+  },
+  "real_image_acceptance": "Not performed by this compiler; requires parent engine validation and an authorized GPU run."
+}

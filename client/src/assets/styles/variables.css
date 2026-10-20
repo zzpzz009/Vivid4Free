@@ -1,0 +1,135 @@
+/* Figma Design System Variables */
+:root {
+  /* Colors */
+  --surface-defaultb: #151220;
+  --colorbu01: #b746ee;
+  --colorbu02: #7367f9;
+  --colorbu03: #f78966;
+  --colorbu04: #ff65a5;
+  --text-primary: #212121;
+  --text-secondary: #757575;
+  --text-invert: #ffffff;
+  --surface-defaultw: #f4f0eb;
+  --primary: #396820;
+  --on-primary: #ffffff;
+  --primary-container: #b6f298;
+  --on-primary-container: #062102;
+
+  /* Material 3 Design System Colors */
+  --schemes-surface: #141218;
+  --schemes-surface-container: #211f26;
+  --schemes-surface-container-lowest: #0f0d13;
+  --state-layers-secondary-opacity-08: rgba(204, 194, 220, 0.08);
+  --schemes-on-surface-variant: #cac4d0;
+  --schemes-on-surface: #e6e0e9;
+  --schemes-on-primary: #381e72;
+  --schemes-outline: #938f99;
+  --schemes-surface-container-high: #2b2930;
+  --schemes-outline-variant: #49454f;
+  --schemes-primary: #d0bcff;
+  --schemes-secondary-container: #4a4458;
+  --schemes-primary-container: #4f378b;
+  --schemes-surface-floating-panel: #1a191f;
+  --right-toolbar-controls-width: 288px;
+  --workspace-sidebar-total-width: 297px;
+
+  --scrollbar-size: 8px;
+  --scrollbar-track-color: transparent;
+  --scrollbar-thumb-color: var(--schemes-primary-container);
+  --scrollbar-thumb-hover-color: color-mix(in srgb, var(--scrollbar-thumb-color) 88%, white);
+  --scrollbar-thumb-active-color: color-mix(in srgb, var(--scrollbar-thumb-color) 82%, white);
+  --scrollbar-radius: var(--border-radius-pill, var(--border-radius-2xs, 9999px));
+  --scrollbar-dot-radius: 3px;
+  --scrollbar-dot-color: color-mix(in srgb, var(--scrollbar-thumb-color) 48%, transparent);
+  --scrollbar-dot-hover-color: color-mix(in srgb, var(--scrollbar-thumb-color) 72%, transparent);
+  --scrollbar-dot-active-color: color-mix(in srgb, var(--scrollbar-thumb-color) 88%, transparent);
+
+  /* Typography Variables */
+  --m3-headline-medium-letter-spacing: 0px;
+  --m3-body-medium-letter-spacing: 0.25px;
+  --m3-label-medium-letter-spacing: 0.5px;
+  --m3-label-small-letter-spacing: 0.5px;
+  --m3-body-large-emphasized-letter-spacing: 0.5px;
+  --m3-body-small-letter-spacing: 0.4px;
+  --m3-label-large-emphasized-letter-spacing: 0.1px;
+  --m3-label-large-letter-spacing: 0.1px;
+  --m3-title-medium-letter-spacing: 0.15px;
+  --m3-title-medium-emphasized-letter-spacing: 0.15px;
+
+  /* Effects */
+  --m3-add-on-placeholder-image: linear-gradient(to left, #2b2930, #2b2930);
+}
+
+/* Global Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+a,
+button,
+input,
+select,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  border: none;
+  text-decoration: none;
+  background: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+menu,
+ol,
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom utility classes */
+.letter-spacing-m3-headline-medium {
+  letter-spacing: var(--m3-headline-medium-letter-spacing, 0px);
+}
+
+.letter-spacing-m3-body-medium {
+  letter-spacing: var(--m3-body-medium-letter-spacing, 0.25px);
+}
+
+.letter-spacing-m3-label-medium {
+  letter-spacing: var(--m3-label-medium-letter-spacing, 0.5px);
+}
+
+.letter-spacing-m3-label-small {
+  letter-spacing: var(--m3-label-small-letter-spacing, 0.5px);
+}
+
+.letter-spacing-m3-body-large-emphasized {
+  letter-spacing: var(--m3-body-large-emphasized-letter-spacing, 0.5px);
+}
+
+.letter-spacing-m3-body-small {
+  letter-spacing: var(--m3-body-small-letter-spacing, 0.4px);
+}
+
+.letter-spacing-m3-label-large-emphasized {
+  letter-spacing: var(--m3-label-large-emphasized-letter-spacing, 0.1px);
+}
+
+.letter-spacing-m3-label-large {
+  letter-spacing: var(--m3-label-large-letter-spacing, 0.1px);
+}
+
+.letter-spacing-m3-title-medium {
+  letter-spacing: var(--m3-title-medium-letter-spacing, 0.15px);
+}
+
+.letter-spacing-m3-title-medium-emphasized {
+  letter-spacing: var(--m3-title-medium-emphasized-letter-spacing, 0.15px);
+}

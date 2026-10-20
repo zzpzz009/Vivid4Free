@@ -1,0 +1,39 @@
+{
+  "appId": "cn.vividai.desktop",
+  "productName": "VividDesktop",
+  "artifactName": "VividDesktop-Setup-${version}-${arch}.${ext}",
+  "electronVersion": "44.9.0",
+  "electronDist": "node_modules/electron/dist",
+  "directories": {
+    "output": "../release/r7-installer"
+  },
+  "files": [
+    "main.cjs",
+    "preload.cjs",
+    "server.cjs",
+    "task-service.cjs",
+    "runtime-manager.cjs",
+    "extract-runtime.ps1",
+    "runtime-feed.json",
+    "package.json",
+    "ui/**/*",
+    "workflows/*.json"
+  ],
+  "asar": true,
+  "win": {
+    "target": [{ "target": "nsis", "arch": ["x64"] }],
+    "signAndEditExecutable": false
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowElevation": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false,
+    "include": "../tools/installer/preserve-runtime.nsh",
+    "runAfterFinish": false,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  },
+  "publish": null
+}

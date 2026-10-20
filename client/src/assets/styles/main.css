@@ -1,0 +1,360 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import './variables.css';
+
+/* Custom component styles */
+@layer components {
+  .floating-panel-surface {
+    background-color: var(--schemes-surface-floating-panel);
+  }
+
+  .upload-area {
+    @apply bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center overflow-hidden;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .upload-area:hover {
+    @apply bg-schemes-surface-container-high;
+  }
+  
+  .upload-area.drag-over {
+    @apply border-2 border-dashed border-schemes-primary;
+  }
+  
+  .nav-tab {
+    @apply flex flex-col gap-1 items-center justify-center self-stretch flex-1 relative;
+  }
+  
+  .nav-tab-active {
+    @apply bg-schemes-on-surface rounded-xl flex flex-col gap-0 items-center justify-center shrink-0 w-[200px] h-[35px] relative overflow-hidden;
+  }
+  
+  .nav-tab-inactive {
+    @apply rounded-[20px] flex flex-col gap-0 items-center justify-center shrink-0 h-8 relative overflow-hidden;
+  }
+  
+  .nav-tab-content {
+    @apply pt-2 pr-4 pb-2 pl-4 flex flex-row gap-1 items-center justify-start shrink-0 h-10 relative;
+  }
+  
+  .nav-tab-icon {
+    @apply shrink-0 w-6 h-6 relative overflow-visible;
+  }
+  
+  .nav-tab-text-active {
+    @apply text-schemes-on-primary text-center font-m3-label-medium-font-family text-m3-label-medium-font-size leading-m3-label-medium-line-height font-m3-label-medium-font-weight relative;
+  }
+  
+  .nav-tab-text-inactive {
+    @apply text-schemes-outline text-center font-m3-label-medium-font-family text-m3-label-medium-font-size leading-m3-label-medium-line-height font-m3-label-medium-font-weight relative;
+  }
+  
+  .image-gallery-item {
+    @apply rounded-xl shrink-0 w-60 h-[150px] relative;
+    background: linear-gradient(to left, #cac4d0, #cac4d0);
+    object-fit: cover;
+  }
+  
+  .image-gallery-placeholder {
+    @apply bg-state-layers-secondary-opacity-08 rounded-xl shrink-0 w-60 h-[150px] relative;
+  }
+  
+  .history-item {
+    @apply rounded-xl shrink-0 w-[165px] h-[165px] relative;
+    background: linear-gradient(
+      to left,
+      rgba(204, 194, 220, 0.08),
+      rgba(204, 194, 220, 0.08)
+    );
+    object-fit: cover;
+  }
+  
+  .history-placeholder {
+    @apply bg-state-layers-secondary-opacity-08 rounded-xl shrink-0 w-[165px] h-[165px] relative;
+  }
+  
+  .primary-button {
+    @apply bg-primary-container rounded-xl flex flex-col gap-0 items-center justify-center shrink-0 relative overflow-hidden;
+  }
+  
+  .secondary-button {
+    @apply bg-on-primary rounded-xl flex flex-row gap-0 items-center justify-center overflow-hidden;
+  }
+
+  /* Generate Options Menu Styles */
+  .generate-options-menu {
+    animation: fadeInUp 0.2s ease-out;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .generate-option-item {
+    position: relative;
+  }
+
+  .generate-option-item:first-child {
+    border-radius: var(--border-radius-base) var(--border-radius-base) var(--border-radius-none) var(--border-radius-none);
+  }
+
+  .generate-option-item:last-child {
+    border-radius: var(--border-radius-none) var(--border-radius-none) var(--border-radius-base) var(--border-radius-base);
+  }
+
+  .generate-option-item:only-child {
+    border-radius: var(--border-radius-base);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .button-text-primary {
+    @apply text-on-primary-container text-left font-m3-title-medium-emphasized-font-family text-m3-title-medium-emphasized-font-size leading-m3-title-medium-emphasized-line-height font-m3-title-medium-emphasized-font-weight relative;
+  }
+
+  .button-text-secondary {
+    @apply text-schemes-on-primary text-left font-m3-title-medium-emphasized-font-family text-m3-title-medium-emphasized-font-size leading-m3-title-medium-emphasized-line-height font-m3-title-medium-emphasized-font-weight relative;
+  }
+  
+  .input-field {
+    @apply bg-schemes-surface-container rounded-lg pt-3.5 pr-4 pb-3.5 pl-4 flex flex-row gap-1 items-start justify-center;
+  }
+  
+  .input-text {
+    @apply text-schemes-on-surface-variant text-left font-m3-body-medium-font-family text-m3-body-medium-font-size leading-m3-body-medium-line-height font-m3-body-medium-font-weight relative flex-1 h-5;
+  }
+}
+
+/* Scrollbar styling */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+
+.el-scrollbar {
+  --el-scrollbar-opacity: 0.12;
+  --el-scrollbar-hover-opacity: 0.24;
+  --el-scrollbar-bg-color: var(--scrollbar-dot-color);
+  --el-scrollbar-hover-bg-color: var(--scrollbar-dot-hover-color);
+}
+
+.el-scrollbar__bar {
+  border-radius: var(--scrollbar-radius);
+}
+
+.el-scrollbar__bar.is-vertical {
+  width: var(--scrollbar-size) !important;
+  right: 0 !important;
+}
+
+.el-scrollbar__bar.is-horizontal {
+  height: var(--scrollbar-size) !important;
+  bottom: 0 !important;
+}
+
+.el-scrollbar__thumb {
+  background-color: transparent !important;
+  background-image: radial-gradient(
+    circle at center,
+    var(--scrollbar-dot-color) 0,
+    var(--scrollbar-dot-color) var(--scrollbar-dot-radius),
+    transparent calc(var(--scrollbar-dot-radius) + 1px)
+  ) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+.el-scrollbar__thumb:hover {
+  background-color: transparent;
+  background-image: radial-gradient(
+    circle at center,
+    var(--scrollbar-dot-hover-color) 0,
+    var(--scrollbar-dot-hover-color) var(--scrollbar-dot-radius),
+    transparent calc(var(--scrollbar-dot-radius) + 1px)
+  );
+}
+
+.el-scrollbar__thumb:active {
+  background-color: transparent;
+  background-image: radial-gradient(
+    circle at center,
+    var(--scrollbar-dot-active-color) 0,
+    var(--scrollbar-dot-active-color) var(--scrollbar-dot-radius),
+    transparent calc(var(--scrollbar-dot-radius) + 1px)
+  );
+}
+
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-button {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
+  border-radius: var(--scrollbar-radius);
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  background-image: radial-gradient(
+    circle at center,
+    var(--scrollbar-dot-color) 0,
+    var(--scrollbar-dot-color) var(--scrollbar-dot-radius),
+    transparent calc(var(--scrollbar-dot-radius) + 1px)
+  );
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: var(--scrollbar-radius);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-image: radial-gradient(
+    circle at center,
+    var(--scrollbar-dot-hover-color) 0,
+    var(--scrollbar-dot-hover-color) var(--scrollbar-dot-radius),
+    transparent calc(var(--scrollbar-dot-radius) + 1px)
+  );
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-image: radial-gradient(
+    circle at center,
+    var(--scrollbar-dot-active-color) 0,
+    var(--scrollbar-dot-active-color) var(--scrollbar-dot-radius),
+    transparent calc(var(--scrollbar-dot-radius) + 1px)
+  );
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track-color);
+}
+
+.el-scrollbar__wrap,
+.el-table__body-wrapper,
+.el-dialog__body,
+.el-select-dropdown .el-scrollbar__wrap,
+.el-dropdown-menu {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+
+.el-scrollbar__wrap::-webkit-scrollbar,
+.el-table__body-wrapper::-webkit-scrollbar,
+.el-dialog__body::-webkit-scrollbar,
+.el-select-dropdown .el-scrollbar__wrap::-webkit-scrollbar,
+.el-dropdown-menu::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+.el-scrollbar__wrap::-webkit-scrollbar-track,
+.el-table__body-wrapper::-webkit-scrollbar-track,
+.el-dialog__body::-webkit-scrollbar-track,
+.el-select-dropdown .el-scrollbar__wrap::-webkit-scrollbar-track,
+.el-dropdown-menu::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
+  border-radius: var(--scrollbar-radius);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-dot-color) var(--scrollbar-track-color);
+  }
+
+  .el-scrollbar__wrap,
+  .el-table__body-wrapper,
+  .el-dialog__body,
+  .el-select-dropdown .el-scrollbar__wrap,
+  .el-dropdown-menu,
+  .el-drawer__body,
+  .el-message-box__content,
+  .el-cascader-panel,
+  .el-autocomplete-suggestion,
+  .el-menu,
+  .el-tree,
+  .el-tabs__content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-dot-color) var(--scrollbar-track-color);
+  }
+}
+
+.el-scrollbar__wrap::-webkit-scrollbar-thumb,
+.el-table__body-wrapper::-webkit-scrollbar-thumb,
+.el-dialog__body::-webkit-scrollbar-thumb,
+.el-select-dropdown .el-scrollbar__wrap::-webkit-scrollbar-thumb,
+.el-dropdown-menu::-webkit-scrollbar-thumb {
+  background: transparent;
+  background-image: radial-gradient(
+    circle at center,
+    var(--scrollbar-dot-color) 0,
+    var(--scrollbar-dot-color) var(--scrollbar-dot-radius),
+    transparent calc(var(--scrollbar-dot-radius) + 1px)
+  );
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: var(--scrollbar-radius);
+}
+
+/* 其它可能未使用 el-scrollbar 的原生滚动容器（漏网项补充） */
+.el-drawer__body,
+.el-message-box__content,
+.el-cascader-panel,
+.el-autocomplete-suggestion,
+.el-menu,
+.el-tree,
+.el-tabs__content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-dot-color) var(--scrollbar-track-color);
+}
+.el-drawer__body::-webkit-scrollbar,
+.el-message-box__content::-webkit-scrollbar,
+.el-cascader-panel::-webkit-scrollbar,
+.el-autocomplete-suggestion::-webkit-scrollbar,
+.el-menu::-webkit-scrollbar,
+.el-tree::-webkit-scrollbar,
+.el-tabs__content::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+.el-drawer__body::-webkit-scrollbar-track,
+.el-message-box__content::-webkit-scrollbar-track,
+.el-cascader-panel::-webkit-scrollbar-track,
+.el-autocomplete-suggestion::-webkit-scrollbar-track,
+.el-menu::-webkit-scrollbar-track,
+.el-tree::-webkit-scrollbar-track,
+.el-tabs__content::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
+  border-radius: var(--scrollbar-radius);
+}
+.el-drawer__body::-webkit-scrollbar-thumb,
+.el-message-box__content::-webkit-scrollbar-thumb,
+.el-cascader-panel::-webkit-scrollbar-thumb,
+.el-autocomplete-suggestion::-webkit-scrollbar-thumb,
+.el-menu::-webkit-scrollbar-thumb,
+.el-tree::-webkit-scrollbar-thumb,
+.el-tabs__content::-webkit-scrollbar-thumb {
+  background: transparent;
+  background-image: radial-gradient(
+    circle at center,
+    var(--scrollbar-dot-color) 0,
+    var(--scrollbar-dot-color) var(--scrollbar-dot-radius),
+    transparent calc(var(--scrollbar-dot-radius) + 1px)
+  );
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: var(--scrollbar-radius);
+}

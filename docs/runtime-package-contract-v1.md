@@ -1,0 +1,9 @@
+# CF 独立运行包接口 v1
+客户端版本0.2.0；runtimeProtocol=1；Windows x64。
+发布配置 desktop/runtime-feed.json: {"schemaVersion":1,"manifestUrl":null}。正式URL未给出时显示未配置；测试可用主进程VIVID_RUNTIME_MANIFEST_URL与VIVID_RUNTIME_ALLOW_LOCAL_TEST=1启用仅127.0.0.1的HTTP，不接受renderer传任意URL。
+发布清单字段：schemaVersion=1,id="vivid-comfy",version(安全字母数字点横线),protocolVersion=1,platform="win32-x64",archive={url,bytes,sha256,unpackedBytes},entry={python:"python/python.exe",launcher:"tools/start_comfy.py"},requiredFiles(相对路径数组)。archive.url正式HTTPS，禁止任意file路径。
+ZIP根直接是python/、comfyui/、models/、custom_nodes/、llama/、tools/start_comfy.py，以及runtime.json。runtime.json含schemaVersion,id,version,protocolVersion,platform,entry,files:[{path,bytes,sha256}]。运行包制作工具拒绝缺原模型/节点，不发布演示包。测试夹具明确标为fixture，不宣称真实渲染通过。
+安装位置为用户选择的storageDir/versions/vivid-comfy-<version>；用户设置和激活指针在Electron userData。下载片段/storageDir/downloads，暂存解压/storageDir/staging；绝不清空任意目录或覆盖当前激活版本。文件名/ZIP路径/链接及清单内路径须校验；大小和SHA正确、内部清单及entry/requiredFiles完整之后原子激活。磁盘检查包括下载与解压，失败不更换指针。
+主进程预加载桥六个无任意路径/URL参数方法：runtimeStatus(),runtimeCheck(),runtimeInstall(),runtimePause(),chooseRuntimeDirectory(),startEngine()。choose使用原生目录框；runtimeInstall成功后由主进程启动引擎；进度由runtimeStatus轮询。runtimeStatus返回{state,installed,available,version,availableVersion,storageDir,downloadedBytes,totalBytes,progress,message,error}；state包括not_installed/checking/downloading/paused/verifying/installing/installed/starting/ready/error。
+后台API兼容：startServer新增runtimeRoot(路径获取函数)、workflowDir(轻量随客户端)、runtimeStatus(状态获取函数)，旧测试默认root/runtime仍可。生产root=Electron.userData，仅持久图库与tasks；production workflowDir=desktop/workflows；无旧项目root探测。任务服务动态取已激活runtimeRoot/models，未安装时返回不可用。/api/desktop/capabilities附runtime字段；Agent共用。
+引擎启动调用已激活包entry.python和entry.launcher，进程环境VIVID_RUNTIME_DIR=安装根；只有本客户端启动的项目引擎能停止，保留psutil身份/端口检查。开发测试可以主进程VIVID_RUNTIME_DEV_PATH显式接现有runtime，不得作为生产默认fallback；不改变其他CF服务。

@@ -1,0 +1,17 @@
+{
+  "name": "vivid-desktop",
+  "version": "0.3.3",
+  "description": "VividAI local rendering desktop client",
+  "main": "main.cjs",
+  "author": "VividAI",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs",
+    "pack": "node prepare-ui.cjs && electron-packager . VividDesktop --platform=win32 --arch=x64 --out=../release/r7 --ignore=tests --ignore=ui-source --prune=true"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "^44.9.0"
+  }
+}

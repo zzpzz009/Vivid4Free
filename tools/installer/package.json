@@ -1,0 +1,8 @@
+{
+  "name": "vivid-client-installer-tools",
+  "private": true,
+  "version": "0.1.0",
+  "devDependencies": {
+    "electron-builder": "26.15.3"
+  }
+}

@@ -1,0 +1,37 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
+const root = path.resolve(__dirname, '..');
+const read = file => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
+const info = read('release-info.json');
+const version = read('desktop/package.json').version;
+const lock = read('desktop/package-lock.json');
+assert.match(version, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
+assert.equal(info.clientVersion, version);
+assert.equal(info.tag, `v${version}`);
+assert.equal(lock.version, version);
+assert.equal(lock.packages[''].version, version);
+assert.match(info.releaseDate, /^\d{4}-\d{2}-\d{2}$/);
+assert.ok(fs.readFileSync(path.join(root, info.notes), 'utf8').includes(`## ${version} — ${info.releaseDate}`), 'Missing dated user release notes');
+assert.equal(info.runtime.includedInRepository, false);
+assert.equal(info.runtime.distribution, 'separate-download');
+assert.equal(info.platform, 'win32-x64');
+assert.ok(['local-preview', 'preview', 'stable'].includes(info.channel));
+assert.ok(Number.isInteger(info.runtime.protocolVersion) && info.runtime.protocolVersion > 0);
+assert.match(info.runtime.testedVersion, /^\d+\.\d+\.\d+$/);
+assert.equal(typeof info.runtime.automaticDownloadAvailable, 'boolean');
+for (const value of Object.values(info.features)) assert.equal(typeof value, 'boolean');
+const gitRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: root, encoding: 'utf8' }).trim();
+assert.equal(path.resolve(gitRoot).toLowerCase(), root.toLowerCase(), 'Operate only in the independent project repository');
+const files = execFileSync('git', ['ls-files', '--cached', '-z'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
+assert.ok(files.length, 'Stage the source before checking a release');
+const staged = execFileSync('git', ['ls-files', '--stage'], { cwd: root, encoding: 'utf8' });
+assert.ok(!/^160000 /m.test(staged), 'Embedded repositories must be imported as complete source, not gitlinks');
+const forbidden = /(^|\/)(node_modules|\.runloop|\.archi-coo|\.local-baseline|release|runtime|runtime-dist|VividCFRuntime|VividCFPackages|data)(\/|$)|\.(safetensors|gguf|ckpt|pt|pth|onnx|exe|dll|pyd|bin|whl|tar|gz|zip|7z|rar|pem|key|p12|pfx|sqlite3?|part|tmp|log)$/i;
+for (const file of files) {
+  assert.ok(!forbidden.test(file), `Forbidden release file: ${file}`);
+  assert.ok(!/(^|\/)\.env(?:\..*)?$/.test(file) || /(^|\/)\.env\.example$/.test(file), `Credential config: ${file}`);
+  assert.ok(fs.statSync(path.join(root, file)).size <= 20 * 1024 * 1024, `Review oversized source file: ${file}`);
+}
+console.log(`Release ${info.tag}: versions, user notes, runtime separation and ${files.length} staged source files verified`);

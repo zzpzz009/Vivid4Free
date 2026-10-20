@@ -1,0 +1,123 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createRuntimeEnvironmentController } from './useRuntimeEnvironment.js'
+
+function deferred() {
+  let resolve
+  let reject
+  const promise = new Promise((res, rej) => { resolve = res; reject = rej })
+  return { promise, resolve, reject }
+}
+
+describe('runtime environment controller', () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('keeps a failed operation retryable and replaces the error after a successful retry', async () => {
+    const status = { state: 'not_installed', installed: false, available: true, downloadedBytes: 0, totalBytes: 100 }
+    const bridge = {
+      runtimeStatus: vi.fn(async () => status),
+      runtimeInstall: vi.fn()
+        .mockRejectedValueOnce(new Error('下载中断'))
+        .mockImplementationOnce(async () => {
+          Object.assign(status, { state: 'installed', installed: true, version: '1.2.0' })
+          return status
+        })
+    }
+    const controller = createRuntimeEnvironmentController(bridge)
+
+    await controller.refresh()
+    expect(await controller.run('installing', 'runtimeInstall')).toBe(false)
+    expect(controller.error.value).toBe('运行包操作失败，请检查安装目录后重试。')
+    expect(controller.busyAction.value).toBe('')
+
+    expect(await controller.run('installing', 'runtimeInstall')).toBe(true)
+    expect(controller.error.value).toBe('')
+    expect(controller.status.value.version).toBe('1.2.0')
+    expect(bridge.runtimeInstall).toHaveBeenCalledTimes(2)
+    controller.dispose()
+  })
+
+  it('ignores overlapping actions while the first native operation is pending', async () => {
+    const pending = deferred()
+    const bridge = {
+      runtimeStatus: vi.fn(async () => ({ state: 'downloading', installed: false, available: true })),
+      runtimeInstall: vi.fn(() => pending.promise)
+    }
+    const controller = createRuntimeEnvironmentController(bridge)
+    const first = controller.run('installing', 'runtimeInstall')
+    const second = await controller.run('installing', 'runtimeInstall')
+
+    expect(second).toBe(false)
+    expect(bridge.runtimeInstall).toHaveBeenCalledTimes(1)
+    expect(controller.busyAction.value).toBe('installing')
+    expect(await controller.run('checking', 'runtimeCheck')).toBe(false)
+    expect(await controller.run('choosing-directory', 'chooseRuntimeDirectory')).toBe(false)
+
+    pending.resolve({ state: 'downloading', installed: false, available: true })
+    expect(await first).toBe(true)
+    expect(controller.busyAction.value).toBe('')
+    controller.dispose()
+  })
+
+  it('allows one pause during an active download without allowing a second install', async () => {
+    const install = deferred()
+    let currentStatus = { state: 'not_installed', installed: false, available: true }
+    const bridge = {
+      runtimeStatus: vi.fn(async () => currentStatus),
+      runtimeInstall: vi.fn(() => install.promise),
+      runtimePause: vi.fn(async () => {
+        currentStatus = { ...currentStatus, state: 'paused', message: '下载已暂停' }
+        return true
+      })
+    }
+    const controller = createRuntimeEnvironmentController(bridge)
+    await controller.refresh()
+    const installOperation = controller.run('installing', 'runtimeInstall')
+    currentStatus = { ...currentStatus, state: 'downloading', downloadedBytes: 20, totalBytes: 100 }
+    await controller.refresh()
+
+    expect(await controller.run('installing', 'runtimeInstall')).toBe(false)
+    expect(await controller.run('checking', 'runtimeCheck')).toBe(false)
+    expect(await controller.run('choosing-directory', 'chooseRuntimeDirectory')).toBe(false)
+    expect(await controller.pause()).toBe(true)
+    expect(await controller.pause()).toBe(false)
+    expect(bridge.runtimeInstall).toHaveBeenCalledTimes(1)
+    expect(bridge.runtimePause).toHaveBeenCalledTimes(1)
+    expect(controller.status.value.state).toBe('paused')
+
+    install.reject(new Error('aborted by pause'))
+    expect(await installOperation).toBe(false)
+    expect(controller.error.value).toBe('')
+    expect(controller.busyAction.value).toBe('')
+    controller.dispose()
+  })
+
+  it('blocks check and directory selection from transitional status even without a pending UI action', async () => {
+    const bridge = {
+      runtimeStatus: vi.fn(async () => ({ state: 'installing', installed: false, available: true })),
+      runtimeCheck: vi.fn(),
+      chooseRuntimeDirectory: vi.fn()
+    }
+    const controller = createRuntimeEnvironmentController(bridge)
+    await controller.refresh()
+
+    expect(await controller.run('checking', 'runtimeCheck')).toBe(false)
+    expect(await controller.run('choosing-directory', 'chooseRuntimeDirectory')).toBe(false)
+    expect(bridge.runtimeCheck).not.toHaveBeenCalled()
+    expect(bridge.chooseRuntimeDirectory).not.toHaveBeenCalled()
+    controller.dispose()
+  })
+
+  it('polls only while active and stops its timer when disposed', async () => {
+    vi.useFakeTimers()
+    const bridge = { runtimeStatus: vi.fn(async () => ({ state: 'paused', installed: false, available: true })) }
+    const controller = createRuntimeEnvironmentController(bridge)
+    await controller.refresh()
+    controller.startPolling()
+    await vi.advanceTimersByTimeAsync(1800)
+    expect(bridge.runtimeStatus).toHaveBeenCalledTimes(2)
+
+    controller.dispose()
+    await vi.advanceTimersByTimeAsync(5400)
+    expect(bridge.runtimeStatus).toHaveBeenCalledTimes(2)
+  })
+})
