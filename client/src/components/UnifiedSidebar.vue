@@ -539,7 +539,6 @@
       </div>
     </div>
     <div class="shrink-0 m-4 mt-4">
-      <p v-if="!canPreview" class="input-requirement">{{ !engineReady ? '请在运行环境中连接本地引擎' : '请先上传待处理图片' }}</p>
       <div class="w-[265px] flex flex-row gap-3 items-center justify-between">
           <div class="flex-1 h-10 relative">
             <HMenu as="div" class="rounded-2xl flex flex-row items-center justify-center w-full h-full relative">
@@ -547,6 +546,7 @@
                 class="primary-button flex-1 h-10 min-w-0"
                 :class="showActionDropdown ? 'rounded-r-none' : ''"
                 :disabled="isPrimaryActionDisabled"
+                :title="!engineReady ? '请在运行环境中连接本地引擎' : !canPreview ? '请先上传待处理图片' : primaryActionText"
                 data-testid="primary-action-button"
                 :data-mode="mode"
                 @click="handlePrimaryAction"
@@ -1568,7 +1568,6 @@ export default {
 .prompt-field{height:136px;padding:var(--space-3);background:var(--workspace-input-bg);border:1px solid var(--border-color);border-radius:var(--border-radius-base)}
 .prompt-field:focus-within{box-shadow:var(--pod-ring)}.prompt-field :deep(textarea:focus-visible){box-shadow:none}
 .input-requirement{margin:0 0 var(--space-2);font-size:12px;color:var(--text-secondary)}
-[data-testid=unified-sidebar]{background:var(--workspace-bg-sidebar);border-right:1px solid var(--border-color)}
-[data-testid=unified-sidebar] button{min-height:32px}
+[data-testid=unified-sidebar]{background:transparent}
 [data-testid=primary-action-dropdown]{background:var(--color-lime-300)}
 </style>

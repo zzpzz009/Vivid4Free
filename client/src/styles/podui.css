@@ -145,7 +145,6 @@
 
 .podui-theme {
   color: var(--text-primary);
-  background-color: var(--bg-page);
   --tw-ring-color: var(--pod-ring-color);
   --tw-ring-offset-color: transparent;
 }

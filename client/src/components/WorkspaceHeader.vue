@@ -1,39 +1,176 @@
 <template>
-  <nav class="workspace-header" aria-label="工作区与资源面板">
-    <div class="workspace-navigation">
-      <IconButton type="button" size="sm" :active="sidebarOpen" :aria-expanded="sidebarOpen" aria-controls="workspace-inputs" aria-label="切换输入面板" @click="$emit('toggle-tabs')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-      </IconButton>
-      <div class="workspace-tabs" role="tablist" aria-label="工作区">
-        <Button v-for="tab in navigationTabs" :id="`tab-${tab.id}`" :key="tab.id" variant="ghost" size="sm" role="tab" :aria-selected="activeWorkspaceTab === tab.id" :aria-controls="`view-${tab.id}`" :class="{ selected: activeWorkspaceTab === tab.id }" :data-testid="`workspace-tab-${tab.id}`" @click="$emit('tab-change', tab.id)" @keydown.right.prevent="nextWorkspace(tab.id)" @keydown.left.prevent="nextWorkspace(tab.id)">
-          {{ tab.name }}<span v-if="tab.id === 'creative-workshop'" class="unavailable-label">未开放</span>
-        </Button>
+  <div class="workspace-header relative mx-4 mb-4">
+    <button type="button" class="sidebar-toggle absolute left-[14px] top-1 z-10 w-8 h-8 flex items-center justify-center rounded-lg" aria-label="切换输入面板" :aria-expanded="sidebarOpen" aria-controls="workspace-inputs" @click="toggleTabs"><img class="w-6 h-6" :src="menuIcon" alt="" /></button>
+
+    <div class="flex flex-row items-center w-full h-10 overflow-hidden gap-4">
+      <TabGroup
+        class="flex-1 bg-schemes-surface-container rounded-corner-medium h-full"
+        :selected-index="selectedIndex"
+        @change="handleTabChange"
+      >
+        <TabList class="flex flex-row items-center justify-between h-full px-2">
+          <Tab
+            v-for="tab in navigationTabs"
+            :key="tab.id"
+            v-slot="{ selected }"
+            class="nav-tab focus:outline-none"
+            :data-testid="`workspace-tab-${tab.id}`"
+          >
+            <div :class="selected ? 'nav-tab-active' : 'nav-tab-inactive'">
+              <div class="nav-tab-content">
+                <img
+                  class="nav-tab-icon"
+                  :src="selected ? tab.activeIcon : tab.inactiveIcon"
+                  :alt="tab.name"
+                >
+                <div
+                  :class="selected ? 'nav-tab-text-active' : 'nav-tab-text-inactive'"
+                  class="letter-spacing-m3-label-medium"
+                >
+                  {{ tab.name }}
+                </div>
+              </div>
+            </div>
+          </Tab>
+        </TabList>
+      </TabGroup>
+
+      <!-- Vertical Divider -->
+      <div class="w-[1px] h-6 bg-schemes-outline opacity-20"></div>
+
+      <div class="flex flex-row h-10 bg-schemes-surface-container rounded-corner-medium items-center px-1">
+        <div class="pt-1.5 pb-1.5 flex flex-row gap-0 items-center justify-center" data-testid="toolbar-right-tabs">
+          <button
+            v-for="tab in rightTabs"
+            :key="tab.id"
+            class="pt-1.5 pb-1.5 flex flex-col gap-1 items-center justify-center w-[120px] cursor-pointer outline-none"
+            :class="tab.id === activeRightTab ? 'bg-schemes-secondary-container rounded-xl' : ''"
+            :data-testid="`right-tab-${tab.id}`"
+            type="button"
+            @click="handleRightTabClick(tab.id)"
+          >
+            <div class="text-center font-m3-label-large-emphasized-font-family text-m3-label-large-emphasized-font-size leading-m3-label-large-emphasized-line-height font-m3-label-large-emphasized-font-weight relative self-stretch letter-spacing-m3-label-large-emphasized text-schemes-on-surface-variant">
+              {{ tab.name }}
+            </div>
+          </button>
+        </div>
+
+        <div class="flex items-center pr-2 gap-1">
+          <button
+            class="w-8 h-8 flex items-center justify-center transition-opacity hover:opacity-90"
+            :title="isRightPanelExpanded ? '收缩面板' : '展开面板'" :aria-label="isRightPanelExpanded ? '紧凑资源面板' : '展开资源面板'"
+            type="button"
+            data-testid="btn-expand-panel"
+            @click="toggleRightPanel"
+          >
+            <img
+              :src="isRightPanelExpanded ? navigateNextIcon : navigatePreviousIcon"
+              alt="Toggle"
+              class="w-8 h-8 opacity-60"
+            >
+          </button>
+        </div>
       </div>
     </div>
-    <div class="resource-tabs" data-testid="toolbar-right-tabs" aria-label="资源面板">
-      <Button v-for="tab in rightTabs" :key="tab.id" variant="ghost" size="sm" :class="{ selected: activeRightTab === tab.id && rightPanelVisible }" :aria-pressed="activeRightTab === tab.id && rightPanelVisible" :data-testid="`right-tab-${tab.id}`" @click="$emit('right-tab-change', tab.id)">{{ tab.name }}</Button>
-      <Button v-if="rightPanelVisible" variant="ghost" size="xs" :aria-label="isRightPanelExpanded ? '紧凑资源面板' : '展开资源面板'" @click="$emit('resize-right-panel')">{{ isRightPanelExpanded ? '紧凑' : '展开' }}</Button>
-      <IconButton type="button" size="sm" :aria-expanded="rightPanelVisible" aria-controls="desktop-resources" :aria-label="rightPanelVisible ? '收起资源面板' : '展开资源面板'" data-testid="btn-expand-panel" @click="$emit('toggle-right-panel')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path :d="rightPanelVisible ? 'm9 5 7 7-7 7' : 'm15 5-7 7 7 7'"/></svg>
-      </IconButton>
-    </div>
-  </nav>
+  </div>
 </template>
-<script setup>
-import { nextTick } from 'vue'
-import Button from '@/ui/Button.vue'
-import IconButton from '@/ui/IconButton.vue'
-const props = defineProps({ activeWorkspaceTab: { type: String, default: 'workspace' }, activeRightTab: { type: String, default: 'common' }, isRightPanelExpanded: Boolean, sidebarOpen: { type: Boolean, default: true }, rightPanelVisible: { type: Boolean, default: true } })
-const emit = defineEmits(['tab-change', 'toggle-tabs', 'right-tab-change', 'toggle-right-panel', 'resize-right-panel'])
-const navigationTabs = [{ id: 'workspace', name: '工作区' }, { id: 'creative-workshop', name: '创意工坊' }]
-const rightTabs = [{ id: 'common', name: '常用' }, { id: 'gallery', name: '图库' }]
-async function nextWorkspace(id) { const next = id === 'workspace' ? 'creative-workshop' : 'workspace'; emit('tab-change', next); await nextTick(); document.getElementById(`tab-${next}`)?.focus() }
+
+<script>
+import { computed } from 'vue'
+import { TabGroup, TabList, Tab } from '@headlessui/vue'
+import { icons } from '../utils/assets.js'
+
+export default {
+  name: 'WorkspaceHeader',
+  components: {
+    TabGroup,
+    TabList,
+    Tab
+  },
+  props: {
+    activeWorkspaceTab: {
+      type: String,
+      default: 'workspace'
+    },
+    activeRightTab: {
+      type: String,
+      default: 'common'
+    },
+    sidebarOpen: { type: Boolean, default: true },
+    rightPanelVisible: { type: Boolean, default: true },
+    isRightPanelExpanded: {
+      type: Boolean,
+      default: false
+    }
+  },
+  emits: ['tab-change', 'toggle-tabs', 'right-tab-change', 'toggle-right-panel', 'resize-right-panel'],
+  setup(props, { emit }) {
+    const menuIcon = icons.menu
+    const navigateNextIcon = icons.navigateNext
+    const navigatePreviousIcon = icons.navigatePrevious
+
+    const navigationTabs = [
+      {
+        id: 'workspace',
+        name: '工作区',
+        activeIcon: icons.workspaceActive,
+        inactiveIcon: icons.workspaceInactive
+      },
+      {
+        id: 'creative-workshop',
+        name: '创意工坊',
+        activeIcon: icons.localRepaintActive,
+        inactiveIcon: icons.localRepaintInactive
+      }
+    ]
+
+    const rightTabs = [
+      { id: 'common', name: '常用' },
+      { id: 'gallery', name: '图库' }
+    ]
+
+    // 计算当前选中的索引
+    const selectedIndex = computed(() => {
+      const index = navigationTabs.findIndex(tab => tab.id === props.activeWorkspaceTab)
+      return index >= 0 ? index : 0
+    })
+
+    const handleTabChange = (index) => {
+      const selectedTab = navigationTabs[index]
+      if (!selectedTab) return
+      emit('tab-change', selectedTab.id)
+    }
+
+    const toggleTabs = () => {
+      emit('toggle-tabs')
+
+    }
+
+    const handleRightTabClick = (tabId) => {
+      emit('right-tab-change', tabId)
+    }
+
+    const toggleRightPanel = () => {
+      emit(props.rightPanelVisible ? 'resize-right-panel' : 'toggle-right-panel')
+    }
+
+    return {
+      navigationTabs,
+      rightTabs,
+      menuIcon,
+      navigateNextIcon,
+      navigatePreviousIcon,
+      selectedIndex,
+      handleTabChange,
+      toggleTabs,
+      handleRightTabClick,
+      toggleRightPanel
+    }
+  }
+}
 </script>
+
 <style scoped>
-.workspace-header{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);padding:var(--space-2) var(--space-4);border-bottom:1px solid var(--border-color);flex:none}
-.workspace-navigation,.workspace-tabs,.resource-tabs{display:flex;align-items:center;gap:var(--space-1);min-width:0}
-.workspace-tabs,.resource-tabs{background:var(--workspace-bg-header);border:1px solid var(--border-color);border-radius:var(--border-radius-base);padding:var(--space-1)}
-.selected{background:var(--brand-solid);color:var(--brand-primary)}
-.unavailable-label{font-size:11px;color:var(--text-secondary)}
-@media(max-width:768px){.workspace-header{gap:var(--space-2);padding:var(--space-2)}.workspace-tabs>button,.resource-tabs>button{padding:var(--space-2)}.unavailable-label{display:none}}
+@media(max-width:1023px){.workspace-header{margin-left:8px;margin-right:8px}.workspace-header :deep(.nav-tab-active){width:auto;max-width:100%}.workspace-header :deep(.nav-tab-content){padding-left:8px;padding-right:8px}.workspace-header [data-testid=toolbar-right-tabs]>button{width:64px}.sidebar-toggle{left:4px}.workspace-header :deep(.nav-tab:first-child){padding-left:28px}}
+@media(max-width:767px){.workspace-header [data-testid=toolbar-right-tabs]>button{width:48px}.workspace-header :deep(.nav-tab-icon){width:20px;height:20px}}
 </style>
