@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, shell, safeStorage, net: electronNet } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -6,6 +6,7 @@ const { spawn } = require('node:child_process');
 const net = require('node:net');
 const { startServer } = require('./server.cjs');
 const { RuntimeManager } = require('./runtime-manager.cjs');
+const { createAccountService } = require('./account-service.cjs');
 
 let window, server, root, manager, ownedEngineRoot = null, engineReady = false, engineStartPromise = null, engineStartRoot = null, closing = false;
 function listenPort(variable, fallback) {
@@ -135,6 +136,32 @@ else {
       const frame = event.senderFrame;
       if (event.sender !== window.webContents || frame !== window.webContents.mainFrame || !frame.url.startsWith(`${server.origin}/`)) throw new Error('不允许的调用来源');
     };
+    const account = createAccountService({ userData: root, secureStorage: safeStorage,
+      fetchImpl: (url, options) => electronNet.fetch(url, options) });
+    const accountAction = operation => async (event, input) => {
+      sender(event);
+      try { return await operation(input); }
+      catch { return { ...account.status(), status: 'unavailable', message: '账号操作暂时无法完成，请检查网络或本机用户目录权限' }; }
+    };
+    ipcMain.handle('account:status', accountAction(() => account.status()));
+    ipcMain.handle('account:login', accountAction(input => account.login(input)));
+    ipcMain.handle('account:refresh', accountAction(() => account.refresh()));
+    ipcMain.handle('account:logout', accountAction(() => account.logout()));
+    ipcMain.handle('account:reset-password', async event => {
+      sender(event);
+      try { await shell.openExternal(await account.passwordResetUrl()); return { opened: true }; }
+      catch { return { opened: false, message: '找回密码入口暂时无法打开，请稍后重试或联系管理员' }; }
+    });
+    let registrationOpening = null;
+    ipcMain.handle('account:register', async event => {
+      sender(event);
+      if (registrationOpening) return registrationOpening;
+      registrationOpening = (async () => {
+        try { await shell.openExternal(await account.registrationUrl()); return { opened: true, message: '注册页面已打开，请在浏览器完成注册后返回客户端登录' }; }
+        catch { return { opened: false, message: '注册入口暂时无法打开，请稍后重试或联系管理员' }; }
+      })();
+      try { return await registrationOpening; } finally { registrationOpening = null; }
+    });
     ipcMain.handle('gallery:import', async event => {
       sender(event);
       const result = await dialog.showOpenDialog(window, { title: '导入本地图库文件夹', properties: ['openDirectory'] });

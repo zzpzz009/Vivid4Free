@@ -1,5 +1,5 @@
 /* PodUI theme variables and components */
-:root {
+:root, .podui-theme {
   /* --- Primitive Colors --- */
   --color-base-dark: #0F0D13;
   --color-base-dark-alpha: rgba(30, 30, 35, 0.7);

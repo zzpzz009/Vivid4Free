@@ -4,7 +4,9 @@
       <div class="brand"><strong>VividDesktop</strong><span>本地 AI 渲染</span></div>
       <div class="toolbar-actions">
         <span class="engine-state" :class="engineReady ? 'ready' : 'waiting'">{{ engineLabel }}</span>
-        <span class="account-state">账号接入待配置</span>
+        <button type="button" class="account-entry !rounded-corner-medium" :aria-expanded="accountPanelOpen" aria-controls="desktop-account-panel" @click="accountPanelOpen = !accountPanelOpen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg>{{ accountLabel }}
+        </button>
         <button type="button" class="runtime-entry" @click="runtimePanelOpen = true">运行环境</button>
         <button type="button" @click="importGallery">导入图库</button>
         <button type="button" @click="showAgentInfo">Agent 接口</button>
@@ -43,6 +45,7 @@
       @close="runtimePanelOpen = false"
       @status="onRuntimeStatus"
     />
+    <AccountPanel :open="accountPanelOpen" @close="accountPanelOpen = false" />
   </div>
 </template>
 
@@ -53,15 +56,18 @@ import WorkspaceContent from '@/components/WorkspaceContent.vue'
 import RightPanel from '@/components/RightPanel.vue'
 import RuntimeEnvironmentPanel from '@/components/RuntimeEnvironmentPanel.vue'
 import StatusBar from '@/components/StatusBar.vue'
-import { useUIStore, useGalleryStore } from '@/stores'
+import { useUIStore, useGalleryStore, useAuthStore } from '@/stores'
+import AccountPanel from '@/components/AccountPanel.vue'
 
 const uiStore = useUIStore()
 const galleryStore = useGalleryStore()
+const authStore = useAuthStore()
 const workspace = ref(null)
 const notice = ref('')
 const capabilities = ref(null)
 const runtimeSnapshot = ref(null)
 const runtimePanelOpen = ref(false)
+const accountPanelOpen = ref(false)
 const activeTab = ref('workspace')
 const didAutoOpenRuntime = ref(false)
 const runtimeCapability = computed(() => runtimeSnapshot.value || capabilities.value?.runtime || capabilities.value?.capabilities?.runtime)
@@ -71,6 +77,7 @@ const engineReady = computed(() => {
   return Boolean(capabilities.value?.capabilities?.render?.ready)
 })
 const engineLabel = computed(() => runtimeCapability.value?.installed === false ? '运行包未安装' : engineReady.value ? '引擎已连接' : '引擎依赖未齐')
+const accountLabel = computed(() => ({ signed_in: `账号：${authStore.user?.displayName || authStore.user?.nickname || authStore.user?.username || '已登录'}`, checking: '账号：检查中', signed_out: '账号：未登录', unavailable: '账号：待验证' }[authStore.accountStatus] || '账号：待验证'))
 let noticeTimer
 let capabilitiesTimer
 
@@ -126,6 +133,7 @@ async function refreshCapabilities() {
 }
 
 onMounted(async () => {
+  void authStore.initAuth()
   await refreshCapabilities()
   capabilitiesTimer = setInterval(refreshCapabilities, 20000)
 })
@@ -139,6 +147,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .desktop-shell{height:100vh;display:flex;flex-direction:column;overflow:hidden;background:var(--schemes-surface,#17151c);color:var(--schemes-on-surface,#f3eff7)}
 .desktop-toolbar{height:52px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid #393640;background:#201e25}
-.brand,.toolbar-actions{display:flex;align-items:center;gap:14px}.brand span,.account-state{font-size:12px;color:#aaa5b2}.toolbar-actions{gap:8px}.toolbar-actions button{padding:6px 10px;border:1px solid #514c59;border-radius:7px;background:#2d2a33;color:inherit;cursor:pointer}.toolbar-actions .runtime-entry{border-color:#7562b3;color:#d4c8ff}.engine-state{font-size:12px}.engine-state.ready{color:#74d29a}.engine-state.waiting{color:#e6bc66}
+.brand,.toolbar-actions{display:flex;align-items:center;gap:14px}.brand span{font-size:12px;color:#aaa5b2}.toolbar-actions{gap:8px}.toolbar-actions button{padding:6px 10px;border:1px solid #514c59;border-radius:7px;background:#2d2a33;color:inherit;cursor:pointer}.toolbar-actions .account-entry{font-size:12px;color:#d4c8ff;border-color:#7562b3}.toolbar-actions .runtime-entry{border-color:#7562b3;color:#d4c8ff}.engine-state{font-size:12px}.engine-state.ready{color:#74d29a}.engine-state.waiting{color:#e6bc66}
+.toolbar-actions .account-entry{display:inline-flex;align-items:center;gap:8px;color:var(--schemes-on-surface-variant);border-color:var(--schemes-outline-variant)}
 .desktop-main{display:flex;flex:1;min-height:0;flex-direction:column;margin-top:12px}.workspace-row{display:flex;flex:1;min-height:0}.workspace-content{min-width:0}.gallery-panel{flex:none}.unavailable{flex:1;display:grid;align-content:center;justify-items:center;color:#c9c4cf}.unavailable h2{margin:0 0 8px}.desktop-notice{position:fixed;right:18px;bottom:52px;padding:10px 14px;border-radius:8px;background:#393540;box-shadow:0 8px 24px #0005;z-index:1000}
 </style>

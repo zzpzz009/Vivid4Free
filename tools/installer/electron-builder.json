@@ -9,6 +9,7 @@
   },
   "files": [
     "main.cjs",
+    "account-service.cjs",
     "preload.cjs",
     "server.cjs",
     "task-service.cjs",
