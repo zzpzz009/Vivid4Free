@@ -1,5 +1,5 @@
 /* PodUI theme variables and components */
-:root, .podui-theme {
+:root {
   /* --- Primitive Colors --- */
   --color-base-dark: #0F0D13;
   --color-base-dark-alpha: rgba(30, 30, 35, 0.7);
@@ -222,7 +222,7 @@
   gap: 8px;
   padding: 4px 6px;
   border-radius: var(--border-radius-pill);
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--workspace-input-bg);
   border: 1px solid var(--border-color);
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
   position: relative;
@@ -391,7 +391,7 @@
 
 .pod-icon-button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(79, 55, 139, 0.8), 0 0 0 6px rgba(79, 55, 139, 0.25);
+  box-shadow: var(--pod-ring);
 }
 
 .pod-primary-button {
@@ -423,7 +423,7 @@
 
 .pod-primary-button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(79, 55, 139, 0.9), 0 0 0 6px rgba(79, 55, 139, 0.35);
+  box-shadow: var(--pod-ring);
 }
 
 /* Utility Classes */
@@ -525,7 +525,7 @@
 }
 .pod-generate-button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(204, 251, 67, 0.9), 0 0 0 6px rgba(204, 251, 67, 0.35);
+  box-shadow: var(--pod-ring);
 }
 .pod-generate-button:disabled {
   opacity: 0.6;
@@ -550,7 +550,7 @@
 }
 .pod-btn-danger:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.9), 0 0 0 6px rgba(239, 68, 68, 0.35);
+  box-shadow: var(--pod-ring);
 }
 
 .pod-btn-secondary {
@@ -568,7 +568,7 @@
 
 .pod-btn-secondary:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+  box-shadow: var(--pod-ring);
 }
 
 .pod-btn-ghost {
@@ -586,7 +586,7 @@
 
 .pod-btn-ghost:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+  box-shadow: var(--pod-ring);
 }
 
 .pod-btn-outline {
@@ -604,7 +604,7 @@
 
 .pod-btn-outline:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(79, 55, 139, 0.6);
+  box-shadow: var(--pod-ring);
 }
 
 .pod-btn-xs {
@@ -629,19 +629,19 @@
 }
 
 .pod-input {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--workspace-input-bg);
   border: 1px solid transparent;
   color: var(--text-primary);
   border-radius: var(--border-radius-base);
   padding: 8px 12px;
   transition: all var(--pod-transition-fast);
 }
-.pod-input::placeholder { color: var(--text-muted); opacity: 1; }
+.pod-input::placeholder { color: var(--text-secondary); opacity: 1; }
 .pod-input:focus { 
   outline: none; 
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: var(--workspace-input-focus-bg);
   border-color: color-mix(in srgb, var(--pod-ring-color), transparent 30%);
-  box-shadow: var(--pod-ring), 0 0 0 calc(var(--pod-ring-width) + 3px) color-mix(in srgb, var(--pod-ring-color), transparent 70%);
+  box-shadow: var(--pod-ring);
 }
 .pod-input:disabled { opacity: 0.6; cursor: not-allowed; }
 .pod-input-sm { height: 32px; font-size: 0.8125rem; }
@@ -650,7 +650,7 @@
 .podui-theme input.pod-input,
 .podui-theme textarea.pod-input,
 .podui-theme select.pod-input {
-  background-color: rgba(0, 0, 0, 0.2) !important;
+  background-color: var(--workspace-input-bg) !important;
   border-radius: var(--border-radius-base) !important;
   color: var(--text-primary) !important;
 }
@@ -658,14 +658,14 @@
 .podui-theme input.pod-input:focus,
 .podui-theme textarea.pod-input:focus,
 .podui-theme select.pod-input:focus {
-  background-color: rgba(0, 0, 0, 0.4) !important;
+  background-color: var(--workspace-input-focus-bg) !important;
   border-color: color-mix(in srgb, var(--pod-ring-color), transparent 30%) !important;
-  box-shadow: var(--pod-ring), 0 0 0 calc(var(--pod-ring-width) + 3px) color-mix(in srgb, var(--pod-ring-color), transparent 70%) !important;
+  box-shadow: var(--pod-ring) !important;
   outline: none !important;
 }
 
 .pod-select {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--workspace-input-bg);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   border-radius: var(--border-radius-base);
@@ -739,7 +739,7 @@
 }
 .pod-textarea:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(79, 55, 139, 0.7);
+  box-shadow: var(--pod-ring);
   border-radius: var(--border-radius-base);
 }
 
@@ -1151,7 +1151,7 @@
 
 .pod-prompt-mode-switch {
   display: flex;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--workspace-input-bg);
   border-radius: var(--border-radius-pill);
   padding: 2px;
   border: 1px solid var(--border-color);
@@ -1852,7 +1852,7 @@
 
 .pod-prompt-mode-switch {
   display: flex;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--workspace-input-bg);
   border-radius: var(--border-radius-pill);
   padding: 2px;
   border: 1px solid var(--border-color);
@@ -1882,3 +1882,24 @@
   right: var(--pod-right, auto);
   bottom: var(--pod-bottom, auto);
 }
+
+/* Shared controls: one focus, spacing and disabled contract for the desktop. */
+.pod-primary-button, .pod-generate-button, .pod-btn-secondary, .pod-btn-outline, .pod-btn-ghost, .pod-btn-danger {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  border-radius: var(--border-radius-base); cursor: pointer;
+  transition: background-color var(--transition-speed-fast), border-color var(--transition-speed-fast);
+}
+.pod-primary-button, .pod-generate-button { background: var(--color-lime-300); border: 1px solid var(--color-lime-300); color: var(--color-lime-950); }
+.pod-primary-button:hover, .pod-generate-button:hover { background: color-mix(in srgb, var(--color-lime-300), white 10%); border-color: var(--color-lime-300); transform: none; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+.pod-input-filled { background: var(--workspace-input-bg); border-color: var(--border-color); }
+.podui-theme { font-family: Roboto, sans-serif; }
+.podui-theme :is(button, input, textarea, select, [tabindex]):focus-visible { outline: none; box-shadow: var(--pod-ring); }
+.podui-theme :is(input,textarea,select)::placeholder { color: var(--text-secondary); opacity: 1; }
+.podui-theme input[type=range] { accent-color: var(--brand-primary); }
+.podui-theme input[type=checkbox] { accent-color: var(--brand-primary); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+body { font-family: Roboto, sans-serif; background: var(--bg-page); color: var(--text-primary); }

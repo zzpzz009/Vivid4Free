@@ -26,6 +26,7 @@ const sizeClass = computed(() => {
 
 <template>
   <button
+    type="button"
     :class="[
       'pod-icon-button',
       active ? 'active' : '',

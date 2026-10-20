@@ -75,11 +75,13 @@
   }
   
   .primary-button {
-    @apply bg-primary-container rounded-xl flex flex-col gap-0 items-center justify-center shrink-0 relative overflow-hidden;
+    @apply rounded-xl flex flex-col gap-0 items-center justify-center shrink-0 relative overflow-hidden;
+    background: var(--color-lime-300); color: var(--color-lime-950);
   }
   
   .secondary-button {
-    @apply bg-on-primary rounded-xl flex flex-row gap-0 items-center justify-center overflow-hidden;
+    @apply rounded-xl flex flex-row gap-0 items-center justify-center overflow-hidden;
+    background: var(--bg-component-solid); color: var(--text-secondary); border: 1px solid var(--border-color);
   }
 
   /* Generate Options Menu Styles */
@@ -134,8 +136,8 @@
 
 /* Scrollbar styling */
 * {
-  scrollbar-width: auto;
-  scrollbar-color: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
 }
 
 .el-scrollbar {
@@ -247,8 +249,8 @@
 .el-dialog__body,
 .el-select-dropdown .el-scrollbar__wrap,
 .el-dropdown-menu {
-  scrollbar-width: auto;
-  scrollbar-color: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
 }
 
 .el-scrollbar__wrap::-webkit-scrollbar,

@@ -130,8 +130,8 @@ else {
       runtimeRoot, runtimeStatus: () => ({ ...manager.status(), engineReady }), agentToken: token,
       port: listenPort('VIVID_TEST_UI_PORT', 17860), agentPort: listenPort('VIVID_TEST_AGENT_PORT', 17861) });
     fs.writeFileSync(tokenPath, JSON.stringify({ endpoint: `${server.agentOrigin}/v1`, token, protocolVersion: '1.0' }, null, 2));
-    window = new BrowserWindow({ width: 1500, height: 960, minWidth: 1100, minHeight: 720, title: 'VividAI 本地渲染', autoHideMenuBar: true,
-      backgroundColor: '#f6f7f2', webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+    window = new BrowserWindow({ width: 1500, height: 960, minWidth: 640, minHeight: 720, title: 'VividAI 本地渲染', autoHideMenuBar: true,
+      backgroundColor: '#0F0D13', webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
     const sender = event => {
       const frame = event.senderFrame;
       if (event.sender !== window.webContents || frame !== window.webContents.mainFrame || !frame.url.startsWith(`${server.origin}/`)) throw new Error('不允许的调用来源');

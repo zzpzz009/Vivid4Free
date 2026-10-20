@@ -50,17 +50,18 @@
       </div>
     </div>
 
-    <div v-if="menuVisible" class="fixed inset-0 z-[210]" @click="closeMenu">
-      <div class="absolute rounded-lg border border-schemes-outline-variant bg-schemes-surface px-2 py-2 shadow-lg" :style="menuStyle" @click.stop>
-        <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuPreview">预览</button>
-        <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuPrimary">设为主图</button>
-        <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuSecondary">设为参考图</button>
-        <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuOpenOriginal">查看原图</button>
-        <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuCopy">复制链接</button>
-      </div>
-    </div>
+    <ImageActionsMenu
+      :visible="menuVisible"
+      :position="menuStyle"
+      @close="closeMenu"
+      @primary="menuPrimary"
+      @secondary="menuSecondary"
+      @preview="menuPreview"
+      @open-original="menuOpenOriginal"
+      @copy="menuCopy"
+    />
 
-    <ImagePreviewModal :visible="previewVisible" :image="previewImage" @close="closePreview" @primary="previewPrimary" @secondary="previewSecondary" />
+    <ImagePreviewModal :visible="previewVisible" :image="previewImage" :return-focus-element="previewReturnFocus" @close="closePreview" @primary="previewPrimary" @secondary="previewSecondary" />
   </div>
 </template>
 
@@ -75,11 +76,13 @@ import { probeImageMeta } from '../utils/imageMeta.js'
 import GalleryCard from './GalleryCard.vue'
 import MasonryGrid from './MasonryGrid.vue'
 import ImagePreviewModal from './ui/ImagePreviewModal.vue'
+import ImageActionsMenu from './ui/ImageActionsMenu.vue'
 
 export default {
   name: 'FavoritesPanel',
-  components: { GalleryCard, MasonryGrid, ImagePreviewModal },
+  components: { GalleryCard, MasonryGrid, ImagePreviewModal, ImageActionsMenu },
   props: {
+    active: { type: Boolean, default: true },
     isExpanded: {
       type: Boolean,
       default: false
@@ -194,6 +197,7 @@ export default {
     const {
       previewVisible,
       previewImage,
+      previewReturnFocus,
       openPreview,
       closePreview,
       menuVisible,
@@ -206,6 +210,13 @@ export default {
       menuCopy,
       menuOpenOriginal
     } = useImagePreviewMenu({ onPrimary: selectImage, onSecondary: selectCkImage })
+
+    watch(() => props.active, (active) => {
+      if (!active) {
+        closeMenu()
+        closePreview()
+      }
+    })
 
     const clearAllUsage = async () => {
       if (confirm('确定要清空所有使用统计吗？此操作不可撤销。')) {

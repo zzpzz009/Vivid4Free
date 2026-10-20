@@ -159,10 +159,9 @@ async function openRegistration() {
 }
 </script>
 
-<style scoped src="../styles/podui.css"></style>
 <style scoped>
 .account-backdrop.podui-theme{position:fixed;inset:0;z-index:1100;pointer-events:none;background:transparent;font-family:Roboto,sans-serif}
-.account-panel{position:absolute;top:64px;right:var(--space-6);width:min(400px,calc(100vw - 32px));max-height:calc(100dvh - 88px);overflow-y:auto;padding:var(--space-6);pointer-events:auto;box-shadow:var(--shadow-lg)}
+.account-panel{position:absolute;top:var(--desktop-utility-top,72px);right:var(--space-6);width:min(400px,calc(100vw - 32px));max-height:calc(100dvh - var(--desktop-utility-top,72px) - 24px);overflow-y:auto;padding:var(--space-6);pointer-events:auto;box-shadow:var(--shadow-lg)}
 .account-header{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6)}
 .account-heading{display:flex;align-items:center;gap:var(--space-3);min-width:0}
 .account-mark,.profile-avatar{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:var(--border-radius-base);background:var(--workspace-card-bg);color:var(--brand-primary)}

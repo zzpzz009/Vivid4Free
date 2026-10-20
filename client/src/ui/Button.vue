@@ -37,6 +37,7 @@ const sizeClass = computed(() => {
 
 <template>
   <button
+    type="button"
     :class="[
       variantClass,
       sizeClass,

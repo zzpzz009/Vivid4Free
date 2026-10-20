@@ -4,7 +4,13 @@
     class="relative overflow-hidden rounded-lg border border-schemes-outline-variant bg-schemes-surface-container"
     :class="outerClass"
     :style="outerStyle"
+    :role="clickable ? 'button' : undefined"
+    :tabindex="clickable ? 0 : undefined"
+    :aria-label="clickable ? (image?.name || '打开图片') : undefined"
     @click="handleClick"
+    @keydown.enter.prevent="handleClick"
+    @keydown.space.prevent="handleClick"
+    @keydown="handleMenuKeydown"
     @contextmenu.prevent="handleMenu"
     @pointerdown="handlePointerDown"
     @pointerup="handlePointerUp"
@@ -204,9 +210,18 @@ export default {
 
     const emitMenu = (event) => {
       if (!props.clickable) return
-      const x = event?.clientX ?? 0
-      const y = event?.clientY ?? 0
-      emit('menu', { image: props.image, x, y })
+      const triggerElement = event?.currentTarget || event?.target?.closest?.('[data-testid="gallery-card"]') || null
+      const rect = triggerElement?.getBoundingClientRect?.()
+      const x = event?.clientX || (rect ? rect.left + 12 : 0)
+      const y = event?.clientY || (rect ? rect.top + Math.min(36, rect.height) : 0)
+      emit('menu', { image: props.image, x, y, triggerElement })
+    }
+
+    const handleMenuKeydown = (event) => {
+      if (!((event.shiftKey && event.key === 'F10') || event.key === 'ContextMenu')) return
+      event.preventDefault()
+      event.stopPropagation()
+      emitMenu(event)
     }
 
     const clearLongPressTimer = () => {
@@ -288,6 +303,7 @@ export default {
       handlePointerCancel,
       handlePointerMove,
       handleMenu,
+      handleMenuKeydown,
       handleDragStart
     }
   }

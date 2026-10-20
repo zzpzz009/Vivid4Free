@@ -1,15 +1,29 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useJobStore } from '@/stores/useJobStore.js'
+import { useUIStore } from '@/stores/useUIStore.js'
 import { useXMStore } from '@/stores/xmStore.js'
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceFile } = {}) => {
   const jobStore = useJobStore()
+  const uiStore = useUIStore()
   const xm = useXMStore()
   const { previewUpscaleRunState } = storeToRefs(jobStore)
-  const previewimgurl = ref('')
+  const { selectedResultJobId, selectedResultUrl, selectedResultInputUrl } = storeToRefs(uiStore)
+  const isSubmitting = ref(false)
+  const selectedResultJob = computed(() => jobStore.jobs.find((job) => job.id === selectedResultJobId.value) || null)
+  const previewimgurl = computed(() => {
+    const outputs = selectedResultJob.value ? jobStore.getOutputUrls(selectedResultJob.value) : []
+    return outputs[0] || selectedResultUrl.value || ''
+  })
+  const previewOriginalImage = computed(() =>
+    selectedResultInputUrl.value
+    || (selectedResultJob.value ? jobStore.getInputUrl(selectedResultJob.value) : '')
+    || (selectedResultJobId.value || selectedResultUrl.value ? '' : uploadedImage?.value?.preview)
+    || ''
+  )
   let activeTaskId = null
   let submitRequestId = null
   let activeSubmissionUnknown = false
@@ -41,8 +55,12 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
         if (task.status === 'completed') {
           const urls = Array.isArray(task.resultImages) ? task.resultImages : []
           const primary = urls[0] || ''
-          previewimgurl.value = primary
           jobStore.completeGeneration({ id: jobId, resultImages: urls, output: task.output || { resultUrls: urls, coverUrl: primary } })
+          uiStore.setSelectedResult({
+            jobId,
+            url: primary,
+            inputUrl: localJob ? jobStore.getInputUrl(localJob) : ''
+          })
           notify('任务已完成', 'success')
           activeTaskId = null
           submitRequestId = null
@@ -51,8 +69,15 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
           return
         }
         if (task.status === 'failed' || task.status === 'cancelled') {
-          jobStore.failGeneration(jobId, task.errorMessage || (task.status === 'cancelled' ? '任务已取消' : '任务失败'))
-          notify(task.errorMessage || (task.status === 'cancelled' ? '任务已取消' : '任务失败'), 'error')
+          if (task.status === 'cancelled') {
+            jobStore.updateJob(jobId, { status: 'cancelled', progress: 0, stage: '已取消', errorMessage: task.errorMessage || '' })
+            jobStore.setGenerating(false)
+            jobStore.setCurrentJobId(null)
+            jobStore.saveJobsToStorage()
+          } else {
+            jobStore.failGeneration(jobId, task.errorMessage || '任务失败')
+          }
+          notify(task.errorMessage || (task.status === 'cancelled' ? '任务已取消' : '任务失败'), task.status === 'cancelled' ? 'warning' : 'error')
           activeTaskId = null
           submitRequestId = null
           activeSubmissionUnknown = false
@@ -90,6 +115,7 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
     }
 
     const requestId = crypto.randomUUID()
+    isSubmitting.value = true
     submitRequestId = requestId
     activeTaskId = 'submitting'
     const parameters = {
@@ -126,18 +152,29 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
       if (!task || typeof task.id !== 'string') throw new Error('本地任务响应缺少 task id')
       const recordId = task.id || jobId
       const unknown = task.status === 'submission_unknown'
-      createJobRecord(recordId, unknown ? 'submission_unknown' : (['failed', 'cancelled', 'completed'].includes(task.status) ? task.status : 'queued'), task.stage || (unknown ? '提交状态待确认' : '排队中'), task.errorMessage || '')
+      createJobRecord(recordId, unknown ? 'submission_unknown' : (['failed', 'cancelled', 'completed', 'submitting'].includes(task.status) ? task.status : 'queued'), task.stage || (unknown ? '提交状态待确认' : '排队中'), task.errorMessage || '')
       activeTaskId = task.id || null
       submitRequestId = null
       activeSubmissionUnknown = unknown
       if (task.status === 'completed') {
-        previewimgurl.value = task.resultImages?.[0] || ''
         jobStore.completeGeneration({ id: recordId, resultImages: task.resultImages || [], output: task.output })
+        uiStore.setSelectedResult({
+          jobId: recordId,
+          url: task.resultImages?.[0] || '',
+          inputUrl: jobStore.getInputUrl(jobStore.jobs.find((item) => item.id === recordId))
+        })
         activeTaskId = null
         activeSubmissionUnknown = false
         jobStore.resetPreviewUpscaleRunState()
       } else if (task.status === 'failed' || task.status === 'cancelled') {
-        jobStore.failGeneration(recordId, task.errorMessage || '任务未能启动')
+        if (task.status === 'cancelled') {
+          jobStore.updateJob(recordId, { status: 'cancelled', progress: 0, stage: '已取消', errorMessage: task.errorMessage || '' })
+          jobStore.setGenerating(false)
+          jobStore.setCurrentJobId(null)
+          jobStore.saveJobsToStorage()
+        } else {
+          jobStore.failGeneration(recordId, task.errorMessage || '任务未能启动')
+        }
         activeTaskId = null
         activeSubmissionUnknown = false
         jobStore.resetPreviewUpscaleRunState()
@@ -173,6 +210,8 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
         jobStore.resetPreviewUpscaleRunState()
         notify('提交状态待确认；已按 requestId 查询任务，未自动重新提交', 'warning')
       }
+    } finally {
+      isSubmitting.value = false
     }
   }
 
@@ -194,12 +233,18 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
   }
 
   const handleHistoryPreviewSelect = (image) => {
-    const url = typeof image === 'string' ? image : image?.url || image?.path || ''
-    if (url) previewimgurl.value = url
+    const item = image?.item || image
+    const url = Array.isArray(image?.urls) ? image.urls[0] : (typeof image === 'string' ? image : image?.url || image?.path || '')
+    if (!url) return
+    uiStore.setSelectedResult({
+      jobId: item?.id || '',
+      url,
+      inputUrl: item ? jobStore.getInputUrl(item) : ''
+    })
   }
 
   return {
-    previewimgurl, previewUpscaleRunState,
+    previewimgurl, previewOriginalImage, previewUpscaleRunState, isSubmitting,
     handleUpscale: () => submit('upscale'),
     handlePreview: () => submit('render', true),
     handleCancel,

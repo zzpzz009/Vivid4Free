@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useToast } from '@/utils/toast.js'
 
 export const useImagePreviewMenu = (options = {}) => {
@@ -9,9 +9,11 @@ export const useImagePreviewMenu = (options = {}) => {
 
   const previewVisible = ref(false)
   const previewImage = ref(null)
+  const previewReturnFocus = ref(null)
 
   const menuVisible = ref(false)
   const menuImage = ref(null)
+  const menuTriggerElement = ref(null)
   const menuPos = ref({ x: 0, y: 0 })
 
   const menuStyle = computed(() => {
@@ -25,8 +27,9 @@ export const useImagePreviewMenu = (options = {}) => {
     return { left: `${left}px`, top: `${top}px`, width: `${width}px` }
   })
 
-  const openPreview = (image) => {
+  const openPreview = (image, returnFocusElement = document.activeElement) => {
     previewImage.value = image
+    previewReturnFocus.value = returnFocusElement
     previewVisible.value = true
   }
 
@@ -35,38 +38,45 @@ export const useImagePreviewMenu = (options = {}) => {
     previewImage.value = null
   }
 
-  const openMenu = ({ image, x, y }) => {
+  const openMenu = ({ image, x, y, triggerElement }) => {
     menuImage.value = image
     menuPos.value = { x, y }
+    menuTriggerElement.value = triggerElement || document.activeElement
     menuVisible.value = true
   }
 
-  const closeMenu = () => {
+  const closeMenu = (reason = 'outside') => {
+    const trigger = menuTriggerElement.value
     menuVisible.value = false
     menuImage.value = null
+    menuTriggerElement.value = null
+    if (reason === 'escape' || reason === 'action') {
+      nextTick(() => { if (trigger?.isConnected) trigger.focus?.() })
+    }
   }
 
   const menuPreview = () => {
     const image = menuImage.value
-    closeMenu()
-    if (image) openPreview(image)
+    const trigger = menuTriggerElement.value
+    closeMenu('silent')
+    if (image) openPreview(image, trigger)
   }
 
   const menuPrimary = () => {
     const image = menuImage.value
-    closeMenu()
+    closeMenu('action')
     if (image && onPrimary) onPrimary(image)
   }
 
   const menuSecondary = () => {
     const image = menuImage.value
-    closeMenu()
+    closeMenu('action')
     if (image && onSecondary) onSecondary(image)
   }
 
   const menuCopy = async () => {
     const url = menuImage.value?.url || ''
-    closeMenu()
+    closeMenu('action')
     if (!url) return
     try {
       if (navigator?.clipboard?.writeText) {
@@ -90,7 +100,7 @@ export const useImagePreviewMenu = (options = {}) => {
 
   const menuOpenOriginal = () => {
     const url = menuImage.value?.url || ''
-    closeMenu()
+    closeMenu('action')
     if (!url) return
     window.open(url, '_blank', 'noopener,noreferrer')
   }
@@ -98,6 +108,7 @@ export const useImagePreviewMenu = (options = {}) => {
   return {
     previewVisible,
     previewImage,
+    previewReturnFocus,
     openPreview,
     closePreview,
     menuVisible,

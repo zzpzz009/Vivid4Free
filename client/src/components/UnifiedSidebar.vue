@@ -1,10 +1,9 @@
 <template>
-  <div class="h-full flex flex-col shrink-0" data-testid="unified-sidebar">
+  <div id="workspace-inputs" class="h-full flex flex-col shrink-0" data-testid="unified-sidebar">
     <div class="flex-1 overflow-y-auto overflow-x-hidden">
       <div class="flex flex-col gap-4 m-4 pb-8">
         <!-- Upload Image Area -->
-        <div
-          class="bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center w-[265px] overflow-hidden cursor-pointer transition-colors duration-200 relative"
+        <SidebarUploadCard label="上传待处理图片" :dragging="isDragOverImage"
           :class="[
             multipleImages ? 'min-h-[182px]' : 'h-[182px]',
             isDragOverImage ? 'bg-schemes-surface-container-high' : ''
@@ -13,7 +12,7 @@
           @dragover.prevent
           @dragenter="isDragOverImage = true"
           @dragleave="isDragOverImage = false"
-          @click="triggerImageUpload"
+          @activate="triggerImageUpload"
         >
           <input
             ref="imageInput"
@@ -43,8 +42,8 @@
             </div>
             <!-- Clear image button -->
             <button
-              class="absolute top-1 right-1 w-5 h-5 bg-schemes-surface-container-high rounded-full flex items-center justify-center hover:bg-schemes-surface-container transition-colors"
-              title="清空基础图"
+              class="absolute top-1 right-1 w-8 h-8 bg-schemes-surface-container-high rounded-full flex items-center justify-center hover:bg-schemes-surface-container transition-colors"
+              aria-label="清空待处理图片" title="清空待处理图片"
               @click.stop="clearImage"
             >
               <svg
@@ -139,12 +138,11 @@
               {{ imageUploadSubtitle }}
             </div>
           </div>
-        </div>
+        </SidebarUploadCard>
 
         <!-- Upload Reference Area -->
-        <div
+        <SidebarUploadCard label="上传参考图片" :dragging="isDragOverReference"
           v-if="showReferenceUpload && currentActionMode.id !== 'generate'"
-          class="bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center w-[265px] overflow-hidden cursor-pointer transition-colors duration-200 relative"
           :class="[
             multipleReferences ? 'min-h-[182px]' : 'h-[182px]',
             isDragOverReference ? 'bg-schemes-surface-container-high' : ''
@@ -153,7 +151,7 @@
           @dragover.prevent
           @dragenter="isDragOverReference = true"
           @dragleave="isDragOverReference = false"
-          @click="triggerReferenceUpload"
+          @activate="triggerReferenceUpload"
         >
           <input
             ref="referenceInput"
@@ -167,7 +165,7 @@
             v-if="!multipleReferences"
             class="absolute top-1 left-1 h-6 px-2 rounded-full flex items-center justify-center transition-colors z-10"
             :class="cktjx === 'true' ? 'bg-schemes-primary-container text-white' : 'bg-schemes-surface-container-high text-schemes-on-surface-variant hover:bg-schemes-surface-container'"
-            title="参考图镜像"
+            title="参考图镜像" aria-label="参考图镜像" :aria-pressed="cktjx === 'true'"
             @click.stop="toggleReferenceMirror"
           >
             <span class="text-xs font-m3-label-medium-font-family font-m3-label-medium-font-weight letter-spacing-m3-label-medium">
@@ -195,8 +193,8 @@
             </div>
             <!-- Clear reference button -->
             <button
-              class="absolute top-1 right-1 w-5 h-5 bg-schemes-surface-container-high rounded-full flex items-center justify-center hover:bg-schemes-surface-container transition-colors"
-              title="清空参考图"
+              class="absolute top-1 right-1 w-8 h-8 bg-schemes-surface-container-high rounded-full flex items-center justify-center hover:bg-schemes-surface-container transition-colors"
+              aria-label="清空参考图片" title="清空参考图片"
               @click.stop="clearReference"
             >
               <svg
@@ -279,10 +277,10 @@
               {{ referenceUploadSubtitle }}
             </div>
           </div>
-        </div>
+        </SidebarUploadCard>
         <div v-if="showRandomSeed && !showAdvancedParams" class="flex flex-col gap-1.5 w-[265px] py-2">
           <div class="flex justify-between items-center">
-            <label class="text-schemes-on-surface-variant text-xs font-medium">
+            <label for="workspace-seed" class="text-schemes-on-surface-variant text-xs font-medium">
               随机种子
             </label>
             <button
@@ -296,13 +294,7 @@
             </button>
           </div>
           <div class="relative group">
-            <input
-              v-model="randomSeed"
-              type="text"
-              class="w-full bg-schemes-surface-container text-schemes-outline text-sm rounded-lg px-3 py-2.5 outline-none border border-transparent focus:border-schemes-primary transition-all font-mono tracking-wide"
-              placeholder="输入种子..."
-              @blur="changeseed"
-            >
+            <Input id="workspace-seed" v-model="randomSeed" type="text" class="w-full font-mono" placeholder="输入种子…" @blur="changeseed" />
           </div>
         </div>
 
@@ -310,9 +302,9 @@
         <button 
           v-if="showAdvancedParams"
           class="flex flex-row items-center justify-between w-[265px] group focus:outline-none py-2"
-          @click.stop="toggleAdvancedOpen"
+          type="button" :aria-expanded="advancedOpen" aria-controls="workspace-advanced-parameters" @click.stop="toggleAdvancedOpen"
         >
-          <div class="text-schemes-primary-container font-medium text-sm flex items-center gap-2">
+          <div class="text-schemes-primary font-medium text-sm flex items-center gap-2">
             高级参数
           </div>
           <div 
@@ -346,12 +338,12 @@
           leave-from-class="transform translate-y-0 opacity-100"
           leave-to-class="transform -translate-y-2 opacity-0"
         >
-          <div v-if="showAdvancedParams && advancedOpen" class="flex flex-col gap-5 w-[265px]">
+          <div id="workspace-advanced-parameters" v-if="showAdvancedParams && advancedOpen" class="flex flex-col gap-4 w-[265px]">
             
             <!-- Random Seed -->
             <div v-if="showRandomSeed" class="space-y-1.5">
               <div class="flex justify-between items-center">
-                <label class="text-schemes-on-surface-variant text-xs font-medium">
+                <label for="workspace-seed" class="text-schemes-on-surface-variant text-xs font-medium">
                   随机种子
                 </label>
                 <button
@@ -365,13 +357,7 @@
                 </button>
               </div>
               <div class="relative group">
-                <input
-                  v-model="randomSeed"
-                  type="text"
-                  class="w-full bg-schemes-surface-container text-schemes-outline text-sm rounded-lg px-3 py-2.5 outline-none border border-transparent focus:border-schemes-primary transition-all font-mono tracking-wide"
-                  placeholder="输入种子..."
-                  @blur="changeseed"
-                >
+                <Input id="workspace-seed" v-model="randomSeed" type="text" class="w-full font-mono" placeholder="输入种子…" @blur="changeseed" />
               </div>
             </div>
 
@@ -382,7 +368,7 @@
                 </label>
                 <span class="text-xs bg-schemes-surface-container-high px-1.5 py-0.5 rounded text-schemes-on-surface-variant">{{ referenceStrengthLabel }}</span>
               </div>
-              <Slider
+              <Slider aria-label="参考图匹配"
                 v-model="referenceStrength"
                 :min="0"
                 :max="1"
@@ -400,7 +386,7 @@
                 </label>
                 <span class="text-xs bg-schemes-surface-container-high px-1.5 py-0.5 rounded text-schemes-on-surface-variant">{{ colorMatchStrengthLabel }}</span>
               </div>
-              <Slider
+              <Slider aria-label="颜色匹配"
                 v-model="colorMatchStrength"
                 :min="0"
                 :max="1"
@@ -413,36 +399,36 @@
 
             <!-- Add Scene Toggle -->
             <div v-if="showAddScene && currentActionMode.id !== 'generate'" class="flex items-center justify-between py-1">
-              <label class="text-schemes-on-surface-variant text-sm font-medium">
+              <label for="workspace-scene" class="text-schemes-on-surface-variant text-sm font-medium">
                 添加配景
               </label>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input 
-                  v-model="addScene" 
+                  id="workspace-scene" v-model="addScene" 
                   type="checkbox" 
                   class="sr-only peer"
                 >
-                <div class="w-9 h-5 bg-schemes-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-schemes-outline after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-schemes-primary-container peer-checked:after:bg-white peer-checked:after:border-white"></div>
+                <div class="w-9 h-5 bg-schemes-surface-container-high peer-focus-visible:shadow-[var(--pod-ring)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-schemes-outline after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-schemes-primary-container peer-checked:after:bg-white peer-checked:after:border-white"></div>
               </label>
             </div>
 
             <!-- Output Size -->
             <div v-if="showOutputSize && currentActionMode.id === 'generate'" class="space-y-1.5">
               <div class="flex justify-between items-center">
-                <label class="text-schemes-on-surface-variant text-xs font-medium">
+                <label for="workspace-output-size" class="text-schemes-on-surface-variant text-xs font-medium">
                   输出尺寸
                 </label>
                 <span class="text-xs text-schemes-outline">{{ outputSize }}px</span>
               </div>
               <div class="relative group">
-                <input
+                <input id="workspace-output-size"
                   v-model.number="outputSize"
                   type="number"
                   min="2536"
-                  max="6500"
+                  max="6300"
                   step="64"
-                  class="w-full bg-schemes-surface-container text-schemes-outline text-sm rounded-lg px-3 py-2.5 outline-none border border-transparent focus:border-schemes-primary transition-all"
-                  placeholder="2536 - 6500"
+                  class="pod-input w-full"
+                  placeholder="2536 - 6300"
                   @blur="validateOutputSize"
                 >
               </div>
@@ -456,7 +442,7 @@
                 </label>
                 <span class="text-xs bg-schemes-surface-container-high px-1.5 py-0.5 rounded text-schemes-on-surface-variant">{{ redraw }}</span>
               </div>
-              <Slider
+              <Slider aria-label="重绘强度"
                 v-model="redraw"
                 :min="0"
                 :max="0.4"
@@ -476,17 +462,17 @@
         <slot name="extra-controls"></slot>
         <!-- Prompt Input -->
         <div v-if="showPromptInput && currentActionMode.id !== 'generate'" class="w-[265px] space-y-2">
-          <label class="text-schemes-on-surface-variant text-sm font-medium pl-1">
+          <label for="workspace-prompt" class="text-schemes-on-surface-variant text-sm font-medium">
             {{ promptLabel }}
           </label>
           <div
-            class="bg-schemes-surface-container rounded-xl p-3 flex flex-row gap-1 items-start justify-center w-full h-[137px] border border-transparent focus-within:border-schemes-primary/50 focus-within:ring-1 focus-within:ring-schemes-primary/50 transition-all duration-200"
+            class="prompt-field"
           >
-            <textarea
+            <Textarea id="workspace-prompt"
               v-model="promptText"
-              class="text-schemes-on-surface text-sm leading-relaxed relative flex-1 h-full resize-none bg-transparent border-none outline-none focus:outline-none focus:ring-0 focus:ring-offset-0 placeholder-schemes-outline"
+              class="w-full h-full text-sm"
               placeholder="在此输入提示词..."
-              @input="handlePromptChange"
+              @update:model-value="handlePromptChange"
             />
           </div>
         </div>
@@ -553,6 +539,7 @@
       </div>
     </div>
     <div class="shrink-0 m-4 mt-4">
+      <p v-if="!canPreview" class="input-requirement">{{ !engineReady ? '请在运行环境中连接本地引擎' : '请先上传待处理图片' }}</p>
       <div class="w-[265px] flex flex-row gap-3 items-center justify-between">
           <div class="flex-1 h-10 relative">
             <HMenu as="div" class="rounded-2xl flex flex-row items-center justify-center w-full h-full relative">
@@ -573,8 +560,9 @@
 
               <HMenuButton
                 v-if="showActionDropdown"
-                class="bg-primary-container rounded-r-xl rounded-l-none flex flex-col gap-0 items-center justify-center shrink-0 w-[30px] relative overflow-hidden border-l border-on-primary-container/10"
-                :disabled="isPrimaryActionDisabled"
+                class="bg-primary-container rounded-r-xl rounded-l-none flex flex-col gap-0 items-center justify-center shrink-0 w-10 relative overflow-hidden border-l border-on-primary-container/10"
+                :disabled="previewUpscaleRunState !== 'idle' || submitting"
+                aria-label="选择预览或放大"
                 data-testid="primary-action-dropdown"
               >
                 <div class="pt-[5px] pr-3.5 pb-[5px] pl-3 flex flex-row gap-2 items-center justify-center shrink-0 w-12 h-10 relative">
@@ -621,14 +609,14 @@
           </div>
 
           <button
-            class="secondary-button flex-1 h-10"
+            class="flex-1 h-10" :class="isCancelDisabled ? 'pod-btn-outline' : 'pod-btn-danger'"
             :disabled="isCancelDisabled"
             data-testid="cancel-button"
             :data-mode="mode"
             @click.stop="selectGenerateMode({ id: 'cancel' })"
           >
             <div class="pt-2.5 pr-2.5 pb-2.5 pl-3 flex flex-row gap-1 items-center justify-center flex-1 relative">
-              <div class="button-text-secondary letter-spacing-m3-title-medium-emphasized">
+              <div class="text-sm font-medium">
                 {{ cancelActionText }}
               </div>
             </div>
@@ -802,6 +790,9 @@ import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Menu as HMenu, MenuButton as HMenuButton, MenuItems as HMenuItems, MenuItem as HMenuItem } from '@headlessui/vue'
 import Slider from './ui/Slider.vue'
+import SidebarUploadCard from '@/ui/SidebarUploadCard.vue'
+import Input from '@/ui/Input.vue'
+import Textarea from '@/ui/Textarea.vue'
 import { useImageStore, useJobStore, useAssetStore, useUIStore,useXMStore } from '../stores'
 import { icons } from '../utils/assets.js'
 import { success, error } from '../utils/toast.js'
@@ -814,7 +805,10 @@ export default {
     HMenuButton,
     HMenuItems,
     HMenuItem,
-    Slider
+    Slider,
+    SidebarUploadCard,
+    Input,
+    Textarea
   },
   props: {
     // Mode configuration
@@ -923,6 +917,8 @@ export default {
       type: String,
       default: null
     },
+    submitting: { type: Boolean, default: false },
+    engineReady: { type: Boolean, default: true },
     previewUpscaleRunState: {
       type: String,
       default: 'idle'
@@ -936,10 +932,10 @@ export default {
   setup(props, { emit }) {
     const xm = useXMStore()
     // 表单数据
-    const outputSize = ref(4096)
+    const outputSize = ref(Number(xm.size) || 4096)
 
-    const redraw = ref(0.2)
-    const cktjx = ref('false')
+    const redraw = ref(Number(xm.chfd) || 0)
+    const cktjx = ref(String(xm.jx) === 'true' ? 'true' : 'false')
     const referenceStrength = ref(Number(xm.referenceStrength ?? 0.8))
     const referenceStrengthLabel = computed(() => Number(referenceStrength.value).toFixed(2))
     const colorMatchStrength = ref(Number(xm.colorMatchStrength ?? 0.8))
@@ -1039,7 +1035,7 @@ export default {
     const isDragOverReference = ref(false)
     const isImageUploading = ref(false)
     const isReferenceUploading = ref(false)
-    const promptText = ref(String(prompt.value || props.defaultPromptText || ''))
+    const promptText = ref(String(prompt.value || xm.tsc || props.defaultPromptText || ''))
 
     const imageInput = ref(null)
 
@@ -1077,17 +1073,12 @@ export default {
     const magicWandIcon = icons.magicWand
     const generateDropdownIcon = icons.generateDropdown
 
-    // Computed properties - 使用全局状态的方法
-    // const canPreview = computed(() => imageStore.canPreview())
-    // const canGenerate = computed(() => imageStore.canGenerate())
-    const canPreview = true;
-    const canGenerate = true;
-    const isActionDisabled = computed(() => {
-      if (currentActionMode.value.id === 'preview') return !canPreview
-      return !canGenerate
-    })
+    const canPreview = computed(() => props.engineReady && Boolean(uploadedImage.value) && !isImageUploading.value && !isReferenceUploading.value)
+    const canGenerate = canPreview
+    const isActionDisabled = computed(() => currentActionMode.value.id === 'preview' ? !canPreview.value : !canGenerate.value)
     const isRunBusy = computed(() => props.previewUpscaleRunState !== 'idle')
     const primaryActionText = computed(() => {
+      if (props.submitting) return '正在提交…'
       if (props.previewUpscaleRunState === 'cancelling') {
         return '取消中...'
       }
@@ -1107,7 +1098,7 @@ export default {
     })
     const cancelActionText = computed(() => props.previewUpscaleRunState === 'cancelling' ? '取消中...' : '取消')
     const isPrimaryActionDisabled = computed(() => isRunBusy.value || isActionDisabled.value)
-    const isCancelDisabled = computed(() => props.previewUpscaleRunState === 'idle' || props.previewUpscaleRunState === 'cancelling')
+    const isCancelDisabled = computed(() => props.submitting || props.previewUpscaleRunState === 'idle' || props.previewUpscaleRunState === 'cancelling')
 
     // Image upload handlers
     const triggerImageUpload = () => {
@@ -1491,17 +1482,9 @@ export default {
         promptText.value = nextText
       }
       emit('prompt-change', promptText.value)
-    }, { immediate: true })
-    watch(currentActionMode, (next) => {
-      if (next?.id !== 'generate') return
-      if (uploadedReference.value) {
-        clearReference()
-      }
-      if (promptText.value) {
-        promptText.value = ''
-        emit('prompt-change', '')
-      }
     })
+    watch(prompt, value => { if (promptText.value !== value) promptText.value = String(value || '') })
+
 
     return {
       actionModes,
@@ -1581,5 +1564,11 @@ export default {
 </script>
 
 
-<style scoped lang="scss">
+<style scoped>
+.prompt-field{height:136px;padding:var(--space-3);background:var(--workspace-input-bg);border:1px solid var(--border-color);border-radius:var(--border-radius-base)}
+.prompt-field:focus-within{box-shadow:var(--pod-ring)}.prompt-field :deep(textarea:focus-visible){box-shadow:none}
+.input-requirement{margin:0 0 var(--space-2);font-size:12px;color:var(--text-secondary)}
+[data-testid=unified-sidebar]{background:var(--workspace-bg-sidebar);border-right:1px solid var(--border-color)}
+[data-testid=unified-sidebar] button{min-height:32px}
+[data-testid=primary-action-dropdown]{background:var(--color-lime-300)}
 </style>

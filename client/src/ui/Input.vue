@@ -38,7 +38,7 @@ const sizeClass = computed(() => {
     :class="[
       'pod-input',
       sizeClass,
-      variant === 'filled' ? 'bg-[#1f2937] border-[#374151]' : '',
+      variant === 'filled' ? 'pod-input-filled' : '',
       attrs.class as string
     ]"
     :value="modelValue"

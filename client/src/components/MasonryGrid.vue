@@ -4,10 +4,16 @@
       v-for="item in visibleItems"
       :key="item.key"
       data-testid="masonry-item"
+      role="button"
+      tabindex="0"
+      :aria-label="item.image?.name || '打开图片预览'"
       class="absolute"
       :style="item.style"
       :ref="(el) => observeItem(item.key, el, item.image)"
       @click="emitClick(item.key, item.image)"
+      @keydown.enter.prevent="emitClick(item.key, item.image)"
+      @keydown.space.prevent="emitClick(item.key, item.image)"
+      @keydown="handleMenuKeydown(item.image, $event)"
       @dblclick.stop="emitDblClick(item.key, item.image)"
       @contextmenu.prevent="emitMenu(item.image, $event)"
       @pointerdown="handlePointerDown(item.key, item.image, $event)"
@@ -212,7 +218,17 @@ export default {
     }
     const emitPrimary = (image) => emit('primary', image)
     const emitSecondary = (image) => emit('secondary', image)
-    const emitMenu = (image, event) => emit('menu', { image, x: event?.clientX ?? 0, y: event?.clientY ?? 0 })
+    const emitMenu = (image, event) => {
+      const triggerElement = event?.currentTarget || event?.target?.closest?.('[data-testid="masonry-item"]') || null
+      const rect = triggerElement?.getBoundingClientRect?.()
+      emit('menu', { image, x: event?.clientX || (rect ? rect.left + 12 : 0), y: event?.clientY || (rect ? rect.top + Math.min(36, rect.height) : 0), triggerElement })
+    }
+    const handleMenuKeydown = (image, event) => {
+      if (!((event.shiftKey && event.key === 'F10') || event.key === 'ContextMenu')) return
+      event.preventDefault()
+      event.stopPropagation()
+      emitMenu(image, { currentTarget: event.target?.closest?.('[data-testid="masonry-item"]') || event.currentTarget })
+    }
     const handlePointerDown = (key, image, event) => longPress.handlePointerDown(key, image, event)
     const handlePointerMove = (key, event) => longPress.handlePointerMove(key, event)
     const handlePointerUp = (key) => longPress.handlePointerUp(key)
@@ -296,6 +312,7 @@ export default {
       emitPrimary,
       emitSecondary,
       emitMenu,
+      handleMenuKeydown,
       handlePointerDown,
       handlePointerUp,
       handlePointerMove,

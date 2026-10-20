@@ -1,6 +1,6 @@
 // 项目上使用到的store内容
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import {randomNum} from '@/utils/utils'
 
 export const useXMStore = defineStore('xm', () => {
@@ -28,6 +28,19 @@ export const useXMStore = defineStore('xm', () => {
   const referenceStrength = ref(0.8)
   const colorMatchStrength = ref(0.8)
   const addScene = ref(true)
+
+  // Keep the small input settings cache separate from image bytes and credentials.
+  try {
+    const cached = JSON.parse(localStorage.getItem('workspace:input-settings') || '{}')
+    if (/^\d{1,20}$/.test(String(cached.seed || ''))) seed.value = String(cached.seed)
+    if (Number.isFinite(Number(cached.size))) size.value = String(Math.min(6300, Math.max(2536, Number(cached.size))))
+    if (Number.isFinite(Number(cached.redraw))) chfd.value = Math.min(.4, Math.max(0, Number(cached.redraw)))
+    if (typeof cached.mirror === 'boolean') jx.value = cached.mirror
+    if (typeof cached.prompt === 'string') tsc.value = cached.prompt.slice(0, 8000)
+  } catch { /* An unavailable cache must not prevent the workbench opening. */ }
+  watch([seed, size, chfd, jx, tsc], () => {
+    try { localStorage.setItem('workspace:input-settings', JSON.stringify({ seed: String(seed.value), size: size.value, redraw: chfd.value, mirror: String(jx.value) === 'true', prompt: String(tsc.value).slice(0, 8000) })) } catch {}
+  })
 
   const savedAddScene = localStorage.getItem('xm-addScene')
   if (savedAddScene === 'true' || savedAddScene === 'false') {

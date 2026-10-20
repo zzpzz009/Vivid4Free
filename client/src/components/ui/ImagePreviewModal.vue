@@ -35,6 +35,7 @@
               </button>
               <button
                 type="button"
+                ref="closeButton"
                 class="w-8 h-8 inline-flex items-center justify-center rounded bg-schemes-surface-container text-schemes-on-surface hover:bg-schemes-surface-container-high"
                 aria-label="关闭预览"
                 title="关闭"
@@ -83,13 +84,16 @@ export default {
     visible: { type: Boolean, default: false },
     image: { type: Object, default: null },
     showActions: { type: Boolean, default: true },
-    showTitle: { type: Boolean, default: true }
+    showTitle: { type: Boolean, default: true },
+    returnFocusElement: { type: Object, default: null }
   },
   emits: ['close', 'primary', 'secondary'],
   setup(props, { emit }) {
     const imageUrl = computed(() => props.image?.url || props.image?.path || '')
     const title = computed(() => props.image?.name || imageUrl.value || '')
     const viewportEl = ref(null)
+    const closeButton = ref(null)
+    let returnFocusTarget = null
     const scale = ref(1)
     const offset = ref({ x: 0, y: 0 })
     const panning = ref(false)
@@ -177,7 +181,16 @@ export default {
     watch(
       () => props.visible,
       (next) => {
-        if (!next) resetView()
+        if (!next) {
+          resetView()
+          const target = returnFocusTarget
+          returnFocusTarget = null
+          if (target?.isConnected) window.requestAnimationFrame(() => target.focus?.())
+        }
+        if (next) {
+          returnFocusTarget = props.returnFocusElement || document.activeElement
+          window.requestAnimationFrame(() => closeButton.value?.focus?.())
+        }
         if (next) window.addEventListener('keydown', onKeydown)
         else window.removeEventListener('keydown', onKeydown)
       },
@@ -192,7 +205,7 @@ export default {
       if (!imageUrl.value) return
       window.open(imageUrl.value, '_blank', 'noopener,noreferrer')
     }
-    return { imageUrl, title, openOriginal, viewportEl, onWheel, onPointerDown, onPointerMove, onPointerUp, imageStyle }
+    return { imageUrl, title, openOriginal, viewportEl, closeButton, onWheel, onPointerDown, onPointerMove, onPointerUp, imageStyle }
   }
 }
 </script>

@@ -176,7 +176,8 @@ export const useAssetStore = defineStore('asset', () => {
   }
 
   // 单图模式 - 设置文件
-  const setFloorplanFile = async (file) => {
+  const setFloorplanFile = async (file, isCurrent = () => true) => {
+    if (!isCurrent()) return { success: false, cancelled: true }
     if (!file) {
       floorplanFile.value = null
       return { success: true }
@@ -187,6 +188,10 @@ export const useAssetStore = defineStore('asset', () => {
       maxSize: 10 * 1024 * 1024
     })
 
+    if (!isCurrent()) {
+      if (result.file) cleanupFileUrl(result.file)
+      return { success: false, cancelled: true }
+    }
     if (result.success) {
       // 清理旧文件URL
       if (floorplanFile.value) {
@@ -198,7 +203,8 @@ export const useAssetStore = defineStore('asset', () => {
     return result
   }
 
-  const setStyleFile = async (file) => {
+  const setStyleFile = async (file, isCurrent = () => true) => {
+    if (!isCurrent()) return { success: false, cancelled: true }
     if (!file) {
       styleFile.value = null
       return { success: true }
@@ -209,6 +215,10 @@ export const useAssetStore = defineStore('asset', () => {
       maxSize: 10 * 1024 * 1024
     })
 
+    if (!isCurrent()) {
+      if (result.file) cleanupFileUrl(result.file)
+      return { success: false, cancelled: true }
+    }
     if (result.success) {
       // 清理旧文件URL
       if (styleFile.value) {

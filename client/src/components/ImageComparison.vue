@@ -69,9 +69,17 @@
     >
       <!-- Divider Handle -->
       <div 
-        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-7 h-7 bg-schemes-surface-container-high rounded-full shadow-sm border border-schemes-outline-variant pointer-events-auto flex items-center justify-center"
+        role="slider"
+        tabindex="0"
+        aria-label="原图与结果图分界"
+        :aria-valuemin="0"
+        :aria-valuemax="100"
+        :aria-valuenow="Math.round(sliderPosition)"
+        :aria-valuetext="`${Math.round(sliderPosition)}%`"
+        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11 h-11 bg-schemes-surface-container-high rounded-full shadow-sm border border-schemes-outline-variant pointer-events-auto flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-schemes-primary"
         @mousedown="startDragging"
         @touchstart="startDragging"
+        @keydown="handleSliderKeydown"
       >
         <div class="flex gap-[3px]">
           <div class="w-[2px] h-3 bg-schemes-outline rounded-full" />
@@ -84,7 +92,7 @@
     <div class="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
       原图
     </div>
-    <div class="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs navs">
+    <div class="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs navs" aria-hidden="true">
       结果图
     </div>
   </div>
@@ -121,11 +129,8 @@ export default {
     }
 
     watch(() => props.originalImage, (newVal) => {
-      if (newVal && !savedOriginalImage.value) {
-        savedOriginalImage.value = newVal
-        // savedOriginalImage.value = window.thissc.dcl
-      }
-    }, {immediate: true})
+      savedOriginalImage.value = newVal || null
+    }, { immediate: true })
     const updateSavedImage = (newImageSrc) => {
       savedOriginalImage.value = newImageSrc || null
     }
@@ -163,6 +168,16 @@ export default {
       const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100))
       sliderPosition.value = percentage
       emit('position-change', percentage)
+    }
+
+    const handleSliderKeydown = (event) => {
+      const increments = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }
+      if (event.key === 'Home' || event.key === 'End' || increments[event.key]) {
+        event.preventDefault()
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? 100 : clampPercentage(sliderPosition.value + increments[event.key] * (event.shiftKey ? 10 : 2))
+        sliderPosition.value = next
+        emit('position-change', next)
+      }
     }
 
     const startDragging = (event) => {
@@ -237,8 +252,6 @@ export default {
 
     const handleHoverMove = (event) => {
       if (!isHovering.value || isDragging.value) return
-      if (event?.target?.closest?.('.navs')) return
-
       pendingClientX = event.clientX
       if (hoverRaf) return
       hoverRaf = requestAnimationFrame(() => {
@@ -277,15 +290,11 @@ export default {
 
     // Watch for prop changes
     const updatePosition = (newPosition) => {
-      if (newPosition !== sliderPosition.value) {
-        sliderPosition.value = newPosition
-      }
+      const next = clampPercentage(Number(newPosition))
+      if (Number.isFinite(next) && next !== sliderPosition.value) sliderPosition.value = next
     }
 
-    // Update position when prop changes
-    if (props.initialPosition !== sliderPosition.value) {
-      updatePosition(props.initialPosition)
-    }
+    watch(() => props.initialPosition, updatePosition)
 
     return {
       // originalImage1,
@@ -299,6 +308,7 @@ export default {
       handleHoverEnter,
       handleHoverLeave,
       handleHoverMove,
+      handleSliderKeydown,
 
       updateSavedImage,
       savedOriginalImage,
@@ -311,8 +321,8 @@ export default {
 
 <style scoped>
 .navs{
-  width:22em;
-  background:transparent;
+  width:auto;
+  pointer-events:none;
   text-align: right;
 }
 /* Prevent text selection during drag */

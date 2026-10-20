@@ -4,8 +4,11 @@
     <!-- Title and Toggle Header -->
     <div class="flex flex-row gap-[3px] items-start justify-start flex-wrap content-start w-full h-7 mb-2 border-t border-schemes-outline-variant pt-2">
       <!-- History icon (also toggle button) -->
-      <div
-        class="cursor-pointer"
+      <button
+        type="button"
+        class="pod-icon-button pod-icon-md"
+        :aria-label="isExpanded ? '收起历史记录' : '展开历史记录'"
+        :aria-expanded="isExpanded"
         @click="toggleExpansion"
       >
         <img
@@ -14,7 +17,7 @@
           :src="historyIcon"
           alt="Toggle History"
         />
-      </div>
+      </button>
       <!-- Title -->
       <div class="text-schemes-on-surface text-left font-m3-title-medium-font-family text-m3-title-medium-font-size leading-m3-title-medium-line-height font-m3-title-medium-font-weight relative flex-1 letter-spacing-m3-title-medium">
         历史记录
@@ -31,18 +34,30 @@
       <!-- History Images Container with auto-wrap and vertical scroll -->
       <div class="w-full h-full overflow-y-auto pt-3 pb-0">
         <div class="flex flex-wrap gap-3 items-start">
-          <!-- All History Images (always visible) -->
+          <div v-if="displayItems.length === 0" class="w-full min-h-40 flex items-center justify-center text-center text-schemes-on-surface-variant text-sm">
+            <div>
+              <div>暂无历史结果</div>
+              <div class="text-xs mt-1">生成或放大图片后，结果会保存在这里</div>
+            </div>
+          </div>
+          <!-- Real history items only -->
+          <template v-else>
           <div
             v-for="(item, index) in displayItems"
             :key="item.id || `history-${index}`"
-            class="history-item rounded-xl shrink-0 w-[165px] h-[165px] relative cursor-pointer hover:opacity-90 transition-all overflow-hidden border-2"
+            role="button"
+            tabindex="0"
+            :aria-label="`历史任务：${getStatusLabel(item)}`"
+            class="history-item rounded-xl shrink-0 w-[165px] h-[165px] relative cursor-pointer hover:opacity-90 transition-all overflow-hidden border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-schemes-primary"
             :class="item?.id && item.id === selectedHistoryId ? 'border-schemes-primary' : 'border-transparent'"
             @click="onHistoryClick(item)"
             @dblclick.stop="onHistoryDblClick(item)"
+            @keydown.enter.prevent="selectHistoryImage(item)"
+            @keydown.space.prevent="selectHistoryImage(item)"
             @contextmenu.prevent.stop="onContextMenu($event, item)"
           >
             <div class="menu">
-              <div class="icon-btn" @click.stop="downloadImage(item)">
+              <button type="button" class="icon-btn" aria-label="下载图片" @click.stop="downloadImage(item)">
                 <div 
                   class="icon-mask"
                   :style="{
@@ -50,7 +65,7 @@
                     WebkitMaskImage: `url(${download})`
                   }"
                 ></div>
-              </div>
+              </button>
             </div>
             
             <!-- Workflow Type Badge -->
@@ -124,7 +139,7 @@
                 >
                   <!-- Pending/Uploading/Queued: Loading animation -->
                   <div
-                    v-if="['pending', 'uploading', 'queued', 'archiving'].includes(item.status)"
+                    v-if="['pending', 'uploading', 'submitting', 'queued', 'archiving'].includes(item.status)"
                     class="w-8 h-8 border-2 border-schemes-primary border-t-transparent rounded-full animate-spin"
                   ></div>
                   <!-- Failed: Error icon -->
@@ -181,50 +196,52 @@
               {{ formatTime(item.timestamp || item.createdAt) }}
             </div>
           </div>
+          </template>
 
-          <!-- Placeholder items (always visible) -->
-          <div
-            v-for="n in Math.max(0, 12 - displayItems.length)"
-            :key="`placeholder-${n}`"
-            class="bg-state-layers-secondary-opacity-08 rounded-xl shrink-0 w-[165px] h-[165px] relative"
-          ></div>
         </div>
-        <div v-if="menuVisible" class="fixed inset-0 z-[210]" @click="closeMenu">
-          <div class="absolute rounded-lg border border-schemes-outline-variant bg-schemes-surface px-2 py-2 shadow-lg" :style="menuStyle" @click.stop>
-            <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuPreview">预览</button>
-            <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuPrimary">设为主图</button>
-            <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuSecondary">设为参考图</button>
-            <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuOpenOriginal">查看原图</button>
-            <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuCopy">复制链接</button>
-          </div>
-        </div>
+        <ImageActionsMenu
+          :visible="menuVisible"
+          :position="menuStyle"
+          @close="closeMenu"
+          @primary="menuPrimary"
+          @secondary="menuSecondary"
+          @preview="menuPreview"
+          @open-original="menuOpenOriginal"
+          @copy="menuCopy"
+        />
       </div>
     </div>
   </div>
-  <ImagePreviewModal :visible="previewVisible" :image="previewImage" :show-title="false" @close="closePreview" @primary="previewPrimary" @secondary="previewSecondary" />
+  <ImagePreviewModal :visible="previewVisible" :image="previewImage" :show-title="false" :return-focus-element="previewReturnFocus" @close="closePreview" @primary="previewPrimary" @secondary="previewSecondary" />
 </template>
 
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useJobStore } from '@/stores'
+import { useUIStore } from '@/stores/useUIStore.js'
 import { icons } from '../utils/assets.js'
 import { useImageStore,useXMStore } from '../stores'
 import { useImagePreviewMenu } from '@/composables/useImagePreviewMenu.js'
 import ImagePreviewModal from './ui/ImagePreviewModal.vue'
+import ImageActionsMenu from './ui/ImageActionsMenu.vue'
 import { success, error } from '@/utils/toast.js'
 
 export default {
   name: 'HistorySection',
   emits: ['expansion-change','image-select','preview-select'],
-  components: { ImagePreviewModal },
+  components: { ImagePreviewModal, ImageActionsMenu },
   setup(props, { emit }) {
     // 使用 JobStore
     const jobStore = useJobStore()
+    const uiStore = useUIStore()
     const { historyItems, historyDegraded, progressMap, queuePositionMap, historySyncHint } = storeToRefs(jobStore)
     const xm = useXMStore()
     
-    const isExpanded = ref(false)
+    const isExpanded = computed({
+      get: () => uiStore.isHistoryExpanded,
+      set: (value) => uiStore.setHistoryExpanded(value)
+    })
     const cancellingSet = ref(new Set())
 
     // Icons
@@ -247,10 +264,10 @@ export default {
       return Array.isArray(historyItems.value) ? historyItems.value : []
     })
 
-    const selectedHistoryId = ref('')
+    const selectedHistoryId = computed(() => uiStore.selectedHistoryId)
 
     const selectHistoryImage = (item) => {
-      selectedHistoryId.value = item?.id || ''
+      uiStore.setSelectedHistoryId(item?.id || '')
 
       if (item?.status === 'completed') {
         const urls = jobStore.getOutputUrls(item)
@@ -272,6 +289,8 @@ export default {
       const statusMap = {
         'pending': '待处理',
         'uploading': '上传中',
+        'submitting': '提交中',
+        'submission_unknown': '提交状态待核对',
         'queued': '排队中',
         'running': '生成中',
         'processing': '生成中',
@@ -304,6 +323,8 @@ export default {
       if (['running', 'processing'].includes(status)) {
         return `生成中 · 进度 ${getDisplayProgress(item)}%`
       }
+      if (status === 'submitting') return '提交中'
+      if (status === 'submission_unknown') return '提交状态待核对'
       if (status === 'archiving') {
         return '等待正式归档'
       }
@@ -318,6 +339,12 @@ export default {
     }
 
     const getStageInfo = (item) => {
+      if (item?.status === 'submission_unknown') {
+        return item?.errorMessage || '请核对本地任务列表后再操作'
+      }
+      if (item?.status === 'submitting') {
+        return item?.stageInfo || '正在提交本地任务'
+      }
       if (['running', 'processing'].includes(item?.status)) {
         return item?.stageInfo || '处理中'
       }
@@ -463,7 +490,7 @@ export default {
 
     
     const selectImage = (image) => {
-      selectedHistoryId.value = image?.id || ''
+      uiStore.setSelectedHistoryId(image?.id || '')
       const xm  = useXMStore()
       xm.deldcl()
       const imageStore = useImageStore()
@@ -475,7 +502,7 @@ export default {
     }
 
     const selectCkImage = (image) => {
-      selectedHistoryId.value = image?.id || ''
+      uiStore.setSelectedHistoryId(image?.id || '')
       const xm  = useXMStore()
       xm.delck()
       const imageStore = useImageStore()
@@ -499,6 +526,7 @@ export default {
     const {
       previewVisible,
       previewImage,
+      previewReturnFocus,
       openPreview,
       closePreview,
       menuVisible,
@@ -571,6 +599,7 @@ export default {
       download,
       previewVisible,
       previewImage,
+      previewReturnFocus,
       openPreview,
       closePreview,
       previewPrimary,
@@ -593,7 +622,8 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.history-item:hover .menu {
+.history-item:hover .menu,
+.history-item:focus-within .menu {
   opacity: 1;
 }
 
@@ -616,13 +646,22 @@ export default {
   padding: 8px;
 
   .icon-btn{
-    width: 20px;
-    height: 20px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    border: 0;
+    padding: 6px;
+    border-radius: 999px;
+    background: var(--bg-component-solid);
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--pod-ring);
+    }
 
     .icon-mask {
       width: 100%;

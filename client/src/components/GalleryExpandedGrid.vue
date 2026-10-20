@@ -7,9 +7,16 @@
     <div
       v-for="item in layoutItems"
       :key="item.key"
+      data-testid="gallery-expanded-item"
+      role="button"
+      tabindex="0"
+      :aria-label="item.image?.name || '选择图片'"
       class="absolute overflow-hidden rounded-lg border border-schemes-outline-variant bg-schemes-surface-container"
       :style="item.style"
       @click="handleClick(item.key, item.image)"
+      @keydown.enter.prevent="handleClick(item.key, item.image)"
+      @keydown.space.prevent="handleClick(item.key, item.image)"
+      @keydown="handleMenuKeydown(item.image, $event)"
       @dblclick.stop="emitDblClick(item.image)"
       @contextmenu.prevent="emitMenu(item.image, $event)"
       @pointerdown="handlePointerDown(item.key, item.image, $event)"
@@ -145,9 +152,7 @@ export default {
       })
     })
 
-    const longPress = createLongPressMenuController({
-      onMenu: (image, event) => emit('menu', { image, x: event?.clientX ?? 0, y: event?.clientY ?? 0 })
-    })
+    const longPress = createLongPressMenuController({ onMenu: (image, event) => emitMenu(image, event) })
 
     const handlePointerDown = (key, image, event) => longPress.handlePointerDown(key, image, event)
     const handlePointerMove = (key, event) => longPress.handlePointerMove(key, event)
@@ -161,7 +166,19 @@ export default {
     const emitDblClick = (image) => emit('dblclick', image)
     const emitPrimary = (image) => emit('primary', image)
     const emitSecondary = (image) => emit('secondary', image)
-    const emitMenu = (image, event) => emit('menu', { image, x: event?.clientX ?? 0, y: event?.clientY ?? 0 })
+    const emitMenu = (image, event) => {
+      const triggerElement = event?.currentTarget || event?.target?.closest?.('[data-testid="gallery-expanded-item"]') || null
+      const rect = triggerElement?.getBoundingClientRect?.()
+      emit('menu', { image, x: event?.clientX || (rect ? rect.left + 12 : 0), y: event?.clientY || (rect ? rect.top + Math.min(36, rect.height) : 0), triggerElement })
+    }
+    const handleMenuKeydown = (image, event) => {
+      if (!((event.shiftKey && event.key === 'F10') || event.key === 'ContextMenu')) return
+      event.preventDefault()
+      event.stopPropagation()
+      const target = event.target?.closest?.('[data-testid="gallery-expanded-item"]') || event.currentTarget
+      const rect = target?.getBoundingClientRect?.()
+      emit('menu', { image, x: rect ? rect.left + 12 : 0, y: rect ? rect.top + Math.min(36, rect.height) : 0, triggerElement: target })
+    }
 
     const handleDragStart = (image, event) => {
       const url = image?.url || image?.path
@@ -231,6 +248,7 @@ export default {
       emitPrimary,
       emitSecondary,
       emitMenu,
+      handleMenuKeydown,
       handlePointerDown,
       handlePointerUp,
       handlePointerMove,

@@ -7,6 +7,7 @@
       <div class="text-center">
         <img :src="imageIcon" alt="No Images" class="w-12 h-12 mb-2 opacity-50 mx-auto" />
         <div class="text-schemes-on-surface-variant text-sm">暂无图片</div>
+        <div class="text-schemes-on-surface-variant text-xs mt-1">点击顶部“导入图库”添加本地图片</div>
       </div>
     </div>
     <div v-else class="flex-1 min-h-0 w-full">
@@ -16,7 +17,7 @@
             v-model="searchText"
             type="text"
             placeholder="搜索图片..."
-            class="flex-1 max-w-[360px] bg-schemes-surface-container text-schemes-outline text-sm rounded-lg px-3 py-2.5 outline-none border border-transparent focus:border-transparent focus:ring-0 focus:ring-transparent transition-all"
+            class="pod-input pod-input-sm pod-input-filled flex-1 max-w-[360px]"
           >
           <div class="text-xs text-schemes-on-surface-variant whitespace-nowrap">{{ filteredImages.length }}/{{ currentImages.length }}</div>
         </div>
@@ -53,28 +54,20 @@
         />
       </div>
     </div>
-    <div v-if="menuVisible" class="fixed inset-0 z-[210]" @click="closeMenu">
-      <div class="absolute rounded-lg border border-schemes-outline-variant bg-schemes-surface px-2 py-2 shadow-lg" :style="menuStyle" @click.stop>
-        <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuPreview">
-          预览
-        </button>
-        <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuPrimary">
-          设为主图
-        </button>
-        <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuSecondary">
-          设为参考图
-        </button>
-        <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuOpenOriginal">
-          查看原图
-        </button>
-        <button type="button" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="menuCopy">
-          复制链接
-        </button>
-      </div>
-    </div>
+    <ImageActionsMenu
+      :visible="menuVisible"
+      :position="menuStyle"
+      @close="closeMenu"
+      @primary="menuPrimary"
+      @secondary="menuSecondary"
+      @preview="menuPreview"
+      @open-original="menuOpenOriginal"
+      @copy="menuCopy"
+    />
     <ImagePreviewModal
       :visible="previewVisible"
       :image="previewImage"
+      :return-focus-element="previewReturnFocus"
       @close="closePreview"
       @primary="previewPrimary"
       @secondary="previewSecondary"
@@ -83,10 +76,11 @@
 </template>
 
 <script>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { icons } from '../utils/assets.js'
 import { useGalleryStore } from '../stores/useGalleryStore.js'
+import { useUIStore } from '@/stores/useUIStore.js'
 import { useImageStore } from '../stores'
 import { useXMStore } from '@/stores/xmStore.js'
 import { useToast } from '@/utils/toast.js'
@@ -94,10 +88,12 @@ import { useImagePreviewMenu } from '@/composables/useImagePreviewMenu.js'
 import GalleryCard from './GalleryCard.vue'
 import GalleryExpandedGrid from './GalleryExpandedGrid.vue'
 import ImagePreviewModal from './ui/ImagePreviewModal.vue'
+import ImageActionsMenu from './ui/ImageActionsMenu.vue'
 export default {
   name: 'GalleryPanel',
-  components: { GalleryCard, GalleryExpandedGrid, ImagePreviewModal },
+  components: { GalleryCard, GalleryExpandedGrid, ImagePreviewModal, ImageActionsMenu },
   props: {
+    active: { type: Boolean, default: true },
     isExpanded: {
       type: Boolean,
       default: false
@@ -107,8 +103,12 @@ export default {
   setup(props, { emit }) {
     const { info } = useToast()
     const galleryStore = useGalleryStore()
+    const uiStore = useUIStore()
     const { currentImages, isLoading } = storeToRefs(galleryStore)
-    const searchText = ref('')
+    const searchText = computed({
+      get: () => uiStore.gallerySearchText,
+      set: (value) => uiStore.setGallerySearchText(value)
+    })
 
     const filteredImages = computed(() => {
       const list = Array.isArray(currentImages.value) ? currentImages.value : []
@@ -181,6 +181,7 @@ export default {
     const {
       previewVisible,
       previewImage,
+      previewReturnFocus,
       openPreview,
       closePreview,
       menuVisible,
@@ -193,6 +194,13 @@ export default {
       menuCopy,
       menuOpenOriginal
     } = useImagePreviewMenu({ onPrimary: selectImage, onSecondary: selectCkImage })
+
+    watch(() => props.active, (active) => {
+      if (!active) {
+        closeMenu()
+        closePreview()
+      }
+    })
 
     let clickTimer = 0
     const handleImageClick = (image) => {

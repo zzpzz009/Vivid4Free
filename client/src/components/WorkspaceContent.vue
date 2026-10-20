@@ -7,6 +7,8 @@
       :show-advanced-params="true"
       :show-brush-button="false"
       :preview-upscale-run-state="previewUpscaleRunState"
+      :submitting="isSubmitting"
+      :engine-ready="engineReady"
       generate-button-text="生成"
       :external-reference-image="uploadedReferenceFile"
       @upload-image="handleImageUpload"
@@ -22,7 +24,7 @@
 
     <WorkspaceCanvasPanel
       ref="canvasPanel"
-      :original-image="uploadedImage?.preview"
+      :original-image="previewOriginalImage"
       :result-image="previewimgurl"
       :comparison-position="comparisonPosition"
       @position-change="handleComparisonPositionChange"
@@ -33,11 +35,13 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import UnifiedSidebar from './UnifiedSidebar.vue'
 import WorkspaceCanvasPanel from './workspace/WorkspaceCanvasPanel.vue'
 import { useWorkspaceAssetInputs } from '@/composables/workspace/useWorkspaceAssetInputs.js'
 import { useWorkspaceTaskOrchestrator } from '@/composables/workspace/useWorkspaceTaskOrchestrator.js'
+import { useUIStore } from '@/stores/useUIStore.js'
+import { useJobStore } from '@/stores/useJobStore.js'
 
 export default {
   name: 'WorkspaceContent',
@@ -45,13 +49,21 @@ export default {
     UnifiedSidebar,
     WorkspaceCanvasPanel
   },
+  props: {
+    engineReady: { type: Boolean, default: true }
+  },
   setup() {
+    const uiStore = useUIStore()
+    const jobStore = useJobStore()
     const canvasPanel = ref(null)
-    const comparisonPosition = ref(50)
+    const comparisonPosition = computed({
+      get: () => uiStore.comparisonSliderPosition,
+      set: (value) => uiStore.setComparisonSliderPosition(value)
+    })
 
     const handleComparisonPositionChange = (position) => {
       if (typeof position === 'number' && Number.isFinite(position)) {
-        comparisonPosition.value = Math.max(0, Math.min(100, position))
+        uiStore.setComparisonSliderPosition(position)
       }
     }
 
@@ -69,7 +81,9 @@ export default {
 
     const {
       previewimgurl,
+      previewOriginalImage,
       previewUpscaleRunState,
+      isSubmitting,
       handleUpscale,
       handlePreview,
       handleCancel,
@@ -82,13 +96,17 @@ export default {
       }
     })
 
+    onMounted(() => jobStore.loadJobsFromStorage())
+
     return {
       canvasPanel,
       comparisonPosition,
       uploadedReferenceFile,
       uploadedImage,
       previewimgurl,
+      previewOriginalImage,
       previewUpscaleRunState,
+      isSubmitting,
       handleComparisonPositionChange,
       handleImageUpload,
       handleReferenceUpload,
