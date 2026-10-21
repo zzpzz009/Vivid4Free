@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #725d42; font-family: Nunito, 'Noto Sans SC', 'Microsoft YaHei', sans-serif; }
+.island-intro { position: fixed; inset: 0; overflow: hidden; background: #f7f3df; isolation: isolate; }
+.island-intro[hidden] { display: none; }
+.island-paper { position: absolute; inset: 0; opacity: .2; background-image: radial-gradient(#9f927d .65px, transparent .65px); background-size: 7px 7px; pointer-events: none; }
+.island-bottom { position: absolute; left: clamp(24px, 5vw, 72px); right: clamp(24px, 5vw, 72px); bottom: 32px; display: flex; justify-content: flex-end; z-index: 2; font-size: 11px; }
+.island-skip { font: inherit; color: #725d42; padding: 10px 18px; border: 1px solid #e8e2d6; border-radius: 30px; background: #fffbe7; cursor: pointer; }
+.island-skip:hover { border-color: #19c8b9; }
+.island-skip:focus-visible { outline: 2px solid #794f27; outline-offset: 4px; }
+.island-scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 92px 20px 100px; }
+.island-emblem { position: relative; width: min(320px, 64vw, 40vh); aspect-ratio: 460 / 360; z-index: 1; }
+.island-emblem > svg { width: 100%; height: 100%; overflow: visible; }
+.island-bay { position: absolute; left: -6%; top: 77%; width: 112%; height: 20%; border-radius: 50%; background: #19c8b9; opacity: .07; z-index: -1; }
+.island-gull { position: absolute; inset: 0; opacity: .5; z-index: -1; pointer-events: none; }
+.island-gull svg { width: 100%; height: 100%; overflow: visible; }
+.island-gull path { transform-origin: 12px 9px; }
+.gull-flight { offset-path: path('M50 156C50 78 410 78 410 156C410 234 50 234 50 156Z'); offset-rotate: 0deg; offset-anchor: 0px 0px; }
+.gull-banking { transform-origin: 0px 0px; }
+.island-boat { position: absolute; left: 84%; top: 66%; width: 48px; height: 40px; }
+.island-boat svg { width: 100%; height: 100%; overflow: visible; }
+.island-wordmark { margin: 12px 0 0; color: #794f27; font-family: Nunito, sans-serif; font-size: 24px; line-height: 1.2; font-weight: 700; letter-spacing: .02em; }
+.island-wordmark span { font-weight: 500; }
+.island-tagline { margin: 28px 0 0; color: #794f27; font-size: clamp(26px, 4vw, 44px); line-height: 1.5; font-weight: 700; letter-spacing: .06em; }
+.island-tide { position: absolute; width: 140%; height: 26%; left: -20%; bottom: -14%; background: #19c8b9; opacity: .07; border-radius: 48% 52% 0 0 / 46% 70% 0 0; transform: rotate(-4deg); }
+.island-tide.back { bottom: -16%; transform: rotate(5deg); opacity: .04; }
+.playing .island-ribbon, .playing .island-glint { animation: island-draw 1.7s cubic-bezier(.3, 0, .15, 1) .3s both; }
+.playing .island-glint { animation-delay: .55s; }
+.playing .island-emblem { animation: island-arrive 1.6s ease-out both; }
+.playing .island-sun { animation: island-sunrise 4.2s cubic-bezier(.35, .1, .35, 1) .65s both; }
+.playing .island-sun-rays { animation: island-reflection .9s ease 4.2s both; }
+.playing .island-reflection { animation: island-reflection 1.6s ease 1.8s both; }
+.playing .island-wake { animation: island-water-recede 3.2s ease-in-out infinite alternate; }
+.playing .island-wordmark { animation: island-ink 1s ease 1.45s both; }
+.playing .island-tagline { animation: island-ink 1s ease 1.05s both; }
+.playing .island-bay { animation: island-water-appear 1.4s ease 1s both; }
+.playing .island-boat { animation: island-ink .8s ease 1.6s both; }
+.playing .island-boat svg { transform-origin: 50% 85%; animation: island-boat-heave 2.8s ease-in-out 1.6s infinite; }
+.playing .gull-flight { animation: island-gull-orbit 10s linear infinite; }
+.playing .island-gull { animation: island-gull-depth 10s steps(1, end) infinite; }
+.playing .gull-banking { animation: island-gull-bank 10s linear infinite; }
+.playing .gull-wing-left { animation: island-wing-left 1.4s ease-in-out 1s infinite; }
+.playing .gull-wing-right { animation: island-wing-right 1.4s ease-in-out 1s infinite; }
+.playing .island-tide { animation: island-tide 5s ease-in-out infinite alternate; }
+@keyframes island-draw { from { stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; } 8% { opacity: 1; } to { stroke-dasharray: 1; stroke-dashoffset: 0; opacity: 1; } }
+@keyframes island-arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes island-sunrise { from { transform: translate(-8px, 130px); } to { transform: translate(0, 0); } }
+@keyframes island-reflection { from { opacity: 0; } to { opacity: 1; } }
+@keyframes island-ink { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes island-water-appear { from { opacity: 0; scale: .85 1; } to { opacity: .07; scale: 1; } }
+@keyframes island-water-recede { from { opacity: .6; transform: translate(0, -3px) scaleX(.9); } to { opacity: .6; transform: translate(0, 3px) scaleX(1.05); } }
+@keyframes island-boat-heave { 0%, 100% { transform: translate(0, 1.5px) rotate(-2deg); } 50% { transform: translate(2px, -1.5px) rotate(1.5deg); } }
+@keyframes island-gull-orbit { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+@keyframes island-gull-depth { 0%, 100% { z-index: -1; } 50% { z-index: 2; } }
+@keyframes island-gull-bank { 0%, 100% { transform: rotate(-8deg); } 25% { transform: rotate(0deg); } 50% { transform: rotate(8deg); } 75% { transform: rotate(0deg); } }
+@keyframes island-wing-left { 0%, 55%, 100% { transform: rotate(0); } 18% { transform: rotate(-18deg); } 35% { transform: rotate(14deg); } }
+@keyframes island-wing-right { 0%, 55%, 100% { transform: rotate(0); } 18% { transform: rotate(18deg); } 35% { transform: rotate(-14deg); } }
+@keyframes island-tide { from { transform: translateX(-2%) rotate(-4deg); } to { transform: translateX(2%) rotate(-2deg); } }
+@media (max-width: 560px) { .island-bottom { bottom: 24px; } .island-wordmark { font-size: 20px; } }
+@media (max-height: 500px) { .island-scene { padding: 60px 20px; } .island-tagline { margin-top: 12px; } .island-bottom { bottom: 16px; } }
+@media (prefers-reduced-motion: reduce) { .island-intro *, .island-intro *::before { animation: none !important; transition: none !important; } }
+</style></head>
+<body>
+<section class="island-intro" id="island-intro" aria-label="海岛主题开屏">
+  <div class="island-paper" aria-hidden="true"></div>
+  <div class="island-scene">
+    <div class="island-emblem">__ISLAND_LOGO__
+      <div aria-hidden="true">
+        <div class="island-bay"></div>
+        <div class="island-gull"><svg viewBox="0 0 460 360" fill="none" stroke="#725d42" stroke-width="1.8" stroke-linecap="round"><g class="gull-flight"><g class="gull-banking"><g transform="translate(-12 -9)"><path class="gull-wing-left" d="M12 9Q6 3 1 6"/><path class="gull-wing-right" d="M12 9q6-6 11-3"/></g></g></g></svg></div>
+        <div class="island-boat"><svg viewBox="0 0 60 50" fill="none"><path d="M9 36h43l-9 9H18Z" fill="#725d42"/><path d="M31 5v31" stroke="#725d42" stroke-width="2" stroke-linecap="round"/><path d="M28 8 10 32h18Z" fill="#fffbe7" stroke="#c4b89e" stroke-width="1.2" stroke-linejoin="round"/><path d="m34 14 13 18H34Z" fill="#19c8b9" opacity=".6"/></svg></div>
+      </div>
+    </div>
+    <h1 class="island-wordmark">Vivid<span>4Free</span></h1>
+    <p class="island-tagline">让灵感，即刻成形</p>
+  </div>
+  <div class="island-tide back" aria-hidden="true"></div><div class="island-tide" aria-hidden="true"></div>
+  <div class="island-bottom"><button class="island-skip" id="skip" type="button">跳过 ↗</button></div>
+</section>
+</body></html>

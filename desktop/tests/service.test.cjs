@@ -59,6 +59,27 @@ function fakeWebSocketClass() {
 async function jsonFetch(url, options = {}) {
   const response = await fetch(url, options); return { status: response.status, body: await response.json() };
 }
+
+test('render submits source strengths and original nodes, with explicit controls applied only to their inputs', async () => {
+  const root = freshRoot(); const service = createTaskService(root, 'http://127.0.0.1:1');
+  running.push({ close: service.close });
+  const input = { kind: 'render', mainImage: 'main.png', referenceImage: 'reference.png', seed: 123 };
+  const graph = service.build(input);
+  assert.equal(graph['1322'].inputs.value, 1);
+  assert.equal(graph['1323'].inputs.value, 0.285403);
+  assert.equal(graph['1318'].class_type, 'Power Lora Loader (rgthree)');
+  assert.equal(graph['622'].class_type, 'Image Save');
+  assert.equal(graph['622'].inputs.extension, 'jpg');
+  assert.deepEqual(graph['1330'].inputs.text_a, ['1329', 0]);
+  assert.equal(graph['1321'].inputs.noise_seed, 123);
+  const changed = service.build({ ...input, referenceStrength: 0.5, colorMatchStrength: 0.4, addScene: false, mirror: true });
+  assert.equal(changed['1322'].inputs.value, 0.5);
+  assert.equal(changed['1323'].inputs.value, 0.4);
+  assert.equal(changed['735'].inputs.boolean, true);
+  assert.match(changed['1329'].inputs.positive, /不要增加任何配景/);
+  assert.notEqual(graph['1329'].inputs.positive, changed['1329'].inputs.positive);
+  assert.deepEqual(changed['1294'], graph['1294']);
+});
 afterEach(async () => {
   await Promise.all(running.splice(0).map(async item => { try { await item.close(); } catch {} }));
   fs.rmSync(tempRoot, { recursive: true, force: true });

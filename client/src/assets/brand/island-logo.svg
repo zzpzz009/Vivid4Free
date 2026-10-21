@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 360" fill="none" role="img" aria-label="Vivid4Free 海岛波带 Logo">
+  <defs>
+    <linearGradient id="island-ribbon" x1="96" y1="100" x2="356" y2="262" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#19c8b9"/><stop offset=".48" stop-color="#0cc0b5"/><stop offset="1" stop-color="#19c8b9"/>
+    </linearGradient>
+    <clipPath id="island-horizon"><path d="M220 0h150v190H220z"/></clipPath>
+  </defs>
+  <g clip-path="url(#island-horizon)">
+    <g class="island-sun">
+      <circle cx="292" cy="92" r="43" fill="#ffcc00" opacity=".16"/>
+      <circle cx="292" cy="92" r="26" fill="#ffcc00"/>
+      <path class="island-sun-rays" d="M292 38v-8m39 24 6-6m-84 6-6-6" stroke="#ffcc00" stroke-width="4" stroke-linecap="round"/>
+    </g>
+  </g>
+  <path class="island-ribbon" d="M103 115c27 63 39 127 83 127s62-127 105-127 48 63 69 127" stroke="url(#island-ribbon)" stroke-width="52" stroke-linecap="round" pathLength="1"/>
+  <path class="island-glint" d="M95 111c29 65 41 121 83 121s64-127 107-127 53 65 74 128" stroke="#fffbe7" stroke-opacity=".52" stroke-width="4" stroke-linecap="round" pathLength="1"/>
+  <g class="island-reflection" stroke="#ffcc00" stroke-linecap="round">
+    <path d="M282 203h20" stroke-width="3" opacity=".6"/>
+    <path d="M287 212h10" stroke-width="2" opacity=".35"/>
+  </g>
+  <g class="island-wake" stroke="#0cc0b5" stroke-linecap="round">
+    <path d="M159 295c34 11 100 11 137 0" stroke-width="4" opacity=".35"/>
+    <path d="M186 313c23 5 59 5 84 0" stroke-width="3" opacity=".2"/>
+  </g>
+</svg>

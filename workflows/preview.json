@@ -1,12 +1,26 @@
 {
   "622": {
-    "class_type": "SaveImage",
+    "class_type": "Image Save",
     "inputs": {
       "images": [
         "1305",
         0
       ],
-      "filename_prefix": "Vivid/preview"
+      "output_path": "第一阶段",
+      "filename_prefix": "预览",
+      "filename_delimiter": "_",
+      "filename_number_padding": 4,
+      "filename_number_start": "false",
+      "extension": "jpg",
+      "dpi": 72,
+      "quality": 100,
+      "optimize_image": "false",
+      "lossless_webp": "false",
+      "overwrite_mode": "false",
+      "show_history": "false",
+      "show_history_by_prefix": "false",
+      "embed_workflow": "false",
+      "show_previews": "true"
     }
   },
   "1305": {
@@ -103,7 +117,7 @@
     "class_type": "EditTextEncode_EditUtils",
     "inputs": {
       "clip": [
-        "vivid_detail_lora",
+        "1318",
         1
       ],
       "vae": [
@@ -124,24 +138,8 @@
       ]
     }
   },
-  "vivid_detail_lora": {
-    "class_type": "LoraLoader",
-    "inputs": {
-      "model": [
-        "1318",
-        0
-      ],
-      "clip": [
-        "1318",
-        1
-      ],
-      "lora_name": "klein\\realistic.safetensors",
-      "strength_model": 0.28,
-      "strength_clip": 0.28
-    }
-  },
   "1318": {
-    "class_type": "LoraLoader",
+    "class_type": "Power Lora Loader (rgthree)",
     "inputs": {
       "model": [
         "1317",
@@ -151,9 +149,18 @@
         "1301",
         0
       ],
-      "lora_name": "klein\\vivid_klein_v1.4_000076275.safetensors",
-      "strength_model": 1.0,
-      "strength_clip": 1.0
+      "lora_1": {
+        "on": true,
+        "lora": "klein\\vivid_klein_v1.4_000076275.safetensors",
+        "strength": 1,
+        "strengthTwo": null
+      },
+      "lora_2": {
+        "on": true,
+        "lora": "klein\\realistic.safetensors",
+        "strength": 0.28,
+        "strengthTwo": null
+      }
     }
   },
   "1317": {
@@ -298,7 +305,7 @@
     "class_type": "Text Concatenate",
     "inputs": {
       "text_a": [
-        "vivid_scene",
+        "1329",
         0
       ],
       "text_b": [
@@ -309,30 +316,10 @@
       "clean_whitespace": "true"
     }
   },
-  "vivid_scene": {
-    "class_type": "VividTextSwitch",
-    "inputs": {
-      "boolean": true,
-      "on_true": [
-        "1329",
-        0
-      ],
-      "on_false": [
-        "vivid_scene_off",
-        0
-      ]
-    }
-  },
   "1329": {
     "class_type": "easy positive",
     "inputs": {
       "positive": "加上丰富合理的配景，如马路上的车、人行道上有几个人，草地上的植物"
-    }
-  },
-  "vivid_scene_off": {
-    "class_type": "easy positive",
-    "inputs": {
-      "positive": "不增加任何场景，不要增加任何配景，如人、车、植物"
     }
   },
   "762": {
@@ -417,7 +404,7 @@
     "class_type": "ModelSamplingAuraFlow",
     "inputs": {
       "model": [
-        "vivid_detail_lora",
+        "1318",
         0
       ],
       "shift": 3.1
@@ -457,7 +444,7 @@
     "class_type": "CLIPTextEncode",
     "inputs": {
       "clip": [
-        "vivid_detail_lora",
+        "1318",
         1
       ],
       "text": [
@@ -502,7 +489,7 @@
     "class_type": "CLIPTextEncode",
     "inputs": {
       "clip": [
-        "vivid_detail_lora",
+        "1318",
         1
       ],
       "text": ""

@@ -25,8 +25,8 @@ export const useXMStore = defineStore('xm', () => {
 
   const jx = ref(false)// 镜像
   const chfd = ref(0.2)// 重绘幅度
-  const referenceStrength = ref(0.8)
-  const colorMatchStrength = ref(0.8)
+  const referenceStrength = ref(1)
+  const colorMatchStrength = ref(0.285403)
   const addScene = ref(true)
 
   // Keep the small input settings cache separate from image bytes and credentials.
@@ -47,6 +47,16 @@ export const useXMStore = defineStore('xm', () => {
     addScene.value = savedAddScene === 'true'
   }
 
+  // Restore source-workflow defaults once; retain the old values for rollback.
+  if (localStorage.getItem('xm-preview-defaults-version') !== '1') {
+    localStorage.setItem('xm-preview-settings-before-fidelity-v1', JSON.stringify({
+      referenceStrength: localStorage.getItem('xm-referenceStrength'),
+      colorMatchStrength: localStorage.getItem('xm-colorMatchStrength')
+    }))
+    localStorage.setItem('xm-referenceStrength', '1')
+    localStorage.setItem('xm-colorMatchStrength', '0.285403')
+    localStorage.setItem('xm-preview-defaults-version', '1')
+  }
   const savedReferenceStrength = Number.parseFloat(localStorage.getItem('xm-referenceStrength') || '')
   if (Number.isFinite(savedReferenceStrength)) {
     referenceStrength.value = Math.min(1, Math.max(0, savedReferenceStrength))
@@ -95,8 +105,8 @@ export const useXMStore = defineStore('xm', () => {
     jx.value = false
     // ft.value = ''
     chfd.value = 0.2
-    referenceStrength.value = 0.8
-    colorMatchStrength.value = 0.8
+    saveReferenceStrength(1)
+    saveColorMatchStrength(0.285403)
     addScene.value = true
   }
 

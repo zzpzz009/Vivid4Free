@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1 flex flex-col relative mx-5 my-4 min-h-0">
+  <div class="workspace-canvas flex-1 flex flex-col relative mx-5 my-4 min-h-0">
     <div
       v-show="resultImage"
       class="previvewimgp pt-2 pr-2.5 pb-2 pl-2.5 flex flex-col gap-2.5 items-center justify-center self-stretch shrink-0 w-5 relative"
@@ -16,9 +16,20 @@
 
     <div
       v-show="!resultImage"
-      class="flex items-center justify-center w-full h-full"
+      class="canvas-empty flex items-center justify-center w-full h-full"
     >
-      <div class="text-schemes-on-surface-variant text-center">
+      <div v-if="uiStore.skin === 'animal-island'" class="island-canvas-welcome">
+        <div class="island-seascape" aria-hidden="true">
+          <span class="island-sun"><IslandIcon name="Sun" :size="49" /></span>
+          <span class="island-cloud"><IslandIcon name="Cloud" :size="55" /></span>
+          <span class="island-sea island-sea-back" /><span class="island-sea island-sea-front" />
+          <span class="island-boat"><IslandIcon name="Sailboat" :size="108" /></span>
+          <span class="island-sprig"><IslandIcon name="Leaf" :size="36" /></span>
+        </div>
+        <h3>{{ actionLabel }}效果将在这里显示</h3>
+        <p>{{ actionLabel === '放大' ? '从左侧选择主图，开始放大。' : '从左侧选择图片，调整参数后开始预览。' }}</p>
+      </div>
+      <div v-else class="text-schemes-on-surface-variant text-center">
         <div class="font-m3-body-large-emphasized-font-family text-m3-body-large-emphasized-font-size mb-2">
           请上传图片开始处理
         </div>
@@ -39,14 +50,18 @@
 import { ref } from 'vue'
 import HistorySection from '../HistorySection.vue'
 import ImageComparisonVue from '../ImageComparison.vue'
+import { Icon as IslandIcon } from 'animal-island-vue'
+import { useUIStore } from '@/stores/useUIStore.js'
 
 export default {
   name: 'WorkspaceCanvasPanel',
   components: {
     HistorySection,
-    ImageComparisonVue
+    ImageComparisonVue,
+    IslandIcon
   },
   props: {
+    actionLabel: { type: String, default: '预览' },
     originalImage: {
       type: String,
       default: ''
@@ -78,6 +93,7 @@ export default {
     })
 
     return {
+      uiStore: useUIStore(),
       emit,
       imageComparison,
       handleImageSelect

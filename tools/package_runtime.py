@@ -37,7 +37,9 @@ MODEL_FILES = (
 )
 # The audited final upscale graph may add packs/assets. A passing acceptance
 # report is required in addition to this known list, so it cannot certify gaps.
-NODE_PACKS = ('ComfyUI-EditUtils', 'ComfyUI-MingNodes', 'sd-perturbed-attention', 'vivid_nodes')
+NODE_PACKS = ('ComfyUI-EditUtils', 'ComfyUI-MingNodes', 'sd-perturbed-attention', 'vivid_nodes',
+              'rgthree-comfy', 'ComfyUI-Crystools', 'TextConditional', 'was-node-suite-comfyui',
+              'comfyui_essentials', 'Comfyui_TTP_Toolset', 'comfyui-easy-use', 'comfyui-custom-scripts')
 ENTRY = {'python': 'python/python.exe', 'launcher': 'tools/start_comfy.py'}
 
 

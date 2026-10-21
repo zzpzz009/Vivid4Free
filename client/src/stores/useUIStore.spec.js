@@ -17,6 +17,35 @@ describe('useUIStore', () => {
     localStorage.clear()
   })
 
+  it('keeps the original skin by default and persists a valid second skin with work state', () => {
+    const store = useUIStore()
+    expect(store.skin).toBe('original')
+    store.setGallerySearchText('facade')
+    store.setSkin('animal-island')
+    expect(JSON.parse(localStorage.getItem('ui:rightPanel'))).toMatchObject({ skin: 'animal-island', gallerySearchText: 'facade' })
+    setActivePinia(createPinia())
+    expect(useUIStore().skin).toBe('animal-island')
+    expect(useUIStore().gallerySearchText).toBe('facade')
+    useUIStore().setSkin('original')
+    expect(JSON.parse(localStorage.getItem('ui:rightPanel')).skin).toBe('original')
+  })
+
+  it('falls back to the original skin for unknown persisted values and when storage is unavailable', () => {
+    localStorage.setItem('ui:rightPanel', JSON.stringify({ skin: 'unknown', activeRightTab: 'gallery' }))
+    const store = useUIStore()
+    expect(store.skin).toBe('original')
+    expect(store.activeRightTab).toBe('gallery')
+    const storage = global.localStorage
+    try {
+      global.localStorage = { getItem() { throw new Error('blocked') }, setItem() { throw new Error('blocked') } }
+      setActivePinia(createPinia())
+      const unavailable = useUIStore()
+      expect(unavailable.skin).toBe('original')
+      expect(() => unavailable.setSkin('animal-island')).not.toThrow()
+      expect(unavailable.skin).toBe('animal-island')
+    } finally { global.localStorage = storage }
+  })
+
   it('toggleRightPanel should toggle state', () => {
     const store = useUIStore()
     store.isRightPanelExpanded = false

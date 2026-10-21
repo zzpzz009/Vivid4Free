@@ -10,7 +10,7 @@
     <div
       v-if="visible"
       class="toast-outer fixed top-4 right-4 z-50 max-w-sm w-full rounded-xl overflow-hidden p-[2px]"
-      :class="{ 'animate-spin-slow': isSpinning }"
+      :class="{ 'animate-spin-slow': isSpinning, 'island-toast': isIsland }"
       :style="outerStyles"
     >
       <div class="toast-inner relative bg-schemes-surface-container-high rounded-lg p-4 flex items-start h-full w-full">
@@ -20,8 +20,9 @@
             :class="iconClasses"
             class="w-6 h-6 flex items-center justify-center"
           >
+            <IslandIcon v-if="isIsland" :name="islandIcon" :size="24" />
             <svg
-              v-if="type === 'success'"
+              v-else-if="type === 'success'"
               class="w-5 h-5"
               fill="none"
               viewBox="0 0 24 24"
@@ -99,12 +100,16 @@
           <div class="font-m3-body-medium-font-family text-m3-body-medium-font-size mt-1 text-schemes-on-surface-variant break-words">
             {{ message }}
           </div>
+          <div v-if="isIsland && progress !== undefined" class="mt-3" role="progressbar" aria-label="操作进度" :aria-valuenow="Math.min(100, Math.max(0, progress))" aria-valuemin="0" aria-valuemax="100">
+            <IslandProgress :percent="progress" variant="forest-grove" size="small" aria-hidden="true" />
+          </div>
         </div>
 
         <!-- Close Button -->
         <div class="ml-4 flex-shrink-0 z-10">
           <button
             class="rounded-md p-1.5 hover:opacity-75 transition-opacity focus:outline-none text-schemes-on-surface-variant"
+            aria-label="关闭提示"
             @click="close"
           >
             <svg
@@ -127,9 +132,12 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Icon as IslandIcon, Progress as IslandProgress } from 'animal-island-vue'
+import { useUIStore } from '@/stores/useUIStore.js'
 
 export default {
   name: 'Toast',
+  components: { IslandIcon, IslandProgress },
   props: {
     type: {
       type: String,
@@ -163,6 +171,9 @@ export default {
   },
   emits: ['close'],
   setup(props, { emit }) {
+    const uiStore = useUIStore()
+    const isIsland = computed(() => uiStore.skin === 'animal-island')
+    const islandIcon = computed(() => ({ success: 'Check', error: 'Close', warning: 'Bell', info: 'Chat' })[props.type])
     const visible = ref(true)
     let timer = null
 
@@ -173,11 +184,16 @@ export default {
       info: '#3b82f6'     // blue-500
     }
 
-    const accentColor = computed(() => colors[props.type] || colors.info)
+    const accentColor = computed(() => {
+      if (!isIsland.value) return colors[props.type] || colors.info
+      const tokens = { success: 'success', error: 'error', warning: 'warning', info: 'primary' }
+      return `var(--animal-${tokens[props.type]}-color)`
+    })
 
-    const isSpinning = computed(() => props.progress === undefined)
+    const isSpinning = computed(() => !isIsland.value && props.progress === undefined)
 
     const outerStyles = computed(() => {
+      if (isIsland.value) return { '--toast-accent': accentColor.value }
       if (props.progress !== undefined) {
         const p = Math.min(Math.max(props.progress, 0), 100)
         return {
@@ -191,6 +207,7 @@ export default {
     })
 
     const iconClasses = computed(() => {
+      if (isIsland.value) return ''
       const typeClasses = {
         success: 'text-green-500',
         error: 'text-red-500',
@@ -222,6 +239,8 @@ export default {
 
     return {
       visible,
+      isIsland,
+      islandIcon,
       accentColor,
       isSpinning,
       outerStyles,

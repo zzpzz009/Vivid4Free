@@ -142,13 +142,13 @@ const canvasToBlob = (canvas, type, quality) => new Promise((resolve, reject) =>
   }, type, quality)
 })
 
-export const resizeImageFileForWorkspace = async (type, file) => {
+export const resizeImageFileForWorkspace = async (type, file, preserveOriginalWhenWithinLimits = false) => {
   const rule = getWorkspaceImageResizeRule(type)
   const { width, height, cleanup, image } = await readImageDimensions(file)
 
   try {
     const plan = computeImageResizePlan(width, height, rule)
-    const forceJpeg = type === 'dcl'
+    const forceJpeg = type === 'dcl' && (plan.resized || !preserveOriginalWhenWithinLimits)
     const needsTransform = plan.resized || forceJpeg
 
     if (!needsTransform) {

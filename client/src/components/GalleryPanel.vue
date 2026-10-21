@@ -3,6 +3,7 @@
     <div v-if="isLoading" class="flex items-center justify-center h-32">
       <div class="text-schemes-on-surface-variant">加载中...</div>
     </div>
+    <IslandEmptyMaterials v-else-if="currentImages.length === 0 && uiStore.skin === 'animal-island'" gallery />
     <div v-else-if="currentImages.length === 0" class="flex items-center justify-center h-32">
       <div class="text-center">
         <img :src="imageIcon" alt="No Images" class="w-12 h-12 mb-2 opacity-50 mx-auto" />
@@ -80,6 +81,7 @@ import { storeToRefs } from 'pinia'
 import { icons } from '../utils/assets.js'
 import { useGalleryStore } from '../stores/useGalleryStore.js'
 import { useUIStore } from '@/stores/useUIStore.js'
+import IslandEmptyMaterials from './island/IslandEmptyMaterials.vue'
 import { useImageStore } from '../stores'
 import { useXMStore } from '@/stores/xmStore.js'
 import { useToast } from '@/utils/toast.js'
@@ -90,7 +92,7 @@ import ImagePreviewModal from './ui/ImagePreviewModal.vue'
 import ImageActionsMenu from './ui/ImageActionsMenu.vue'
 export default {
   name: 'GalleryPanel',
-  components: { GalleryCard, GalleryExpandedGrid, ImagePreviewModal, ImageActionsMenu },
+  components: { GalleryCard, GalleryExpandedGrid, ImagePreviewModal, ImageActionsMenu, IslandEmptyMaterials },
   props: {
     active: { type: Boolean, default: true },
     isExpanded: {
@@ -223,6 +225,7 @@ export default {
     })
 
     return {
+      uiStore,
       isLoading,
       currentImages,
       searchText,

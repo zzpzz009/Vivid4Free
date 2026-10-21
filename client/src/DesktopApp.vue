@@ -47,7 +47,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import WorkspaceHeader from '@/components/WorkspaceHeader.vue'
 import DesktopToolbar from '@/components/DesktopToolbar.vue'
 import WorkspaceContent from '@/components/WorkspaceContent.vue'
@@ -60,6 +60,7 @@ import Button from '@/ui/Button.vue'
 import ToastContainer from '@/components/ui/ToastContainer.vue'
 
 const uiStore = useUIStore()
+watchEffect(() => { document.documentElement.dataset.vividSkin = uiStore.skin })
 const galleryStore = useGalleryStore()
 const authStore = useAuthStore()
 const workspace = ref(null)

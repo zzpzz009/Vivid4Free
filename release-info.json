@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "clientVersion": "0.4.0",
-  "tag": "v0.4.0",
+  "clientVersion": "0.5.1",
+  "tag": "v0.5.1",
   "releaseDate": "2026-10-21",
   "channel": "local-preview",
-  "delivery": "source-preview",
+  "delivery": "local-installer",
   "platform": "win32-x64",
   "notes": "CHANGELOG.md",
   "runtime": {
@@ -13,7 +13,8 @@
     "testedVersion": "0.3.0",
     "distribution": "separate-download",
     "includedInRepository": false,
-    "automaticDownloadAvailable": false
+    "automaticDownloadAvailable": false,
+    "requiredLocalRevision": "preview-fidelity-v1"
   },
   "features": {
     "localRender": true,
@@ -25,7 +26,9 @@
     "accountRegistrationEntry": true,
     "accountSettings": true,
     "customTitlebar": true,
-    "localGenerationConsumesQuota": false
+    "localGenerationConsumesQuota": false,
+    "dualSkin": true,
+    "themeStartupIntro": true
   },
   "validation": {
     "nativeDragAndEdgeResizeManuallyConfirmed": false,

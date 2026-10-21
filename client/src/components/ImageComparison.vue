@@ -81,10 +81,10 @@
     </div>
 
     <!-- Labels -->
-    <div class="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+    <div class="comparison-label absolute top-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
       原图
     </div>
-    <div class="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs navs">
+    <div class="comparison-label absolute top-4 right-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs navs">
       结果图
     </div>
   </div>

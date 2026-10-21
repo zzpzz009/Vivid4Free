@@ -7,6 +7,7 @@
       </div>
     </div>
 
+    <IslandEmptyMaterials v-else-if="displayImages.length === 0 && uiStore.skin === 'animal-island'" />
     <div v-else-if="displayImages.length === 0" class="flex flex-col items-center justify-center h-32 text-center">
       <img :src="imageIcon" alt="No Usage Data" class="w-12 h-12 mb-2 opacity-50" />
       <div class="text-schemes-on-surface-variant text-sm">还没有使用过图片</div>
@@ -70,6 +71,8 @@ import { ref, onMounted, watch } from 'vue'
 import { icons } from '../utils/assets.js'
 import { useImageUsage } from '../composables/useImageUsage.js'
 import { useImageStore,useXMStore } from '@/stores'
+import { useUIStore } from '@/stores/useUIStore.js'
+import IslandEmptyMaterials from './island/IslandEmptyMaterials.vue'
 import { useImagePreviewMenu } from '@/composables/useImagePreviewMenu.js'
 import xmAPI from '../api/xmapi.js'
 import { probeImageMeta } from '../utils/imageMeta.js'
@@ -80,7 +83,7 @@ import ImageActionsMenu from './ui/ImageActionsMenu.vue'
 
 export default {
   name: 'FavoritesPanel',
-  components: { GalleryCard, MasonryGrid, ImagePreviewModal, ImageActionsMenu },
+  components: { GalleryCard, MasonryGrid, ImagePreviewModal, ImageActionsMenu, IslandEmptyMaterials },
   props: {
     active: { type: Boolean, default: true },
     isExpanded: {
@@ -246,6 +249,7 @@ export default {
       }
     })
     return {
+      uiStore: useUIStore(),
       displayImages,
       isLoading,
       imageIcon,

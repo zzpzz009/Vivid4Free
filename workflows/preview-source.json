@@ -1,13 +1,13 @@
 {
   "source": "G:\\Agent\\Vivida4free\\vivid模型\\01生动建筑第一阶段预览-klein.json",
   "source_sha256": "d9020c09c54d9387107b3b8ddcb12078ac9ee5d16fff9f8ffbb8b83f7c020e21",
-  "nodes": 46,
+  "nodes": 43,
   "changes": [
     "v1.4_000076275 selected by user",
     "Zhipu caption replaced by local Qwen3.5 visual inference",
-    "UI utility adapters preserve original computations",
-    "Power Lora expanded to two core LoraLoader nodes; original realistic strength .28 retained",
-    "final image saved as lossless PNG through core SaveImage, without WAS history/UI dependencies",
-    "scene checkbox controls original scene text; sampling chain unchanged"
+    "Original computational node types and links retained; SetNode reroutes and ImpactInt constant folded",
+    "Original Power Lora Loader retained with original strengths and ordering",
+    "Original WAS Image Save and JPG settings retained; show_previews enabled for client result retrieval",
+    "Scene checkbox edits original scene text node only; sampling chain unchanged"
   ]
 }

@@ -39,8 +39,6 @@ def compile_graph():
             return resolve(list(links[link]))
         if node['type'] == 'ImpactInt':
             return node['widgets_values'][0]
-        if node['type'] == 'Power Lora Loader (rgthree)':
-            return ['vivid_detail_lora', slot]
         return value
 
     for item in graph.values():
@@ -48,25 +46,19 @@ def compile_graph():
     graph.pop('1356')  # ImpactInt is a literal, not a computation node.
     model_link = resolve(list(links[next(i['link'] for i in nodes['1318']['inputs'] if i['name'] == 'model')]))
     clip_link = resolve(list(links[next(i['link'] for i in nodes['1318']['inputs'] if i['name'] == 'clip')]))
-    graph['1318'] = {'class_type': 'LoraLoader', 'inputs': {
-        'model': model_link, 'clip': clip_link, 'lora_name': str(Path('klein') / 'vivid_klein_v1.4_000076275.safetensors'),
-        'strength_model': 1.0, 'strength_clip': 1.0}}
-    graph['vivid_detail_lora'] = {'class_type': 'LoraLoader', 'inputs': {
-        'model': ['1318', 0], 'clip': ['1318', 1], 'lora_name': str(Path('klein') / 'realistic.safetensors'),
-        'strength_model': .28, 'strength_clip': .28}}
+    loras = [dict(value) for value in nodes['1318']['widgets_values']
+             if isinstance(value, dict) and 'lora' in value and value.get('on')]
+    loras[0]['lora'] = str(Path('klein') / 'vivid_klein_v1.4_000076275.safetensors')
+    graph['1318'] = {'class_type': 'Power Lora Loader (rgthree)', 'inputs': {
+        'model': model_link, 'clip': clip_link,
+        **{f'lora_{index}': value for index, value in enumerate(loras, 1)}}}
     graph['760'] = {'class_type': 'VividLocalCaption', 'inputs': {
         'image': resolve(list(links[next(i['link'] for i in nodes['760']['inputs'] if i['name'] == 'image')])),
         'prompt': nodes['760']['widgets_values'][1]}}
-    graph['622'] = {'class_type': 'SaveImage', 'inputs': {
-        'images': resolve(list(links[next(i['link'] for i in nodes['622']['inputs'] if i['name'] == 'images')])),
-        'filename_prefix': 'Vivid/preview'}}
+    # Only expose the original saved JPG to the client; encoding settings stay intact.
+    graph['622']['inputs']['show_previews'] = 'true'
     for item in graph.values():
         item['inputs'].pop('upload', None)
-    # Add an explicit scene switch while preserving the original scene text.
-    graph['vivid_scene_off'] = {'class_type': 'easy positive', 'inputs': {'positive': '不增加任何场景，不要增加任何配景，如人、车、植物'}}
-    graph['vivid_scene'] = {'class_type': 'VividTextSwitch', 'inputs': {
-        'boolean': True, 'on_true': ['1329', 0], 'on_false': ['vivid_scene_off', 0]}}
-    graph['1330']['inputs']['text_a'] = ['vivid_scene', 0]
     graph['536']['inputs']['image'] = 'vivid-main.png'
     graph['605']['inputs']['image'] = 'vivid-reference.png'
     # Drop unconsumed UI/debug branches by traversing from the final output.
@@ -94,8 +86,8 @@ if __name__ == '__main__':
         'source': str(SOURCE), 'source_sha256': hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
         'nodes': len(graph), 'changes': ['v1.4_000076275 selected by user',
             'Zhipu caption replaced by local Qwen3.5 visual inference',
-            'UI utility adapters preserve original computations',
-            'Power Lora expanded to two core LoraLoader nodes; original realistic strength .28 retained',
-            'final image saved as lossless PNG through core SaveImage, without WAS history/UI dependencies',
-            'scene checkbox controls original scene text; sampling chain unchanged']}, ensure_ascii=False, indent=2), encoding='utf8')
+            'Original computational node types and links retained; SetNode reroutes and ImpactInt constant folded',
+            'Original Power Lora Loader retained with original strengths and ordering',
+            'Original WAS Image Save and JPG settings retained; show_previews enabled for client result retrieval',
+            'Scene checkbox edits original scene text node only; sampling chain unchanged']}, ensure_ascii=False, indent=2), encoding='utf8')
     print(f'Compiled {len(graph)} nodes; original sampling chain retained')
