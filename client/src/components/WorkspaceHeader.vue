@@ -172,5 +172,5 @@ export default {
 
 <style scoped>
 @media(max-width:1023px){.workspace-header{margin-left:8px;margin-right:8px}.workspace-header :deep(.nav-tab-active){width:auto;max-width:100%}.workspace-header :deep(.nav-tab-content){padding-left:8px;padding-right:8px}.workspace-header [data-testid=toolbar-right-tabs]>button{width:64px}.sidebar-toggle{left:4px}.workspace-header :deep(.nav-tab:first-child){padding-left:28px}}
-@media(max-width:767px){.workspace-header [data-testid=toolbar-right-tabs]>button{width:48px}.workspace-header :deep(.nav-tab-icon){width:20px;height:20px}}
+@media(max-width:767px){.workspace-header [data-testid=toolbar-right-tabs]>button{width:48px}}
 </style>

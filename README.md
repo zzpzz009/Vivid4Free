@@ -1,6 +1,6 @@
 # VividDesktop：客户端与 CF 独立分发
 
-当前版本 **0.3.3，本地试用版**。用户可见的迭代内容见 [版本更新](CHANGELOG.md)，后续版本与推送规则见 [项目约定](AGENTS.md)。本仓库仅提供客户端源码和文档，CF 环境、运行包、安装程序及个人数据分别保存在本机，未上传到 Git。
+当前源码版本 **0.4.0，账号与桌面体验预览版**，新版安装包尚未发布，本机原有 0.3.3 安装版保持不变。用户可见的迭代内容见 [版本更新](CHANGELOG.md)，后续版本与推送规则见 [项目约定](AGENTS.md)。本仓库仅提供客户端源码和文档，CF 环境、运行包、安装程序及个人数据分别保存在本机，未上传到 Git。
 
 2026-10-20 已按用户要求完成旧下载片段、测试缓存和旧版解包目录清理，过程脚本与前端遗留草稿已校验归档，正式客户端与 CF 保持可用。旧验收记录中的片段留存描述属于清理前快照；清理回执和恢复归档仅保存在本机。
 
@@ -37,7 +37,7 @@
 
 正式 CF 下载地址未确定，desktop/runtime-feed.json 的 manifestUrl 为空。目前先跑本地。独立下载、暂停、Range 续传、校验、ZIP64 安装和激活已在小夹具链路验证；正式托管与实际完整大包下载、解压安装需地址就绪后验收。完整包校验不等于已验证完整大包下载链路。
 
-用户要求暂缓线上账号接入，等待后续方法，共用账号中心目标保持 https://www.vividai.com.cn/new-api。界面如实显示账号接入待配置，没有伪造登录。本地生成不扣额度；创意工坊保留界面且未开放。开放功能为渲染、放大、图库和本机 Agent 接口。
+当前源码已接入统一账号中心 https://www.vividai.com.cn/new-api，支持登录、资料刷新、会话恢复与退出；注册入口打开官方账号中心。本机真实登录与会话生命周期已验证，多电脑、到期与撤销场景仍待验收，详见 [账号对接记录与配合事项](docs/account-system-integration.md)。导入图库、输出目录和 Agent 接口位于“登录 / 账号弹窗 → 设置”，未登录也可使用。自定义标题栏的按钮与双击已验证，拖动与边缘缩放仍待人工确认。本地生成不扣额度；创意工坊保留界面且未开放。
 
 ## CF 打包
 
@@ -63,7 +63,7 @@ $env:ELECTRON_BUILDER_CACHE = 'G:\PackageCaches\electron-builder'
 node tools/installer/node_modules/electron-builder/cli.js --projectDir desktop --config "$PWD/tools/installer/electron-builder.json" --config.directories.output=../release/r10-client033 --win nsis --x64 --publish never
 ```
 
-开发依赖分别在 desktop 和 tools/installer 安装。构建使用显式文件白名单。安装器只检查目标目录占用，不按进程名杀其他版本。基线保留在 .local-baseline；未推送远端或修改线上账号配置。
+开发依赖分别在 desktop 和 tools/installer 安装。构建使用显式文件白名单。上方命令展示原 0.3.3 安装包的构建方式，制作新版本时应使用对应的独立输出目录；本轮仅交付源码。安装器只检查目标目录占用，不按进程名杀其他版本。基线保留在 .local-baseline；未修改线上账号配置。
 
 ## Agent
 

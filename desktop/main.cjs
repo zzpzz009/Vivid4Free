@@ -130,12 +130,27 @@ else {
       runtimeRoot, runtimeStatus: () => ({ ...manager.status(), engineReady }), agentToken: token,
       port: listenPort('VIVID_TEST_UI_PORT', 17860), agentPort: listenPort('VIVID_TEST_AGENT_PORT', 17861) });
     fs.writeFileSync(tokenPath, JSON.stringify({ endpoint: `${server.agentOrigin}/v1`, token, protocolVersion: '1.0' }, null, 2));
-    window = new BrowserWindow({ width: 1500, height: 960, minWidth: 640, minHeight: 720, title: 'VividAI 本地渲染', autoHideMenuBar: true,
+    window = new BrowserWindow({ width: 1500, height: 960, minWidth: 640, minHeight: 720, title: 'VividAI 本地渲染', frame: false, thickFrame: true, autoHideMenuBar: true,
       backgroundColor: '#0F0D13', webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
     const sender = event => {
       const frame = event.senderFrame;
       if (event.sender !== window.webContents || frame !== window.webContents.mainFrame || !frame.url.startsWith(`${server.origin}/`)) throw new Error('不允许的调用来源');
     };
+    window.removeMenu();
+    const windowState = () => ({ maximized: window.isMaximized(), fullscreen: window.isFullScreen() });
+    const publishWindowState = () => { if (!window.isDestroyed()) window.webContents.send('window:state-changed', windowState()); };
+    for (const name of ['maximize', 'unmaximize', 'enter-full-screen', 'leave-full-screen']) window.on(name, publishWindowState);
+    ipcMain.handle('window:state', event => { sender(event); return windowState(); });
+    ipcMain.handle('window:action', (event, action) => {
+      sender(event);
+      if (action === 'minimize') window.minimize();
+      else if (action === 'toggle-maximize') {
+        if (window.isFullScreen()) window.setFullScreen(false);
+        else if (window.isMaximized()) window.unmaximize();
+        else window.maximize();
+      } else if (action === 'close') window.close();
+      else throw new Error('不支持的窗口操作');
+    });
     const account = createAccountService({ userData: root, secureStorage: safeStorage,
       fetchImpl: (url, options) => electronNet.fetch(url, options) });
     const accountAction = operation => async (event, input) => {

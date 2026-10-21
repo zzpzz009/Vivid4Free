@@ -2,7 +2,6 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './DesktopApp.vue'
 import './assets/styles/main.css'
-import './styles/podui.css'
 
 
 

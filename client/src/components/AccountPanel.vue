@@ -7,14 +7,27 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg>
           </span>
           <div>
-            <h2 id="account-title" class="account-title">{{ store.isAuthenticated ? '我的账号' : '登录账号' }}</h2>
-            <p id="account-description" class="account-subtitle">{{ store.isAuthenticated ? 'VividAI 统一账号' : '使用 VividAI 账号登录客户端' }}</p>
+            <h2 id="account-title" class="account-title">{{ settingsOpen ? '设置' : store.isAuthenticated ? '我的账号' : '登录账号' }}</h2>
+            <p id="account-description" class="account-subtitle">{{ settingsOpen ? 'VividDesktop' : store.isAuthenticated ? 'VividAI 统一账号' : '使用 VividAI 账号登录客户端' }}</p>
           </div>
         </div>
+        <div class="account-header-actions">
+        <button type="button" class="settings-entry" :aria-expanded="settingsOpen" aria-controls="desktop-account-settings" @click="settingsOpen = !settingsOpen">
+          <svg v-if="!settingsOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m9.5 3-.6 2.2-2 1.2-2.2-.6-2.5 4.4L4 12l-1.8 1.8 2.5 4.4 2.2-.6 2 1.2.6 2.2h5l.6-2.2 2-1.2 2.2.6 2.5-4.4L20 12l1.8-1.8-2.5-4.4-2.2.6-2-1.2L14.5 3Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+          {{ settingsOpen ? '返回账号' : '设置' }}
+        </button>
         <IconButton type="button" size="sm" aria-label="关闭" data-account-close @click="closePanel()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
         </IconButton>
+        </div>
       </header>
+      <section v-if="settingsOpen" id="desktop-account-settings" class="account-settings" aria-label="客户端设置">
+        <button type="button" @click="$emit('import')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m3 16 5-5 4 4 3-3 6 6M15 7h3m-1.5-1.5v3"/></svg><span>导入图库</span><span class="settings-arrow" aria-hidden="true">›</span></button>
+        <button type="button" @click="$emit('output')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg><span>输出目录</span><span class="settings-arrow" aria-hidden="true">›</span></button>
+        <button type="button" @click="$emit('agent')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 9 3 3-3 3m6 0h4"/></svg><span>Agent 接口</span><span class="settings-arrow" aria-hidden="true">›</span></button>
+      </section>
+      <div v-else>
       <p v-if="store.accountStatus === 'checking' || store.accountStatus === 'unavailable'" class="account-status" role="status">{{ statusText }}</p>
       <p v-if="store.snapshot.message" class="account-message" role="status">{{ store.snapshot.message }}</p>
 
@@ -43,6 +56,7 @@
         <p v-if="registrationMessage" class="account-message" role="status">{{ registrationMessage }}</p>
       </div>
       <p class="local-note"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>本地渲染与放大不扣额度</p>
+      </div>
     </Panel>
   </div>
 </template>
@@ -56,7 +70,7 @@ import IconButton from '@/ui/IconButton.vue'
 import Panel from '@/ui/Panel.vue'
 
 const props = defineProps({ open: { type: Boolean, default: false } })
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'import', 'output', 'agent'])
 const store = useAuthStore()
 const username = ref('')
 const password = ref('')
@@ -65,6 +79,7 @@ const registrationBusy = ref(false)
 const registrationMessage = ref('')
 const surface = ref(null)
 const activeAction = ref(null)
+const settingsOpen = ref(false)
 let opener
 let retryTimer
 const statusText = computed(() => ({
@@ -87,6 +102,7 @@ function startRetryCountdown() {
 watch(() => store.snapshot.retryAfterSeconds, startRetryCountdown)
 watch(() => props.open, async open => {
   if (!open) { password.value = ''; return }
+  settingsOpen.value = false
   opener = document.activeElement
   await nextTick()
   const target = surface.value?.querySelector('input[autocomplete="username"]:not(:disabled)') || surface.value?.querySelector('[data-account-close]')
@@ -159,10 +175,19 @@ async function openRegistration() {
 }
 </script>
 
+<style scoped src="../styles/podui.css"></style>
 <style scoped>
 .account-backdrop.podui-theme{position:fixed;inset:0;z-index:1100;pointer-events:none;background:transparent;font-family:Roboto,sans-serif}
-.account-panel{position:absolute;top:var(--desktop-utility-top,72px);right:var(--space-6);width:min(400px,calc(100vw - 32px));max-height:calc(100dvh - var(--desktop-utility-top,72px) - 24px);overflow-y:auto;padding:var(--space-6);pointer-events:auto;box-shadow:var(--shadow-lg)}
+.account-panel{position:absolute;top:64px;right:var(--space-6);width:min(400px,calc(100vw - 32px));max-height:calc(100dvh - 88px);overflow-y:auto;padding:var(--space-6);pointer-events:auto;box-shadow:var(--shadow-lg)}
 .account-header{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6)}
+.account-header-actions{display:flex;align-items:center;gap:var(--space-2);flex:none}
+.settings-entry{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 6px;border:0;border-radius:7px;background:transparent;color:var(--text-secondary);font-size:12px;cursor:pointer}
+.settings-entry:hover,.settings-entry[aria-expanded=true]{background:var(--workspace-card-bg);color:var(--text-primary)}
+.account-settings{display:grid;gap:4px}
+.account-settings>button{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:0 12px;border:0;border-radius:8px;background:transparent;color:var(--text-primary);font-size:12px;cursor:pointer;text-align:left}
+.account-settings>button:hover{background:var(--workspace-card-bg)}
+.account-settings svg{width:16px;height:16px;color:var(--text-secondary)}
+.settings-arrow{margin-left:auto;color:var(--text-secondary);font-size:18px}
 .account-heading{display:flex;align-items:center;gap:var(--space-3);min-width:0}
 .account-mark,.profile-avatar{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:var(--border-radius-base);background:var(--workspace-card-bg);color:var(--brand-primary)}
 .account-title{margin:0;font-size:16px;line-height:24px;font-weight:600}

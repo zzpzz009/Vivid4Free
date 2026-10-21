@@ -20,8 +20,7 @@
       style="line-height: 0;"
     >
       <input
-        :id="inputId"
-        :aria-label="$attrs['aria-label'] || label || '参数值'"
+        :id="inputId" :aria-label="$attrs['aria-label'] || label || '参数值'"
         v-model="internalValue"
         type="range"
         :min="min"
@@ -211,7 +210,7 @@ export default {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--brand-primary);
+  background: var(--primary-container);
   cursor: pointer;
   border: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
@@ -223,12 +222,12 @@ export default {
 }
 
 .slider::-webkit-slider-thumb:hover {
-  filter: brightness(1.1);
+  transform: scale(1.1);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .slider::-webkit-slider-thumb:active {
-  filter: brightness(.95);
+  transform: scale(0.95);
 }
 
 .slider::-webkit-slider-track {
@@ -256,7 +255,7 @@ export default {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--brand-primary);
+  background: var(--primary-container);
   cursor: pointer;
   border: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
@@ -266,7 +265,7 @@ export default {
 }
 
 .slider::-moz-range-thumb:hover {
-  filter: brightness(1.1);
+  transform: scale(1.1);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
@@ -285,7 +284,7 @@ export default {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--brand-primary);
+  background: var(--primary-container);
   cursor: pointer;
   border: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);

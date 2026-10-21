@@ -7,7 +7,6 @@
       <div class="text-center">
         <img :src="imageIcon" alt="No Images" class="w-12 h-12 mb-2 opacity-50 mx-auto" />
         <div class="text-schemes-on-surface-variant text-sm">暂无图片</div>
-        <div class="text-schemes-on-surface-variant text-xs mt-1">点击顶部“导入图库”添加本地图片</div>
       </div>
     </div>
     <div v-else class="flex-1 min-h-0 w-full">
@@ -17,7 +16,7 @@
             v-model="searchText"
             type="text"
             placeholder="搜索图片..."
-            class="pod-input pod-input-sm pod-input-filled flex-1 max-w-[360px]"
+            class="flex-1 max-w-[360px] bg-schemes-surface-container text-schemes-outline text-sm rounded-lg px-3 py-2.5 outline-none border border-transparent focus:border-transparent focus:ring-0 focus:ring-transparent transition-all" aria-label="搜索图片"
           >
           <div class="text-xs text-schemes-on-surface-variant whitespace-nowrap">{{ filteredImages.length }}/{{ currentImages.length }}</div>
         </div>
@@ -238,6 +237,7 @@ export default {
       jck,
       previewVisible,
       previewImage,
+      previewReturnFocus,
       openPreview,
       closePreview,
       previewPrimary,

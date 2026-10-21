@@ -75,13 +75,11 @@
   }
   
   .primary-button {
-    @apply rounded-xl flex flex-col gap-0 items-center justify-center shrink-0 relative overflow-hidden;
-    background: var(--color-lime-300); color: var(--color-lime-950);
+    @apply bg-primary-container rounded-xl flex flex-col gap-0 items-center justify-center shrink-0 relative overflow-hidden;
   }
   
   .secondary-button {
-    @apply rounded-xl flex flex-row gap-0 items-center justify-center overflow-hidden;
-    background: var(--bg-component-solid); color: var(--text-secondary); border: 1px solid var(--border-color);
+    @apply bg-on-primary rounded-xl flex flex-row gap-0 items-center justify-center overflow-hidden;
   }
 
   /* Generate Options Menu Styles */

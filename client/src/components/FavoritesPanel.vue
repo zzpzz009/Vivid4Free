@@ -257,6 +257,7 @@ export default {
       jck,
       previewVisible,
       previewImage,
+      previewReturnFocus,
       openPreview,
       closePreview,
       previewPrimary,
