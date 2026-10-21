@@ -6,6 +6,7 @@ const fixture = path.resolve(__dirname, '../../src/assets/images/rectangle-150.p
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('vivid-desktop:startup-intro:v1', 'seen')
+    localStorage.setItem('vivid-desktop:startup-intro:animal-island:v1', 'seen')
     window.vividDesktop = {
       accountStatus: async () => ({ status: 'signed_out' }),
       runtimeStatus: async () => ({ installed: true, state: 'ready', version: '0.3.0' }),

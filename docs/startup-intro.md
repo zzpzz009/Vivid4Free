@@ -4,18 +4,33 @@
 
 ## 用户行为
 
-- 当前 Windows 用户的客户端数据首次使用时播放一次，约 4.75 秒后淡入工作台。
-- 可以点击「跳过」或按 Escape。正常完成或主动跳过后写入本地完成标记，后续启动直接进入工作台。
+- 从 0.5.1 起，开屏读取已保存的界面主题。经典深色使用原来的光带动画，海岛使用已确认的日出 Logo、小船与海鸥场景，slogan 为「让灵感，即刻成形」。
+- 每套主题分别在首次启动时播放一次。经典动画约 4.75 秒，海岛动画约 5.6 秒，随后淡入工作台。切换主题时不会打断当前操作，下一次以该主题启动时判断是否首次播放。
+- 可以点击「跳过」或按 Escape。正常完成或主动跳过后，只记录当前主题的完成标记，之后以同一主题启动直接进入工作台。
 - 提前关闭客户端不会记录完成；动画加载或显示异常时最多等待 12 秒后退出开屏，不记录完成，下一次仍可重试。
 - 已有账号、图库、任务、CF 位置和引擎状态不参与开屏判断。更新现有安装同样会在下一次打开时展示一次。
 
-本地标记为 `vivid-desktop:startup-intro:v1=seen`，保存在客户端自身的 localStorage 中，不按客户端补丁版本重复播放。清除客户端用户数据会重置此标记。
+经典完成标记继续使用 `vivid-desktop:startup-intro:v1=seen`；海岛独立使用 `vivid-desktop:startup-intro:animal-island:v1=seen`。两者保存在客户端自身的 localStorage 中，不按客户端补丁版本重复播放。升级保留已有经典标记，清除客户端用户数据会重置标记。
 
 ## 实现
 
 `client/src/main.js` 调用 `utils/startupOverlay.js`。动画模板和代码位于 `components/startup/`，仅首次展示时加载。开屏期间工作台设置为 inert；完成后恢复交互并清理动画计时器与临时文字层。
 
 通过 Shadow DOM 隔离样式，JavaScript 以正常外部模块运行。未放宽客户端 CSP，也不使用 iframe、内联脚本或 eval。
+
+海岛模板与动画分别为 `client/src/components/startup/island.html` 和 `island.js`，Logo 为 `client/src/assets/brand/island-logo.svg`。本地 Nunito 与 Noto Sans SC 就绪后再播放。太阳从 A 内部低位缓慢升至原 Logo 的上方位置并恢复光芒；海鸥沿闭合曲线盘旋，远侧从 Logo 后方、近侧从前方经过。海面、小船与海鸥持续运动到开屏移除，系统减少动态效果时展示静态版本。
+
+独立预览位于 `G:/Agent/Vivida4free/logo-splash/island/index.html`，字体直接嵌入 HTML，直接打开时不再依赖 `fonts/` 相对路径。可通过 `node tools/build-island-preview.cjs ../logo-splash/island` 从客户端同源资源重建；预览只包含开屏和重播按钮，不包含配色或设计说明页面。
+
+## 0.5.1 本机整合状态
+
+源码与固定目录安装包已包含双主题开屏。本次源码合并前，162 项前端单元测试、39 项桌面测试、16 项皮肤与开屏浏览器回归、类型检查及桌面前端构建通过。此前安装包内真实 Electron 使用独立用户目录验证了经典首次播放、海岛首次播放、海岛再次启动跳过，以及返回经典后保留完成记录。原动画文件保持不变。
+
+安装包为 `release/installer/VividDesktop-Setup-latest-x64.exe`，其 0.5.1 来源是较早的未提交工作区；本次源码合并不重建该包，不代表包内包含全部后续皮肤调整。当前固定安装目录的实际更新尚未执行：自动审批拒绝了正常关闭现用客户端并运行安装器的命令，仅返回 `blocked by policy`。需退出客户端后，手动运行该安装包并选择 `G:/Agent/Vivida4free/VividClient`，再验证实际安装入口；不能把安装包验收当作现用客户端已更新。
+
+完整原安装回退副本位于 `.local-baseline/client-rollback/island-startup-0.5.1-before`，其 ASAR SHA256 与更新前安装一致。源码基线为 `9035a388d68ea9162e24c50eab0c839c2b0155a2`。本次原生检查、截图和回退校验记录位于 `.local-baseline/island-startup-integration/`，未复制真实账号凭据或修改外置 CF。
+
+以下为先前版本的安装和验收历史。
 
 本机安装版与工作区已有原生代码不同，为保留现有安装，只向原安装包新增 `ui/startup-intro.js`，并在 `ui/index.html` 加入启动入口。所有其他打包文件按字节保持一致。独立入口由同一份源码构建：
 

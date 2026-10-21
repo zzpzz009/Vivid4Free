@@ -46,6 +46,6 @@
 
 浏览器用例使用隔离夹具。Electron 检查使用独立用户目录和测试端口，不复制账号凭据，不启动或修改现用 CF。真实历史图片的显示与对比通过本机服务只读检查。
 
-当前安装包版本为 0.5.0；本文中的主色收敛、组件统一和表面层级细化属于后续未发布候选，尚未写入该安装包。源码、前端构建与 Electron 界面已验证；安装包统一由 `npm --prefix desktop run pack` 生成到固定发行目录，实际安装包版本、来源提交和 SHA256 见 `release/installer/latest.json`。本机安装与固定入口的验证回执保存在 `.local-baseline/animal-island/`，不包含在远端源码中。远端源码推送不代表安装程序或完整 CF 包已在线托管。
+本文中的主色收敛、组件统一、表面层级细化和双主题开屏统一收录于 0.5.1 源码。本机已有 0.5.1 安装包，但来源为较早的未提交工作区，不代表包含本文全部后续调整。安装包统一由 `npm --prefix desktop run pack` 生成到固定发行目录，实际版本、来源提交、工作区状态和 SHA256 见 `release/installer/latest.json`。本次源码合并不更新安装包或现用安装。本机界面验证回执保存在 `.local-baseline/animal-island/`，不包含在远端源码中。远端源码推送不代表安装程序或完整 CF 包已在线托管。
 
 修改前源码基线为 `40517beeeccd9db61acecb33716b2d3df397e74d`，源码归档和本机截图、检查回执保存在已忽略的 `.local-baseline/animal-island/`。

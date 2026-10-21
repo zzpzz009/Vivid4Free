@@ -1,9 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { rememberStartupIntro, shouldShowStartupIntro, STARTUP_INTRO_KEY } from './startupIntro.js'
+import { rememberStartupIntro, shouldShowStartupIntro, STARTUP_INTRO_KEY, ISLAND_STARTUP_INTRO_KEY } from './startupIntro.js'
 
 afterEach(() => vi.unstubAllGlobals())
 
 describe('first-launch intro persistence', () => {
+  it('remembers each skin separately while preserving the original completion key', () => {
+    const entries = new Map([[STARTUP_INTRO_KEY, 'seen']])
+    const storage = { getItem: key => entries.get(key) ?? null, setItem: (key, value) => entries.set(key, value) }
+    expect(shouldShowStartupIntro(storage, 'original')).toBe(false)
+    expect(shouldShowStartupIntro(storage, 'animal-island')).toBe(true)
+    expect(rememberStartupIntro(storage, 'animal-island')).toBe(true)
+    expect(shouldShowStartupIntro(storage, 'animal-island')).toBe(false)
+    expect(entries.get(STARTUP_INTRO_KEY)).toBe('seen')
+    expect(entries.get(ISLAND_STARTUP_INTRO_KEY)).toBe('seen')
+    entries.delete(STARTUP_INTRO_KEY)
+    expect(shouldShowStartupIntro(storage, 'original')).toBe(true)
+    expect(shouldShowStartupIntro(storage, 'animal-island')).toBe(false)
+  })
+
   it('plays for a fresh profile and skips after completion across a new storage reader', () => {
     const entries = new Map()
     const storage = { getItem: key => entries.get(key) ?? null, setItem: (key, value) => entries.set(key, value) }
