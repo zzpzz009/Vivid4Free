@@ -173,6 +173,7 @@
             class="absolute top-1 left-1 h-6 px-2 rounded-full flex items-center justify-center transition-colors z-10"
             :class="cktjx === 'true' ? 'bg-schemes-primary-container text-white' : 'bg-schemes-surface-container-high text-schemes-on-surface-variant hover:bg-schemes-surface-container'"
             title="参考图镜像"
+            :aria-pressed="cktjx === 'true'"
             @click.stop="toggleReferenceMirror"
           >
             <span class="text-xs font-m3-label-medium-font-family font-m3-label-medium-font-weight letter-spacing-m3-label-medium">
@@ -491,7 +492,7 @@
 
         <slot name="extra-controls"></slot>
         <!-- Prompt Input -->
-        <div v-if="showPromptInput && currentActionMode.id !== 'generate'" class="w-[265px] space-y-2">
+        <div v-if="showPromptInput && currentActionMode.id !== 'generate'" class="island-prompt-card w-[265px] space-y-2">
           <label class="text-schemes-on-surface-variant text-sm font-medium pl-1">
             {{ promptLabel }}
           </label>
@@ -569,9 +570,8 @@
       </div>
     </div>
     <div class="island-action-dock shrink-0 m-4 mt-4">
-      <p v-if="uiStore.skin === 'animal-island'" id="workspace-action-hint" class="island-action-hint" role="status">{{ islandActionHint }}</p>
-      <div class="island-action-row w-[265px] flex flex-row gap-3 items-center justify-between">
-          <div class="island-action-primary flex-1 h-10 relative">
+      <div class="w-[265px] flex flex-row gap-3 items-center justify-between">
+          <div class="flex-1 h-10 relative">
             <HMenu as="div" class="primary-action-group rounded-2xl flex flex-row items-center justify-center w-full h-full relative" :class="{ 'action-disabled': isPrimaryActionDisabled }">
               <component :is="uiStore.skin === 'animal-island' ? IslandButton : 'button'"
                 v-bind="uiStore.skin === 'animal-island' ? { type: 'primary', htmlType: 'button' } : {}"
@@ -579,12 +579,10 @@
                 :class="showActionDropdown ? 'rounded-r-none' : ''"
                 :disabled="isPrimaryActionDisabled"
                 data-testid="primary-action-button"
-                :aria-describedby="uiStore.skin === 'animal-island' ? 'workspace-action-hint' : undefined"
                 :data-mode="mode"
                 @click="handlePrimaryAction"
               >
                 <div class="pt-2.5 pr-2.5 pb-2.5 pl-3 flex flex-row gap-1 items-center justify-start flex-1 relative">
-                  <IslandIcon v-if="uiStore.skin === 'animal-island'" :name="currentActionMode.id === 'preview' ? 'Eye' : 'Search'" :size="18" aria-hidden="true" />
                   <div class="button-text-primary letter-spacing-m3-title-medium-emphasized truncate">
                     {{ primaryActionText }}
                   </div>
@@ -642,7 +640,7 @@
           </div>
 
           <component :is="uiStore.skin === 'animal-island' ? IslandButton : 'button'"
-            v-bind="uiStore.skin === 'animal-island' ? { type: 'text', htmlType: 'button' } : {}"
+            v-bind="uiStore.skin === 'animal-island' ? { type: 'default', htmlType: 'button' } : {}"
             class="secondary-button flex-1 h-10"
             :disabled="isCancelDisabled"
             data-testid="cancel-button"
@@ -1112,16 +1110,6 @@ export default {
     const canGenerate = canPreview
     const isActionDisabled = computed(() => currentActionMode.value.id === 'preview' ? !canPreview.value : !canGenerate.value)
     const isRunBusy = computed(() => props.previewUpscaleRunState !== 'idle')
-    const islandActionHint = computed(() => {
-      const action = currentActionMode.value.id === 'generate' ? '放大' : '预览'
-      if (props.submitting) return '正在提交，请稍候'
-      if (isRunBusy.value) return props.previewUpscaleRunState === 'cancelling' ? '正在取消任务…' : '任务运行中，可用右侧取消'
-      if (isImageUploading.value || isReferenceUploading.value) return '正在准备图片…'
-      if (!uploadedImage.value) return action === '预览' ? '添加主图与参考图' : '添加需要放大的图片'
-      if (action === '预览' && !uploadedReference.value) return '还需要一张风格参考图'
-      if (!props.engineReady) return '等待引擎就绪'
-      return '素材已就绪'
-    })
     const primaryActionText = computed(() => {
       if (props.submitting) return '正在提交…'
       if (props.previewUpscaleRunState === 'cancelling') {
@@ -1543,7 +1531,6 @@ export default {
       isPrimaryActionDisabled,
       isCancelDisabled,
       primaryActionText,
-      islandActionHint,
       cancelActionText,
       selectActionMode,
       handlePrimaryAction,

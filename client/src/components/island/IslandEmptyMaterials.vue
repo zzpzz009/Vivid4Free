@@ -12,5 +12,5 @@ defineProps({ gallery: Boolean })
 <style scoped>
 .island-empty-materials{display:flex;flex-direction:column;align-items:center;padding:24px 4px;text-align:center}
 .material-envelope{position:relative;display:grid;place-items:center;width:64px;height:56px;border-radius:48% 52% 55% 45%;background:var(--animal-bg-color-secondary);transform:rotate(-7deg);margin-bottom:16px}.material-envelope>span{position:absolute;right:-4px;bottom:0;transform:rotate(20deg)}
-h3{color:var(--animal-text-color);font-size:12px;font-weight:600;margin-bottom:12px}p{white-space:pre-line;font-size:12px;font-weight:400;line-height:1.9;color:var(--animal-text-color-secondary)}
+h3{color:var(--animal-text-color);font-size:14px;font-weight:600;margin-bottom:12px}p{white-space:pre-line;font-size:12px;font-weight:400;line-height:1.9;color:var(--animal-text-color-secondary)}
 </style>
