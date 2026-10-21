@@ -1,11 +1,11 @@
 <template>
   <div v-if="visible" class="fixed inset-0 z-[210] pointer-events-none">
-    <div ref="menuEl" class="pod-context-menu pointer-events-auto" role="menu" aria-label="图片操作" :style="position" @keydown="onMenuKeydown">
-      <button v-if="actions.includes('primary')" type="button" role="menuitem" class="pod-context-menu-item" @click="$emit('primary')">设为主图</button>
-      <button v-if="actions.includes('secondary')" type="button" role="menuitem" class="pod-context-menu-item" @click="$emit('secondary')">设为参考图</button>
-      <button v-if="actions.includes('preview')" type="button" role="menuitem" class="pod-context-menu-item" @click="$emit('preview')">预览</button>
-      <button v-if="actions.includes('open-original')" type="button" role="menuitem" class="pod-context-menu-item" @click="$emit('open-original')">查看原图</button>
-      <button v-if="actions.includes('copy')" type="button" role="menuitem" class="pod-context-menu-item" @click="$emit('copy')">复制链接</button>
+    <div ref="menuEl" class="absolute rounded-lg border border-schemes-outline-variant bg-schemes-surface px-2 py-2 shadow-lg pointer-events-auto" role="menu" aria-label="图片操作" :style="position" @keydown="onMenuKeydown">
+      <button v-if="actions.includes('preview')" type="button" role="menuitem" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="$emit('preview')">预览</button>
+      <button v-if="actions.includes('primary')" type="button" role="menuitem" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="$emit('primary')">设为主图</button>
+      <button v-if="actions.includes('secondary')" type="button" role="menuitem" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="$emit('secondary')">设为参考图</button>
+      <button v-if="actions.includes('open-original')" type="button" role="menuitem" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="$emit('open-original')">查看原图</button>
+      <button v-if="actions.includes('copy')" type="button" role="menuitem" class="w-full text-left px-2 py-2 text-xs text-schemes-on-surface hover:bg-schemes-surface-container rounded" @click="$emit('copy')">复制链接</button>
     </div>
   </div>
 </template>

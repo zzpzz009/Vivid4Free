@@ -2,8 +2,9 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './DesktopApp.vue'
 import './assets/styles/main.css'
-import './styles/podui.css'
+import { mountStartupIntro } from './utils/startupOverlay'
 
+mountStartupIntro(document.getElementById('app'))
 
 
 // 创建应用实例

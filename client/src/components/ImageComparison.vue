@@ -69,17 +69,9 @@
     >
       <!-- Divider Handle -->
       <div 
-        role="slider"
-        tabindex="0"
-        aria-label="原图与结果图分界"
-        :aria-valuemin="0"
-        :aria-valuemax="100"
-        :aria-valuenow="Math.round(sliderPosition)"
-        :aria-valuetext="`${Math.round(sliderPosition)}%`"
-        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11 h-11 bg-schemes-surface-container-high rounded-full shadow-sm border border-schemes-outline-variant pointer-events-auto flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-schemes-primary"
+        role="slider" tabindex="0" aria-label="原图与结果图分界" :aria-valuemin="0" :aria-valuemax="100" :aria-valuenow="Math.round(sliderPosition)" @keydown="handleSliderKeydown" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-7 h-7 bg-schemes-surface-container-high rounded-full shadow-sm border border-schemes-outline-variant pointer-events-auto flex items-center justify-center"
         @mousedown="startDragging"
         @touchstart="startDragging"
-        @keydown="handleSliderKeydown"
       >
         <div class="flex gap-[3px]">
           <div class="w-[2px] h-3 bg-schemes-outline rounded-full" />
@@ -92,7 +84,7 @@
     <div class="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
       原图
     </div>
-    <div class="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs navs" aria-hidden="true">
+    <div class="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs navs">
       结果图
     </div>
   </div>
@@ -321,8 +313,9 @@ export default {
 
 <style scoped>
 .navs{
-  width:auto;
+  width:22em;
   pointer-events:none;
+  background:transparent;
   text-align: right;
 }
 /* Prevent text selection during drag */

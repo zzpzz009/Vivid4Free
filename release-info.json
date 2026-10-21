@@ -1,9 +1,10 @@
 {
   "schemaVersion": 1,
-  "clientVersion": "0.3.3",
-  "tag": "v0.3.3",
-  "releaseDate": "2026-10-20",
+  "clientVersion": "0.4.0",
+  "tag": "v0.4.0",
+  "releaseDate": "2026-10-21",
   "channel": "local-preview",
+  "delivery": "source-preview",
   "platform": "win32-x64",
   "notes": "CHANGELOG.md",
   "runtime": {
@@ -20,7 +21,15 @@
     "gallery": true,
     "agentControl": true,
     "creativeWorkshop": false,
-    "accountLogin": false,
+    "accountLogin": true,
+    "accountRegistrationEntry": true,
+    "accountSettings": true,
+    "customTitlebar": true,
     "localGenerationConsumesQuota": false
+  },
+  "validation": {
+    "nativeDragAndEdgeResizeManuallyConfirmed": false,
+    "multiComputerAccountAcceptanceComplete": false,
+    "newInstallerPublished": false
   }
 }

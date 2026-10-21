@@ -1,5 +1,12 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('vividDesktop', Object.freeze({
+  windowState: () => ipcRenderer.invoke('window:state'),
+  windowAction: action => ipcRenderer.invoke('window:action', action),
+  onWindowState: callback => {
+    const listener = (_event, state) => callback(state);
+    ipcRenderer.on('window:state-changed', listener);
+    return () => ipcRenderer.removeListener('window:state-changed', listener);
+  },
   accountStatus: () => ipcRenderer.invoke('account:status'),
   accountLogin: input => ipcRenderer.invoke('account:login', input),
   accountRefresh: () => ipcRenderer.invoke('account:refresh'),

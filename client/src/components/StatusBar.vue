@@ -1,12 +1,63 @@
 <template>
-  <footer class="status-bar" role="status" aria-live="polite">
-    <span class="status-dot" :class="[`status-${currentStatusType}`, { loading: isLoading }]" aria-hidden="true" />
-    <span>{{ currentStatusMessage }}</span>
-  </footer>
+  <div class="pr-4 pl-4 flex flex-col gap-1 items-start justify-center w-full shrink-0">
+    <div class="border-solid border-schemes-outline-variant border-t border-r-0 border-b-0 border-l-0 self-stretch shrink-0 h-0 relative -mt-px" />
+    <div class="flex items-center justify-between w-full py-2">
+      <div class="flex items-center gap-2">
+        <!-- Loading spinner when generating -->
+        <div
+          v-if="isLoading"
+          class="animate-spin rounded-full h-3 w-3 border-b-2 border-schemes-primary"
+        />
+
+        <!-- Status icon based on status type -->
+        <div
+          v-else-if="currentStatusType === 'success'"
+          class="w-3 h-3 rounded-full bg-green-500"
+        />
+        <div
+          v-else-if="currentStatusType === 'error'"
+          class="w-3 h-3 rounded-full bg-red-500"
+        />
+        <div
+          v-else-if="currentStatusType === 'warning'"
+          class="w-3 h-3 rounded-full bg-yellow-500"
+        />
+        <div
+          v-else
+          class="w-3 h-3 rounded-full bg-schemes-outline-variant"
+        />
+
+        <!-- Status message -->
+        <div class="text-schemes-outline-variant text-left font-m3-label-small-font-family text-m3-label-small-font-size leading-m3-label-small-line-height font-m3-label-small-font-weight letter-spacing-m3-label-small">
+          {{ currentStatusMessage }}
+        </div>
+      </div>
+
+      <div v-if="isDev" class="flex items-center gap-2">
+        <button
+          type="button"
+          class="px-2 py-1 rounded-full border border-schemes-outline-variant text-[10px] leading-[12px] text-schemes-on-surface-variant hover:bg-state-layers-secondary-opacity-08"
+          @click="uiStore.toggleUseGenerationMock()"
+        >
+          {{ uiStore.useGenerationMock ? 'MOCK: ON' : 'MOCK: OFF' }}
+        </button>
+        <button
+          v-if="uiStore.useGenerationMock"
+          type="button"
+          class="px-2 py-1 rounded-full border border-schemes-outline-variant text-[10px] leading-[12px] text-schemes-primary hover:bg-state-layers-secondary-opacity-08"
+          @click="uiStore.cycleMockScenario()"
+        >
+          {{ `SCENE: ${uiStore.mockScenario}` }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 <script setup>
 import { computed } from 'vue'
-import { useJobStore } from '@/stores'
+import { useJobStore, useUIStore } from '@/stores'
+const uiStore = useUIStore()
+const isDev = import.meta.env.DEV
 const store = useJobStore()
 const job = computed(() => store.currentJob)
 const state = computed(() => job.value?.status === 'processing' ? 'running' : job.value?.status)
@@ -19,10 +70,7 @@ const currentStatusMessage = computed(() => {
   if (state.value === 'completed') return '任务已完成'
   if (state.value === 'cancelled') return '任务已取消'
   if (state.value === 'failed') return job.value.errorMessage || '任务失败，请检查后重试'
-  return store.statusMessage === 'Ready' ? '就绪' : store.statusMessage || '就绪'
+  return store.statusMessage === 'Ready' ? 'Ready' : store.statusMessage || 'Ready'
 })
 const currentStatusType = computed(() => state.value === 'failed' ? 'error' : state.value === 'completed' ? 'success' : isLoading.value ? 'active' : store.statusType || 'info')
 </script>
-<style scoped>
-.status-bar{display:flex;align-items:center;gap:var(--space-2);flex:none;min-height:32px;padding:var(--space-2) 0;border-top:1px solid var(--schemes-outline-variant);margin:0 var(--space-4);width:calc(100% - 32px);background:transparent;color:var(--text-secondary);font-size:11px;line-height:16px}.status-dot{width:8px;height:8px;flex:none;border-radius:var(--border-radius-circle);background:var(--text-muted)}.status-success{background:var(--ui-green-color)}.status-error{background:var(--color-red-500)}.status-active{background:var(--brand-primary)}.loading{border:2px solid var(--border-color);border-top-color:var(--brand-primary);background:transparent;animation:status-spin 1s linear infinite}@keyframes status-spin{to{transform:rotate(360deg)}}
-</style>

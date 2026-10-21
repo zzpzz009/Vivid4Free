@@ -7,6 +7,8 @@ const read = file => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
 const info = read('release-info.json');
 const version = read('desktop/package.json').version;
 const lock = read('desktop/package-lock.json');
+assert.equal(read('tools/installer/electron-builder.json').directories.output, '../release/installer', 'Installer output must stay in the fixed directory');
+assert.equal(read('desktop/package.json').scripts.pack, 'node ../tools/build-installer.cjs', 'Use the fixed installer build entry');
 assert.match(version, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
 assert.equal(info.clientVersion, version);
 assert.equal(info.tag, `v${version}`);

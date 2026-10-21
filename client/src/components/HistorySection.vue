@@ -4,11 +4,8 @@
     <!-- Title and Toggle Header -->
     <div class="flex flex-row gap-[3px] items-start justify-start flex-wrap content-start w-full h-7 mb-2 border-t border-schemes-outline-variant pt-2">
       <!-- History icon (also toggle button) -->
-      <button
-        type="button"
-        class="pod-icon-button pod-icon-md"
-        :aria-label="isExpanded ? '收起历史记录' : '展开历史记录'"
-        :aria-expanded="isExpanded"
+      <div
+        class="cursor-pointer" role="button" tabindex="0" :aria-label="isExpanded ? '收起历史记录' : '展开历史记录'" :aria-expanded="isExpanded" @keydown.enter.prevent="toggleExpansion" @keydown.space.prevent="toggleExpansion"
         @click="toggleExpansion"
       >
         <img
@@ -17,7 +14,7 @@
           :src="historyIcon"
           alt="Toggle History"
         />
-      </button>
+      </div>
       <!-- Title -->
       <div class="text-schemes-on-surface text-left font-m3-title-medium-font-family text-m3-title-medium-font-size leading-m3-title-medium-line-height font-m3-title-medium-font-weight relative flex-1 letter-spacing-m3-title-medium">
         历史记录
@@ -34,30 +31,18 @@
       <!-- History Images Container with auto-wrap and vertical scroll -->
       <div class="w-full h-full overflow-y-auto pt-3 pb-0">
         <div class="flex flex-wrap gap-3 items-start">
-          <div v-if="displayItems.length === 0" class="w-full min-h-40 flex items-center justify-center text-center text-schemes-on-surface-variant text-sm">
-            <div>
-              <div>暂无历史结果</div>
-              <div class="text-xs mt-1">生成或放大图片后，结果会保存在这里</div>
-            </div>
-          </div>
-          <!-- Real history items only -->
-          <template v-else>
+          <!-- All History Images (always visible) -->
           <div
             v-for="(item, index) in displayItems"
-            :key="item.id || `history-${index}`"
-            role="button"
-            tabindex="0"
-            :aria-label="`历史任务：${getStatusLabel(item)}`"
-            class="history-item rounded-xl shrink-0 w-[165px] h-[165px] relative cursor-pointer hover:opacity-90 transition-all overflow-hidden border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-schemes-primary"
+            :key="item.id || `history-${index}`" role="button" tabindex="0" :aria-label="`历史任务：${getStatusLabel(item)}`" @keydown.enter.prevent="selectHistoryImage(item)" @keydown.space.prevent="selectHistoryImage(item)"
+            class="history-item rounded-xl shrink-0 w-[165px] h-[165px] relative cursor-pointer hover:opacity-90 transition-all overflow-hidden border-2"
             :class="item?.id && item.id === selectedHistoryId ? 'border-schemes-primary' : 'border-transparent'"
             @click="onHistoryClick(item)"
             @dblclick.stop="onHistoryDblClick(item)"
-            @keydown.enter.prevent="selectHistoryImage(item)"
-            @keydown.space.prevent="selectHistoryImage(item)"
             @contextmenu.prevent.stop="onContextMenu($event, item)"
           >
             <div class="menu">
-              <button type="button" class="icon-btn" aria-label="下载图片" @click.stop="downloadImage(item)">
+              <div class="icon-btn" @click.stop="downloadImage(item)">
                 <div 
                   class="icon-mask"
                   :style="{
@@ -65,7 +50,7 @@
                     WebkitMaskImage: `url(${download})`
                   }"
                 ></div>
-              </button>
+              </div>
             </div>
             
             <!-- Workflow Type Badge -->
@@ -139,7 +124,7 @@
                 >
                   <!-- Pending/Uploading/Queued: Loading animation -->
                   <div
-                    v-if="['pending', 'uploading', 'submitting', 'queued', 'archiving'].includes(item.status)"
+                    v-if="['pending', 'uploading', 'queued', 'archiving'].includes(item.status)"
                     class="w-8 h-8 border-2 border-schemes-primary border-t-transparent rounded-full animate-spin"
                   ></div>
                   <!-- Failed: Error icon -->
@@ -196,8 +181,13 @@
               {{ formatTime(item.timestamp || item.createdAt) }}
             </div>
           </div>
-          </template>
 
+          <!-- Placeholder items (always visible) -->
+          <div
+            v-for="n in Math.max(0, 12 - displayItems.length)"
+            :key="`placeholder-${n}`" aria-hidden="true"
+            class="bg-state-layers-secondary-opacity-08 rounded-xl shrink-0 w-[165px] h-[165px] relative"
+          ></div>
         </div>
         <ImageActionsMenu
           :visible="menuVisible"
@@ -622,8 +612,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.history-item:hover .menu,
-.history-item:focus-within .menu {
+.history-item:hover .menu {
   opacity: 1;
 }
 
@@ -646,22 +635,13 @@ export default {
   padding: 8px;
 
   .icon-btn{
-    width: 32px;
-    height: 32px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    border: 0;
-    padding: 6px;
-    border-radius: 999px;
-    background: var(--bg-component-solid);
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: var(--pod-ring);
-    }
 
     .icon-mask {
       width: 100%;
