@@ -22,9 +22,7 @@ html[data-vivid-skin="animal-island"] .island-reference-card:has([title="清空�
 html[data-vivid-skin="animal-island"] .island-reference-card [title="参考图镜像"][aria-pressed="true"] { background: var(--animal-primary-color-bg); border-color: var(--animal-primary-color); }
 html[data-vivid-skin="animal-island"] .island-upload-card :is([title="清空基础图"], [title="清空参考图"]) { top: 8px; right: 8px; width: 24px; height: 24px; border: 1px solid var(--animal-border-color-light); background: var(--animal-bg-color); }
 html[data-vivid-skin="animal-island"] .island-reference-card [title="参考图镜像"] span { font-size: 10px; }
-html[data-vivid-skin="animal-island"] .island-parameter-heading { justify-content: flex-start; position: relative; }
-.island-parameter-title { color: var(--animal-text-color); font-size: 14px; font-weight: 600; padding-left: 12px; }
-.island-parameter-title small { margin-left: 8px; color: var(--animal-text-color-secondary); font-size: 10px; font-weight: 400; }
+html[data-vivid-skin="animal-island"] .island-parameter-heading { justify-content: center; position: relative; }
 html[data-vivid-skin="animal-island"] .island-parameter-heading > div:last-child { position: absolute; right: 6px; }
 html[data-vivid-skin="animal-island"] .island-parameter-heading + div { display: none; }
 html[data-vivid-skin="animal-island"] .island-parameter-card { padding: 12px; border: 1px solid var(--island-line); border-radius: 24px; background: var(--island-paper); gap: 16px; }

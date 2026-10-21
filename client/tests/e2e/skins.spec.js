@@ -236,7 +236,7 @@ test('restored actions and shared paper surfaces support preparation, output and
   await expect(mirror).toHaveCSS('color', 'rgb(121, 79, 39)')
   await expect(page.locator('.island-reference-card img').first()).toHaveCSS('transform', 'matrix(-1, 0, 0, 1, 0, 0)')
   await expect(page.locator('.primary-action-group')).toHaveCSS('background-color', 'rgb(25, 200, 185)')
-  await expect(page.locator('.island-parameter-heading .animal-title')).toHaveCount(0)
+  await expect(page.locator('.island-parameter-heading .animal-title')).toHaveText('高级参数')
   const feedbackClose = page.getByRole('button', { name: '关闭提示' })
   await expect(feedbackClose).toHaveCount(2)
   await feedbackClose.first().click()

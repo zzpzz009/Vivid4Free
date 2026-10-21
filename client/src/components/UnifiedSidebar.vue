@@ -321,7 +321,7 @@
           class="island-parameter-heading flex flex-row items-center justify-between w-[265px] group focus:outline-none py-2"
           @click.stop="toggleAdvancedOpen"
         >
-          <span v-if="uiStore.skin === 'animal-island'" class="island-parameter-title">高级参数 <small>可选</small></span>
+          <IslandTitle v-if="uiStore.skin === 'animal-island'" size="small" color="app-teal">高级参数</IslandTitle>
           <div v-else class="text-schemes-primary-container font-medium text-sm flex items-center gap-2">
             高级参数
           </div>
@@ -822,7 +822,7 @@ import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Menu as HMenu, MenuButton as HMenuButton, MenuItems as HMenuItems, MenuItem as HMenuItem } from '@headlessui/vue'
 import Slider from './ui/Slider.vue'
-import { Card as IslandCard, Icon as IslandIcon, Switch as IslandSwitch, Button as IslandButton, Tag as IslandTag } from 'animal-island-vue'
+import { Card as IslandCard, Icon as IslandIcon, Switch as IslandSwitch, Button as IslandButton, Tag as IslandTag, Title as IslandTitle } from 'animal-island-vue'
 import { useImageStore, useJobStore, useAssetStore, useUIStore,useXMStore } from '../stores'
 import { icons } from '../utils/assets.js'
 import { success, error } from '../utils/toast.js'
@@ -838,6 +838,7 @@ export default {
     IslandCard,
     IslandButton,
     IslandTag,
+    IslandTitle,
     IslandIcon,
     IslandSwitch,
     Slider

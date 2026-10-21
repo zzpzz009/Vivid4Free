@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "clientVersion": "0.5.1",
-  "tag": "v0.5.1",
+  "clientVersion": "0.5.2",
+  "tag": "v0.5.2",
   "releaseDate": "2026-10-21",
   "channel": "local-preview",
   "delivery": "local-installer",
