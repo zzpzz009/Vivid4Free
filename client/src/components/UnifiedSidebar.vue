@@ -4,7 +4,7 @@
       <div class="flex flex-col gap-4 m-4 pb-8">
         <!-- Upload Image Area -->
         <component :is="uiStore.skin === 'animal-island' ? IslandCard : 'div'"
-          v-bind="uiStore.skin === 'animal-island' ? { type: 'dashed', pattern: 'default' } : {}"
+          v-bind="uiStore.skin === 'animal-island' ? { type: 'default', pattern: 'none' } : {}"
           class="island-upload-card island-main-card bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center w-[265px] overflow-hidden cursor-pointer transition-colors duration-200 relative"
           :class="[
             multipleImages ? 'min-h-[182px]' : 'h-[182px]',
@@ -147,7 +147,7 @@
 
         <!-- Upload Reference Area -->
         <component :is="uiStore.skin === 'animal-island' ? IslandCard : 'div'"
-          v-bind="uiStore.skin === 'animal-island' ? { type: 'dashed', pattern: 'default' } : {}"
+          v-bind="uiStore.skin === 'animal-island' ? { type: 'default', pattern: 'none' } : {}"
           v-if="showReferenceUpload && currentActionMode.id !== 'generate'"
           class="island-upload-card island-reference-card bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center w-[265px] overflow-hidden cursor-pointer transition-colors duration-200 relative"
           :class="[

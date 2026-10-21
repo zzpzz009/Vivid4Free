@@ -123,8 +123,9 @@ html[data-vivid-skin="animal-island"] .engine-dot.ready { background: var(--anim
 html[data-vivid-skin="animal-island"] .engine-dot.waiting { background: var(--animal-warning-color); }
 
 html[data-vivid-skin="animal-island"] .workspace-header .bg-schemes-surface-container { border-radius: 50px; }
-html[data-vivid-skin="animal-island"] .nav-tab-active { background: var(--animal-bg-color-secondary); border-radius: 24px; box-shadow: inset 0 0 0 1px var(--animal-border-color); }
-html[data-vivid-skin="animal-island"] .nav-tab-text-active { color: var(--animal-text-color); font-weight: 600; }
+html[data-vivid-skin="animal-island"] .nav-tab-active { background: transparent; border-radius: 24px; box-shadow: none; }
+html[data-vivid-skin="animal-island"] .nav-tab-text-active::after { content: ''; position: absolute; left: 50%; bottom: -8px; width: var(--animal-spacing-xl); height: 2px; transform: translateX(-50%); border-radius: 50px; background: var(--animal-text-color-secondary); }
+html[data-vivid-skin="animal-island"] .nav-tab-text-active { color: var(--animal-text-color); font-weight: 700; }
 html[data-vivid-skin="animal-island"] .nav-tab-text-inactive { color: var(--animal-text-color); }
 html[data-vivid-skin="animal-island"] [data-testid="toolbar-right-tabs"] .bg-schemes-secondary-container > div { color: var(--island-tab-text); }
 html[data-vivid-skin="animal-island"] #workspace-inputs { background: transparent; }

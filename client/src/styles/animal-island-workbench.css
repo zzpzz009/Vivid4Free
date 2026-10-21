@@ -11,7 +11,7 @@ html[data-vivid-skin="animal-island"] .brand strong { font-size: 16px; }
 html[data-vivid-skin="animal-island"] .brand .island-brand-mark { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 42% 58% 55% 45%; background: var(--island-mint); }
 html[data-vivid-skin="animal-island"] .brand > span:last-child { font-size: 11px; }
 html[data-vivid-skin="animal-island"] .toolbar-actions .skin-entry { border: 1px solid var(--island-line); background: var(--island-mint); }
-html[data-vivid-skin="animal-island"] #workspace-inputs .island-upload-card { height: 182px; padding: 0; flex: none; }
+html[data-vivid-skin="animal-island"] #workspace-inputs .island-upload-card { height: 182px; padding: 0; flex: none; background: var(--island-paper); border: 1px solid var(--island-line); border-radius: 24px; box-shadow: none; }
 html[data-vivid-skin="animal-island"] #workspace-inputs .island-upload-card:hover { border-color: var(--animal-primary-color); }
 .island-upload-index { position: absolute; top: 12px; left: 16px; font-size: 10px; color: var(--animal-text-color-secondary); }
 .island-upload-glyph { display: grid; place-items: center; width: 48px; height: 48px; margin-top: 6px; border-radius: 42% 58% 54% 46%; background: var(--animal-bg-color); }
@@ -30,7 +30,8 @@ html[data-vivid-skin="animal-island"] .island-parameter-heading + div { display:
 html[data-vivid-skin="animal-island"] .island-parameter-card { padding: 12px; border: 1px solid var(--island-line); border-radius: 24px; background: var(--island-paper); gap: 16px; }
 html[data-vivid-skin="animal-island"] .island-parameter-card + div { display: none; }
 html[data-vivid-skin="animal-island"] .island-prompt-card > label { display: inline-block; padding-left: 12px; color: var(--animal-text-color); font-size: 14px; font-weight: 600; }
-html[data-vivid-skin="animal-island"] .island-prompt-card > div { background: var(--island-paper); border-color: var(--island-line); border-radius: 24px; }
+html[data-vivid-skin="animal-island"] .island-prompt-card > div { padding: 0; background: transparent; border: 0; border-radius: 24px; box-shadow: none; }
+html[data-vivid-skin="animal-island"] .island-prompt-card textarea { padding: 12px; background: var(--island-paper); border: 1px solid var(--island-line); border-radius: 24px; }
 html[data-vivid-skin="animal-island"] .island-parameter-card input:not([type=range]) { font-size: 12px; padding: 9px 12px; }
 html[data-vivid-skin="animal-island"] .island-parameter-card label { font-size: 12px; }
 html[data-vivid-skin="animal-island"] .island-parameter-card .bg-schemes-surface-container-high { border-radius: 12px; padding: 2px 7px; }
@@ -51,7 +52,8 @@ html[data-vivid-skin="animal-island"] .primary-action-group [data-testid=primary
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:hover,
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:active { background: transparent; box-shadow: none; transform: none; }
 html[data-vivid-skin="animal-island"] .primary-action-group .button-text-primary { color: var(--animal-text-color); font-weight: 600; font-size: 14px; }
-html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled { background: var(--animal-primary-color-bg); border-color: var(--animal-primary-color-bg); box-shadow: none; }
+html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled { background: var(--animal-bg-color); border-color: var(--animal-border-color); border-style: dashed; box-shadow: none; }
+html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled [data-testid=primary-action-dropdown] { border-left-color: var(--animal-border-color-light); }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:disabled { opacity: 1; }
 html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled .button-text-primary { color: var(--animal-text-color-disabled); }
 html[data-vivid-skin="animal-island"] .secondary-button { height: 40px; background: var(--animal-bg-color); border: 2px solid var(--animal-border-color); box-shadow: var(--animal-shadow-sm); }
@@ -81,8 +83,6 @@ html[data-vivid-skin="animal-island"] [data-testid=gallery-card] { border: 4px s
 html[data-vivid-skin="animal-island"] .history-item { border-radius: 18px; }
 html[data-vivid-skin="animal-island"] .history-heading > div:last-of-type { color: var(--animal-text-color); font-size: 14px; font-weight: 600; }
 .island-history-count { color: var(--animal-text-color-secondary); font-size: 10px; padding-top: 2px; }
-html[data-vivid-skin="animal-island"] .history-section { padding: 12px; border-radius: 18px; background: var(--island-paper); }
-html[data-vivid-skin="animal-island"] .history-heading { height: 24px; padding-top: 0; margin-bottom: 4px; border-top: 0; }
 .island-history-empty { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 150px; color: var(--animal-text-color-secondary); font-size: 12px; }
 html[data-vivid-skin="animal-island"] .status-bar .text-schemes-outline-variant { color: var(--animal-text-color-secondary); }
 html[data-vivid-skin="animal-island"] .status-bar .bg-schemes-outline-variant { background: var(--animal-text-color-disabled); }
