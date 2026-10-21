@@ -18,3 +18,12 @@ Windows 命令优先使用 pwsh.exe -NoProfile。只修改任务涉及内容，�
 8. 推送指定分支和对应标签，不用 --all 或 --mirror。推送后核对远端分支提交、标签及标签指向的提交与本地一致，再向用户报告版本、提交和仓库地址。
 
 正式下载或账号未就绪时必须如实写明，不得用本机配置、测试夹具或预留入口声称用户已能使用。
+
+## 固定安装包与安装位置
+
+- 本机安装包唯一输出目录为 `G:\Agent\Vivida4free\VividDesktop\release\installer`，最新安装包固定入口为其中的 `VividDesktop-Setup-latest-x64.exe`；同时保留当前版本文件及 `latest.json` 中的版本、来源提交和 SHA256。
+- 统一执行 `npm --prefix desktop run pack`。入口 `tools/build-installer.cjs` 即使从 Git worktree 构建，也按 Git 公共仓库位置输出到上述固定目录，不在 worktree 内另建发行目录；禁止自行指定 `r7`、`r10-*`、日期或轮次目录。
+- 安装后的本机客户端位置固定为 `G:\Agent\Vivida4free\VividClient`，运行入口为 `VividDesktop.exe`。构建产物中的 `win-unpacked` 仅用于打包验证，不是日常启动位置。
+- 发布新版本先构建并核验新包，再清理旧产物。现用安装、外置 CF、模型、图库、任务、账号数据、源码及回退证据不属于旧安装包清理范围。安装包和解包目录继续被 Git 忽略，不上传远端。
+- 需要保留回退时，旧产物只归档到固定 `.local-baseline/installer-archive`，不得再把旧版本目录作为运行或构建入口。归档与永久删除、实际释放磁盘空间须分开报告。
+- 安装包生成不等于现用客户端已更新。交付“最新版可打开”时，必须核对 `VividClient/resources/app.asar` 的实际版本与新包一致，并从固定 `VividClient/VividDesktop.exe` 启动验证目标界面；仅测试源码预览或包内文件不能替代此检查。更新现用安装前保留回退，并保留已有开屏、用户数据及外置 CF。

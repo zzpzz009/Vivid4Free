@@ -5,7 +5,7 @@
   "electronVersion": "44.9.0",
   "electronDist": "node_modules/electron/dist",
   "directories": {
-    "output": "../release/r7-installer"
+    "output": "../release/installer"
   },
   "files": [
     "main.cjs",

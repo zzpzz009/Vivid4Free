@@ -1,6 +1,6 @@
 # VividDesktop：客户端与 CF 独立分发
 
-当前源码版本 **0.4.0，账号与桌面体验预览版**，新版安装包尚未发布，本机原有 0.3.3 安装版保持不变。用户可见的迭代内容见 [版本更新](CHANGELOG.md)，后续版本与推送规则见 [项目约定](AGENTS.md)。本仓库仅提供客户端源码和文档，CF 环境、运行包、安装程序及个人数据分别保存在本机，未上传到 Git。
+当前源码版本 **0.4.0，账号与桌面体验预览版**，该主线版本的安装包已在本机生成，尚未对外发布；生成安装包不会覆盖现用客户端。用户可见的迭代内容见 [版本更新](CHANGELOG.md)，后续版本与推送规则见 [项目约定](AGENTS.md)。本仓库仅提供客户端源码和文档，CF 环境、运行包、安装程序及个人数据分别保存在本机，未上传到 Git。
 
 2026-10-20 已按用户要求完成旧下载片段、测试缓存和旧版解包目录清理，过程脚本与前端遗留草稿已校验归档，正式客户端与 CF 保持可用。旧验收记录中的片段留存描述属于清理前快照；清理回执和恢复归档仅保存在本机。
 
@@ -15,7 +15,11 @@
 
 以上为实体目录，不使用目录链接或共用模型目录。CF 版本目录自带 Python、ComfyUI、节点、15 个模型、本地反推、工作流与输入输出。存储根目录 start.cmd/stop.cmd 可独立启动和停止 CF，停止前校验所属进程。原始 vivid模型 资料独立保留。
 
-当前客户端安装程序为 `release/r10-client033/VividDesktop-Setup-0.3.3-x64.exe`，113,064,594 字节，已安装到上述 VividClient 目录。本机默认用户数据已登记独立 CF 位置。完整本地验收记录见 `docs/local-acceptance-033.md`。
+安装包统一保存在 `G:\Agent\Vivida4free\VividDesktop\release\installer`，以后始终从 `VividDesktop-Setup-latest-x64.exe` 打开最新本机安装包；同目录的 `latest.json` 记录实际版本、来源提交和 SHA256。安装后的日常启动入口固定为 `G:\Agent\Vivida4free\VividClient\VividDesktop.exe`。`win-unpacked` 是构建中间产物，不作为日常启动路径。旧版本目录不再使用。
+
+现用安装和用户数据在生成新包时保持不变；需要更新时运行上述最新安装包。本机默认用户数据已登记独立 CF 位置。`docs/local-acceptance-033.md` 是原 0.3.3 的历史验收快照，其中旧产物路径只用于追溯，不是当前下载或构建入口。
+
+旧安装包及旧解包目录统一移入 `.local-baseline/installer-archive` 作为可恢复归档，不再放在发行入口；归档不代表释放磁盘空间。清理记录保留在本机。
 
 客户端安装包只含 Electron、界面、任务服务和轻量工作流，不含 CF、Python 或模型。客户端与 CF 分别更新。图库、任务、Agent 令牌和 CF 位置设置使用 Electron 用户数据目录，不存放在安装目录。卸载保留外置 CF 和用户数据。
 
@@ -54,16 +58,13 @@ $cf = 'G:\Agent\Vivida4free\VividCFRuntime\versions\vivid-comfy-0.3.0'
 ## 构建客户端
 
 ```powershell
-cd client
-npm ci
-npm run build -- --mode desktop
-cd ..
-node desktop/prepare-ui.cjs
 $env:ELECTRON_BUILDER_CACHE = 'G:\PackageCaches\electron-builder'
-node tools/installer/node_modules/electron-builder/cli.js --projectDir desktop --config "$PWD/tools/installer/electron-builder.json" --config.directories.output=../release/r10-client033 --win nsis --x64 --publish never
+npm --prefix desktop run pack
 ```
 
-开发依赖分别在 desktop 和 tools/installer 安装。构建使用显式文件白名单。上方命令展示原 0.3.3 安装包的构建方式，制作新版本时应使用对应的独立输出目录；本轮仅交付源码。安装器只检查目标目录占用，不按进程名杀其他版本。基线保留在 .local-baseline；未修改线上账号配置。
+构建前在 client、desktop、tools/installer 安装各自的开发依赖。统一入口会构建前端、刷新轻量桌面资源并生成 NSIS 安装包；从 Git worktree 构建也输出到原仓库的固定 `release/installer`，禁止按版本、日期或轮次新建输出目录。可先运行 `node tools/build-installer.cjs --check` 核对来源与输出位置。
+
+构建使用显式文件白名单，不包含 CF、模型或用户数据。安装器只检查目标目录占用，不按进程名杀其他版本。生成安装包不会自动安装或覆盖现用客户端。基线保留在 .local-baseline；未修改线上账号配置。
 
 ## Agent
 
