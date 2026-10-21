@@ -1,0 +1,166 @@
+/* Semantic bridge to animal-island-vue 1.4.0. Colors come from its public
+ * variables or the upstream design tokens; components keep their own palette.
+ * The html selector also covers teleported previews and menus.
+ */
+html[data-vivid-skin="animal-island"],
+html[data-vivid-skin="animal-island"] .podui-theme {
+  color-scheme: light;
+  --island-paper: #f7f3df; /* design-tokens: bg-color-content */
+  --island-ink: #725d42; /* design-tokens: text-color-body */
+  --island-muted: var(--animal-text-color-secondary);
+  --island-line: var(--animal-border-color-light);
+  --island-mint: var(--animal-primary-color-bg);
+  --island-focus: #ffcc00; /* design-tokens: focus-yellow */
+  --island-tab-active: #0cc0b5; /* packaged Tabs active background */
+  --island-tab-text: #fff9e3; /* packaged Tabs active label */
+  --skin-surface: 247 243 223;
+  --skin-surface-container: 248 248 240;
+  --skin-surface-lowest: 255 251 231;
+  --skin-surface-high: 240 232 216;
+  --skin-text-body: 114 93 66;
+  --skin-text-heading: 121 79 39;
+  --skin-text-muted: 159 146 125;
+  --skin-on-primary: 255 249 227;
+  --skin-border: 232 226 214;
+  --skin-primary: 25 200 185;
+  --skin-secondary: 12 192 181;
+  --skin-action: 248 248 240;
+  --skin-action-ink: 121 79 39;
+  --skin-action-secondary: 248 248 240;
+  --skin-state-layer: var(--animal-bg-color-secondary);
+  --schemes-surface: var(--island-paper);
+  --schemes-surface-container: var(--animal-bg-color);
+  --schemes-surface-container-lowest: var(--animal-bg-color-input);
+  --schemes-surface-container-high: var(--animal-bg-color-secondary);
+  --schemes-surface-floating-panel: var(--animal-bg-color);
+  --schemes-on-surface: var(--animal-text-color);
+  --schemes-on-surface-variant: var(--island-ink);
+  --schemes-outline: var(--island-muted);
+  --schemes-outline-variant: var(--island-line);
+  --schemes-primary: var(--animal-primary-color);
+  --schemes-primary-container: var(--animal-primary-color);
+  --schemes-on-primary: var(--island-tab-text);
+  --schemes-on-primary-container: var(--animal-text-color);
+  --schemes-secondary-container: var(--island-tab-active);
+  --schemes-error: var(--animal-error-color);
+  --schemes-error-container: var(--animal-bg-color);
+  --schemes-on-error-container: var(--animal-error-color);
+  --state-layers-secondary-opacity-08: var(--animal-bg-color-secondary);
+  --primary-container: var(--animal-bg-color);
+  --on-primary-container: var(--animal-text-color);
+  --primary: var(--animal-primary-color);
+  --on-primary: var(--animal-bg-color);
+  --bg-page: var(--animal-bg-color);
+  --bg-component: var(--animal-bg-color);
+  --bg-component-solid: var(--animal-bg-color);
+  --bg-prompt-bar: var(--animal-bg-color-input);
+  --text-heading: var(--animal-text-color);
+  --text-primary: var(--island-ink);
+  --text-secondary: var(--island-muted);
+  --text-muted: var(--island-muted);
+  --text-accent: var(--animal-primary-color);
+  --text-invert: var(--animal-bg-color-input);
+  --border-color: var(--island-line);
+  --brand-primary: var(--animal-primary-color);
+  --brand-solid: var(--animal-primary-color);
+  --color-workspace-dark: var(--animal-bg-color);
+  --color-workspace-base: var(--island-paper);
+  --workspace-bg-sidebar: var(--animal-bg-color);
+  --workspace-bg-main: var(--island-paper);
+  --workspace-bg-header: var(--animal-bg-color);
+  --workspace-border: var(--island-line);
+  --workspace-input-bg: var(--animal-bg-color-input);
+  --workspace-input-focus-bg: var(--animal-bg-color-input);
+  --workspace-card-bg: var(--island-mint);
+  --workspace-card-ring: var(--animal-primary-color);
+  --ui-green-color: var(--animal-success-color);
+  --ui-green-hover-color: var(--animal-success-color-hover);
+  --border-radius-base: var(--animal-border-radius-base);
+  --border-radius-lg: var(--animal-border-radius-lg);
+  --border-radius-xs: 12px;
+  --border-radius-sm: 12px;
+  --border-radius-md: 18px;
+  --pod-ring-color: var(--island-focus);
+  --shadow-md: var(--animal-shadow-base);
+  --shadow-lg: var(--animal-shadow-lg);
+  --grid-dot-color: var(--animal-text-color-disabled);
+  --scrollbar-thumb-color: var(--animal-text-color-disabled);
+  --scrollbar-thumb-hover-color: var(--animal-shadow-soft-strong);
+  --scrollbar-thumb-active-color: var(--animal-primary-color);
+  --m3-body-medium-letter-spacing: .01em;
+  --m3-body-large-emphasized-letter-spacing: .01em;
+  --m3-body-small-letter-spacing: .01em;
+  --m3-label-medium-letter-spacing: .02em;
+  --m3-label-small-letter-spacing: .02em;
+  --m3-label-large-letter-spacing: .02em;
+  --m3-label-large-emphasized-letter-spacing: .02em;
+  --m3-title-medium-letter-spacing: .02em;
+  --m3-title-medium-emphasized-letter-spacing: .02em;
+  font-family: var(--animal-font-family);
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+/* @apply embeds Roboto in these named classes, so inheritance alone is not enough. */
+html[data-vivid-skin="animal-island"] :is(button, input, textarea, select, [class*="font-m3-"], .nav-tab-text-active, .nav-tab-text-inactive, .button-text-primary, .button-text-secondary) { font-family: var(--animal-font-family); }
+html[data-vivid-skin="animal-island"] :is(input, textarea, select) { letter-spacing: .01em; }
+html[data-vivid-skin="animal-island"] :is(button, h1, h2, h3) { letter-spacing: .02em; }
+html[data-vivid-skin="animal-island"] :is(button, select, input:not([type="range"])) { border-radius: 50px; }
+html[data-vivid-skin="animal-island"] :is(textarea, [role="menu"], [role="menuitem"]) { border-radius: 18px; }
+html[data-vivid-skin="animal-island"] :is(button, input, textarea, select, [role="button"]):focus-visible { outline: 2px solid var(--island-focus); outline-offset: 3px; box-shadow: none; }
+html[data-vivid-skin="animal-island"] input:not([type="file"]):not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+html[data-vivid-skin="animal-island"] :is(textarea, select) { background: var(--animal-bg-color-input); color: var(--island-ink); border: 1px solid var(--animal-text-color-disabled); }
+html[data-vivid-skin="animal-island"] :is(input, textarea)::placeholder { color: var(--animal-text-color-disabled); font-weight: 400; }
+html[data-vivid-skin="animal-island"] .desktop-toolbar { background: var(--animal-bg-color); color: var(--animal-text-color); border-color: var(--island-line); }
+html[data-vivid-skin="animal-island"] .brand strong { font-weight: 700; }
+html[data-vivid-skin="animal-island"] .brand span { color: var(--island-muted); }
+html[data-vivid-skin="animal-island"] .toolbar-actions button { color: var(--animal-text-color); }
+html[data-vivid-skin="animal-island"] .toolbar-actions button:hover,
+html[data-vivid-skin="animal-island"] .toolbar-actions button[aria-expanded="true"] { background: var(--island-mint); }
+html[data-vivid-skin="animal-island"] :is(.toolbar-divider, .window-controls) { border-color: var(--island-line); }
+html[data-vivid-skin="animal-island"] .toolbar-divider { background: var(--island-line); }
+html[data-vivid-skin="animal-island"] .engine-dot.ready { background: var(--animal-success-color); }
+html[data-vivid-skin="animal-island"] .engine-dot.waiting { background: var(--animal-warning-color); }
+
+html[data-vivid-skin="animal-island"] .workspace-header .bg-schemes-surface-container { border-radius: 50px; }
+html[data-vivid-skin="animal-island"] .nav-tab-active { background: var(--island-tab-active); border-radius: 24px; }
+html[data-vivid-skin="animal-island"] .nav-tab-text-active { color: var(--island-tab-text); font-weight: 600; }
+html[data-vivid-skin="animal-island"] .nav-tab-text-inactive { color: var(--animal-text-color); }
+html[data-vivid-skin="animal-island"] [data-testid="toolbar-right-tabs"] .bg-schemes-secondary-container > div { color: var(--island-tab-text); }
+html[data-vivid-skin="animal-island"] #workspace-inputs { background: transparent; }
+html[data-vivid-skin="animal-island"] #workspace-inputs button.text-schemes-primary:hover { color: var(--animal-primary-color-active); }
+html[data-vivid-skin="animal-island"] .workspace-canvas { border: 1px solid var(--island-line); border-radius: 24px; padding: 20px; background: var(--animal-bg-color); }
+html[data-vivid-skin="animal-island"] :is(.pod-panel, .pod-panel-black) { background: var(--animal-bg-color); color: var(--island-ink); border-color: var(--island-line); box-shadow: none; }
+html[data-vivid-skin="animal-island"] :is(.desktop-notice, .pod-banana-menu) { background: var(--animal-bg-color); color: var(--island-ink); border: 1px solid var(--island-line); }
+html[data-vivid-skin="animal-island"] .unavailable { color: var(--island-ink); }
+html[data-vivid-skin="animal-island"] .account-backdrop.podui-theme { font-family: var(--animal-font-family); background: transparent; }
+html[data-vivid-skin="animal-island"] .account-panel { border: 1px solid var(--island-line); border-radius: 24px; box-shadow: var(--animal-shadow-lg); }
+html[data-vivid-skin="animal-island"] .account-title { font-weight: 700; }
+html[data-vivid-skin="animal-island"] :is(.account-settings > button, .account-panel .skin-options button) { border-radius: 18px; }
+
+/* Original and result use the same neutral label; their position identifies the side. */
+html[data-vivid-skin="animal-island"] .comparison-label { width: auto; background: var(--animal-bg-color); color: var(--animal-text-color); border: 1px solid var(--animal-border-color); border-radius: 12px; font-weight: 600; text-align: center; }
+html[data-vivid-skin="animal-island"] .runtime-backdrop { background: var(--animal-shadow-color-light); }
+html[data-vivid-skin="animal-island"] .runtime-panel { background: var(--animal-bg-color); color: var(--animal-text-color); border-color: var(--island-line); border-radius: 24px; box-shadow: var(--animal-shadow-lg); }
+html[data-vivid-skin="animal-island"] :is(.panel-header, .directory-row, .panel-footer) { border-color: var(--island-line); }
+html[data-vivid-skin="animal-island"] :is(.eyebrow, .runtime-intro p, .runtime-details dt, .status-message, .panel-footer, .download-labels) { color: var(--island-muted); }
+html[data-vivid-skin="animal-island"] :is(.runtime-details dd, .directory-row dd, .notice, .notice strong) { color: var(--island-ink); }
+html[data-vivid-skin="animal-island"] :is(.notice, .state-pill, .icon-button) { border-color: var(--island-line); color: var(--island-ink); }
+html[data-vivid-skin="animal-island"] .runtime-mark { background: var(--island-mint); color: var(--animal-text-color); }
+html[data-vivid-skin="animal-island"] :is(.state-ready, .state-installed) { color: var(--animal-success-color); border-color: var(--animal-success-color); background: var(--animal-bg-color); }
+html[data-vivid-skin="animal-island"] :is(.state-checking, .state-downloading, .state-verifying, .state-installing, .state-starting) { color: var(--animal-primary-color); border-color: var(--animal-primary-color); }
+html[data-vivid-skin="animal-island"] :is(.notice-warning, .state-paused) { background: var(--animal-bg-color); border-color: var(--animal-warning-color); }
+html[data-vivid-skin="animal-island"] .notice-warning strong { color: var(--animal-text-color); }
+html[data-vivid-skin="animal-island"] :is(.notice-error strong, .state-error) { color: var(--animal-error-color); }
+html[data-vivid-skin="animal-island"] .notice-error { background: var(--animal-bg-color); border-color: var(--animal-error-color); }
+html[data-vivid-skin="animal-island"] .progress-track { background: var(--animal-bg-color-secondary); }
+html[data-vivid-skin="animal-island"] .progress-fill { background: var(--animal-primary-color); }
+html[data-vivid-skin="animal-island"] :is(.button-secondary, .text-button) { background: var(--animal-bg-color); color: var(--animal-text-color); border-color: var(--animal-border-color); }
+html[data-vivid-skin="animal-island"] .button-secondary:hover:enabled { background: var(--animal-bg-color); color: var(--animal-primary-color); border-color: var(--animal-primary-color); }
+html[data-vivid-skin="animal-island"] .button-primary { background: var(--animal-bg-color); border-color: var(--animal-bg-color); color: var(--animal-text-color); box-shadow: 0 5px 0 var(--animal-shadow-warm); }
+html[data-vivid-skin="animal-island"] .button-primary:hover:enabled { background: var(--animal-bg-color); box-shadow: 0 6px 0 var(--animal-shadow-warm); }
+html[data-vivid-skin="animal-island"] :is(img.nav-tab-icon, .sidebar-toggle img) { filter: sepia(1) saturate(.7) brightness(.65); }
+html[data-vivid-skin="animal-island"] [data-testid="image-preview-modal"] { color: var(--island-ink); }
+html[data-vivid-skin="animal-island"] :is([role="menu"], .pod-banana-menu) { box-shadow: var(--animal-shadow-base); }
+@media (max-width: 1023px) { html[data-vivid-skin="animal-island"] .workspace-canvas { margin-left: 8px; margin-right: 12px; padding: 12px; } }
+@media (prefers-reduced-motion: reduce) { html[data-vivid-skin="animal-island"] *, html[data-vivid-skin="animal-island"] *::before, html[data-vivid-skin="animal-island"] *::after { transition: none !important; animation: none !important; } }

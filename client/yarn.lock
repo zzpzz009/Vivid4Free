@@ -99,6 +99,16 @@
   resolved "https://registry.npmmirror.com/@floating-ui/utils/-/utils-0.2.10.tgz"
   integrity sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==
 
+"@fontsource/noto-sans-sc@^5.2.9":
+  version "5.3.1"
+  resolved "https://registry.npmmirror.com/@fontsource/noto-sans-sc/-/noto-sans-sc-5.3.1.tgz"
+  integrity sha512-YxZ/VWAWo9FWzH08Q6fGTzIW6vYNP2TMhUFCnfhlimbhdXnWrxJLrzX3KWt2FKnV0s8XiM5vjpGHQiyFRlTj0w==
+
+"@fontsource/nunito@^5.2.7":
+  version "5.3.0"
+  resolved "https://registry.npmmirror.com/@fontsource/nunito/-/nunito-5.3.0.tgz"
+  integrity sha512-vw9TaTQJ/zpEpKrsODuPmOvaVjXgdda6B+xXA4YqjrdeJ62MLgVoDerdRXFQHyBnSCt2yQ2nHKCHPP/Pv7Xq4Q==
+
 "@headlessui/vue@^1.7.23":
   version "1.7.23"
   resolved "https://registry.npmmirror.com/@headlessui/vue/-/vue-1.7.23.tgz"
@@ -771,6 +781,14 @@ ajv@^6.12.4:
     fast-json-stable-stringify "^2.0.0"
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
+
+animal-island-vue@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.npmmirror.com/animal-island-vue/-/animal-island-vue-1.4.0.tgz"
+  integrity sha512-HkanJdnjz5MniLHlLXDkFQvEPO+9pPcWvzxheXv9gufprVro8gyg7O8W5z2bHwSZ6ZdBiXayIlLIRNpyPgPv6Q==
+  dependencies:
+    "@fontsource/noto-sans-sc" "^5.2.9"
+    "@fontsource/nunito" "^5.2.7"
 
 ansi-regex@^5.0.1:
   version "5.0.1"
@@ -2799,7 +2817,7 @@ vue-tsc@2.0.29:
     "@vue/language-core" "2.0.29"
     semver "^7.5.4"
 
-"vue@^2.7.0 || ^3.0.0", "vue@^2.7.0 || ^3.5.11", "vue@^3.0.0-0 || ^2.6.0", vue@^3.2.0, vue@^3.2.25, vue@^3.5.17, vue@3.5.22:
+"vue@^2.7.0 || ^3.0.0", "vue@^2.7.0 || ^3.5.11", "vue@^3.0.0-0 || ^2.6.0", vue@^3.2.0, vue@^3.2.25, vue@^3.5.17, vue@>=3.4.0, vue@3.5.22:
   version "3.5.22"
   resolved "https://registry.npmmirror.com/vue/-/vue-3.5.22.tgz"
   integrity sha512-toaZjQ3a/G/mYaLSbV+QsQhIdMo9x5rrqIpYRObsJ6T/J+RyCSFwN2LHNVH9v8uIcljDNa3QzPVdv3Y6b9hAJQ==

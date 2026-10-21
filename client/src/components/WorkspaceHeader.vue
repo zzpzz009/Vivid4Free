@@ -18,7 +18,8 @@
           >
             <div :class="selected ? 'nav-tab-active' : 'nav-tab-inactive'">
               <div class="nav-tab-content">
-                <img
+                <IslandIcon v-if="uiStore.skin === 'animal-island'" class="nav-tab-icon" :name="tab.id === 'workspace' ? 'Paintbrush' : 'Bulb'" :size="24" />
+                <img v-else
                   class="nav-tab-icon"
                   :src="selected ? tab.activeIcon : tab.inactiveIcon"
                   :alt="tab.name"
@@ -30,6 +31,7 @@
                   {{ tab.name }}
                 </div>
               </div>
+              <IslandIcon v-if="selected && uiStore.skin === 'animal-island'" class="nav-leaf" name="Leaf" :size="14" aria-hidden="true" />
             </div>
           </Tab>
         </TabList>
@@ -79,12 +81,15 @@
 import { computed } from 'vue'
 import { TabGroup, TabList, Tab } from '@headlessui/vue'
 import { icons } from '../utils/assets.js'
+import { Icon as IslandIcon } from 'animal-island-vue'
+import { useUIStore } from '@/stores/useUIStore.js'
 
 export default {
   name: 'WorkspaceHeader',
   components: {
     TabGroup,
     TabList,
+    IslandIcon,
     Tab
   },
   props: {
@@ -155,6 +160,7 @@ export default {
     }
 
     return {
+      uiStore: useUIStore(),
       navigationTabs,
       rightTabs,
       menuIcon,

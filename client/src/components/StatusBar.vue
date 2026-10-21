@@ -1,5 +1,5 @@
 <template>
-  <div class="pr-4 pl-4 flex flex-col gap-1 items-start justify-center w-full shrink-0">
+  <div class="status-bar pr-4 pl-4 flex flex-col gap-1 items-start justify-center w-full shrink-0">
     <div class="border-solid border-schemes-outline-variant border-t border-r-0 border-b-0 border-l-0 self-stretch shrink-0 h-0 relative -mt-px" />
     <div class="flex items-center justify-between w-full py-2">
       <div class="flex items-center gap-2">
@@ -70,7 +70,8 @@ const currentStatusMessage = computed(() => {
   if (state.value === 'completed') return '任务已完成'
   if (state.value === 'cancelled') return '任务已取消'
   if (state.value === 'failed') return job.value.errorMessage || '任务失败，请检查后重试'
-  return store.statusMessage === 'Ready' ? 'Ready' : store.statusMessage || 'Ready'
+  const ready = uiStore.skin === 'animal-island' ? '准备就绪' : 'Ready'
+  return store.statusMessage === 'Ready' ? ready : store.statusMessage || ready
 })
 const currentStatusType = computed(() => state.value === 'failed' ? 'error' : state.value === 'completed' ? 'success' : isLoading.value ? 'active' : store.statusType || 'info')
 </script>

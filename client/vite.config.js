@@ -1,9 +1,15 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
+import { readFileSync } from 'node:fs'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), {
+    name: 'skin-license-notices',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'THIRD-PARTY-NOTICES.txt', source: readFileSync(new URL('./THIRD-PARTY-NOTICES.txt', import.meta.url), 'utf8') })
+    }
+  }],
   base: './',
   publicDir: false,
   test: {

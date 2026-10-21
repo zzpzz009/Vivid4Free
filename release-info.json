@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "clientVersion": "0.4.1",
-  "tag": "v0.4.1",
+  "clientVersion": "0.5.0",
+  "tag": "v0.5.0",
   "releaseDate": "2026-10-21",
   "channel": "local-preview",
-  "delivery": "source-preview",
+  "delivery": "local-installer",
   "platform": "win32-x64",
   "notes": "CHANGELOG.md",
   "runtime": {
@@ -26,7 +26,8 @@
     "accountRegistrationEntry": true,
     "accountSettings": true,
     "customTitlebar": true,
-    "localGenerationConsumesQuota": false
+    "localGenerationConsumesQuota": false,
+    "dualSkin": true
   },
   "validation": {
     "nativeDragAndEdgeResizeManuallyConfirmed": false,

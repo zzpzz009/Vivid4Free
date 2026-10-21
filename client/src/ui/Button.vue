@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, useAttrs } from 'vue';
+import { Button as IslandButton } from 'animal-island-vue';
+import { useUIStore } from '@/stores/useUIStore.js';
+
+defineOptions({ inheritAttrs: false });
+const attrs = useAttrs();
+const uiStore = useUIStore();
+const islandAttrs = () => Object.fromEntries(Object.entries(attrs).filter(([key]) => key !== 'type'));
 
 interface Props {
   variant?: 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger' | 'generate';
@@ -36,8 +43,20 @@ const sizeClass = computed(() => {
 </script>
 
 <template>
+  <IslandButton
+    v-if="uiStore.skin === 'animal-island'"
+    v-bind="islandAttrs()"
+    :type="variant === 'primary' || variant === 'generate' || variant === 'danger' ? 'primary' : variant === 'ghost' ? 'text' : 'default'"
+    :size="size === 'md' ? 'middle' : 'small'"
+    :danger="variant === 'danger'"
+    :html-type="(attrs.type as 'button' | 'submit' | 'reset') || 'button'"
+    :loading="isLoading"
+    :disabled="disabled || isLoading"
+  ><slot /></IslandButton>
   <button
+    v-else
     type="button"
+    v-bind="attrs"
     :class="[
       variantClass,
       sizeClass,

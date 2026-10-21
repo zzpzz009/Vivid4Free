@@ -3,8 +3,9 @@
     <div class="flex-1 overflow-y-auto overflow-x-hidden">
       <div class="flex flex-col gap-4 m-4 pb-8">
         <!-- Upload Image Area -->
-        <div
-          class="bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center w-[265px] overflow-hidden cursor-pointer transition-colors duration-200 relative"
+        <component :is="uiStore.skin === 'animal-island' ? IslandCard : 'div'"
+          v-bind="uiStore.skin === 'animal-island' ? { type: 'dashed', pattern: 'app-teal' } : {}"
+          class="island-upload-card bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center w-[265px] overflow-hidden cursor-pointer transition-colors duration-200 relative"
           :class="[
             multipleImages ? 'min-h-[182px]' : 'h-[182px]',
             isDragOverImage ? 'bg-schemes-surface-container-high' : ''
@@ -127,7 +128,10 @@
             class="flex flex-col items-center justify-center gap-2"
             :class="multipleImages ? 'p-4' : ''"
           >
+            <span v-if="uiStore.skin === 'animal-island'" class="island-upload-index" aria-hidden="true">主图 / 01</span>
+            <span v-if="uiStore.skin === 'animal-island'" class="island-upload-glyph" aria-hidden="true"><IslandIcon name="Upload" :size="29" /></span>
             <img
+              v-else
               class="shrink-0 w-5 h-5 relative overflow-visible"
               :src="uploadIcon"
               alt="Upload"
@@ -139,12 +143,13 @@
               {{ imageUploadSubtitle }}
             </div>
           </div>
-        </div>
+        </component>
 
         <!-- Upload Reference Area -->
-        <div
+        <component :is="uiStore.skin === 'animal-island' ? IslandCard : 'div'"
+          v-bind="uiStore.skin === 'animal-island' ? { type: 'dashed', pattern: 'default' } : {}"
           v-if="showReferenceUpload && currentActionMode.id !== 'generate'"
-          class="bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center w-[265px] overflow-hidden cursor-pointer transition-colors duration-200 relative"
+          class="island-upload-card island-reference-card bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center w-[265px] overflow-hidden cursor-pointer transition-colors duration-200 relative"
           :class="[
             multipleReferences ? 'min-h-[182px]' : 'h-[182px]',
             isDragOverReference ? 'bg-schemes-surface-container-high' : ''
@@ -267,7 +272,10 @@
             class="flex flex-col items-center gap-2"
             :class="multipleReferences ? 'p-4' : ''"
           >
+            <span v-if="uiStore.skin === 'animal-island'" class="island-upload-index" aria-hidden="true">参考 / 02</span>
+            <span v-if="uiStore.skin === 'animal-island'" class="island-upload-glyph" aria-hidden="true"><IslandIcon name="Image" :size="28" /></span>
             <img
+              v-else
               class="shrink-0 w-5 h-5 relative overflow-visible"
               :src="referenceIcon"
               alt="Reference"
@@ -279,7 +287,7 @@
               {{ referenceUploadSubtitle }}
             </div>
           </div>
-        </div>
+        </component>
         <div v-if="showRandomSeed && !showAdvancedParams" class="flex flex-col gap-1.5 w-[265px] py-2">
           <div class="flex justify-between items-center">
             <label class="text-schemes-on-surface-variant text-xs font-medium">
@@ -309,10 +317,11 @@
         <!-- Advanced Parameters Header -->
         <button 
           v-if="showAdvancedParams"
-          class="flex flex-row items-center justify-between w-[265px] group focus:outline-none py-2"
+          class="island-parameter-heading flex flex-row items-center justify-between w-[265px] group focus:outline-none py-2"
           @click.stop="toggleAdvancedOpen"
         >
-          <div class="text-schemes-primary-container font-medium text-sm flex items-center gap-2">
+          <IslandTitle v-if="uiStore.skin === 'animal-island'" size="small" color="app-teal">高级参数</IslandTitle>
+          <div v-else class="text-schemes-primary-container font-medium text-sm flex items-center gap-2">
             高级参数
           </div>
           <div 
@@ -346,7 +355,7 @@
           leave-from-class="transform translate-y-0 opacity-100"
           leave-to-class="transform -translate-y-2 opacity-0"
         >
-          <div v-if="showAdvancedParams && advancedOpen" class="flex flex-col gap-5 w-[265px]">
+          <div v-if="showAdvancedParams && advancedOpen" class="island-parameter-card flex flex-col gap-5 w-[265px]">
             
             <!-- Random Seed -->
             <div v-if="showRandomSeed" class="space-y-1.5">
@@ -416,7 +425,8 @@
               <label class="text-schemes-on-surface-variant text-sm font-medium">
                 添加配景
               </label>
-              <label class="relative inline-flex items-center cursor-pointer">
+              <IslandSwitch v-if="uiStore.skin === 'animal-island'" v-model="addScene" aria-label="添加配景" size="small" />
+              <label v-else class="relative inline-flex items-center cursor-pointer">
                 <input 
                   id="workspace-scene" aria-label="添加配景" v-model="addScene"
                   type="checkbox" 
@@ -552,10 +562,10 @@
     </div> -->
       </div>
     </div>
-    <div class="shrink-0 m-4 mt-4">
+    <div class="island-action-dock shrink-0 m-4 mt-4">
       <div class="w-[265px] flex flex-row gap-3 items-center justify-between">
           <div class="flex-1 h-10 relative">
-            <HMenu as="div" class="rounded-2xl flex flex-row items-center justify-center w-full h-full relative">
+            <HMenu as="div" class="primary-action-group rounded-2xl flex flex-row items-center justify-center w-full h-full relative" :class="{ 'action-disabled': isPrimaryActionDisabled }">
               <button
                 class="primary-button flex-1 h-10 min-w-0"
                 :class="showActionDropdown ? 'rounded-r-none' : ''"
@@ -803,6 +813,7 @@ import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Menu as HMenu, MenuButton as HMenuButton, MenuItems as HMenuItems, MenuItem as HMenuItem } from '@headlessui/vue'
 import Slider from './ui/Slider.vue'
+import { Card as IslandCard, Title as IslandTitle, Icon as IslandIcon, Switch as IslandSwitch } from 'animal-island-vue'
 import { useImageStore, useJobStore, useAssetStore, useUIStore,useXMStore } from '../stores'
 import { icons } from '../utils/assets.js'
 import { success, error } from '../utils/toast.js'
@@ -815,6 +826,10 @@ export default {
     HMenuButton,
     HMenuItems,
     HMenuItem,
+    IslandCard,
+    IslandTitle,
+    IslandIcon,
+    IslandSwitch,
     Slider
   },
   props: {
@@ -1494,6 +1509,8 @@ export default {
 
 
     return {
+      uiStore,
+      IslandCard,
       actionModes,
       currentActionMode,
       isActionDisabled,

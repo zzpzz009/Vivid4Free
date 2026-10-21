@@ -1,0 +1,77 @@
+/* Layout stays shared with the original skin. Library components own their
+ * colors and patterns; the grouped action follows the packaged primary Button.
+ */
+html[data-vivid-skin="animal-island"] .desktop-shell { background: var(--island-paper); }
+html[data-vivid-skin="animal-island"] .desktop-toolbar { height: 52px; padding: 0 18px; }
+html[data-vivid-skin="animal-island"] .desktop-main { margin-top: 12px; }
+html[data-vivid-skin="animal-island"] .workspace-header { margin-bottom: 16px; }
+html[data-vivid-skin="animal-island"] .brand { gap: 10px; }
+html[data-vivid-skin="animal-island"] .brand strong { font-size: 16px; }
+html[data-vivid-skin="animal-island"] .brand .island-brand-mark { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 42% 58% 55% 45%; background: var(--island-mint); }
+html[data-vivid-skin="animal-island"] .brand > span:last-child { font-size: 11px; }
+html[data-vivid-skin="animal-island"] .toolbar-actions .skin-entry { border: 1px solid var(--island-line); background: var(--island-mint); }
+html[data-vivid-skin="animal-island"] #workspace-inputs .island-upload-card { height: 182px; padding: 0; flex: none; }
+html[data-vivid-skin="animal-island"] #workspace-inputs .island-upload-card:hover { border-color: var(--animal-primary-color); }
+.island-upload-index { position: absolute; top: 12px; left: 16px; font-size: 10px; color: var(--animal-text-color-secondary); }
+.island-upload-glyph { display: grid; place-items: center; width: 48px; height: 48px; margin-top: 6px; border-radius: 42% 58% 54% 46%; background: var(--animal-bg-color); }
+html[data-vivid-skin="animal-island"] .island-upload-card .text-schemes-primary { color: inherit; font-size: 14px; font-weight: 700; }
+html[data-vivid-skin="animal-island"] .island-upload-card .text-schemes-outline { font-size: 11px; }
+html[data-vivid-skin="animal-island"] .island-reference-card [title="参考图镜像"] { left: auto; right: 10px; top: 8px; background: var(--animal-bg-color-secondary); }
+html[data-vivid-skin="animal-island"] .island-reference-card [title="参考图镜像"] span { font-size: 10px; }
+html[data-vivid-skin="animal-island"] .island-parameter-heading { justify-content: center; position: relative; }
+html[data-vivid-skin="animal-island"] .island-parameter-heading > div:last-child { position: absolute; right: 6px; }
+html[data-vivid-skin="animal-island"] .island-parameter-heading + div { display: none; }
+html[data-vivid-skin="animal-island"] .island-parameter-card { padding: 12px; border: 1px solid var(--island-line); border-radius: 24px; background: var(--animal-bg-color); gap: 16px; }
+html[data-vivid-skin="animal-island"] .island-parameter-card + div { display: none; }
+html[data-vivid-skin="animal-island"] .island-parameter-card input:not([type=range]) { font-size: 12px; padding: 9px 12px; }
+html[data-vivid-skin="animal-island"] .island-parameter-card label { font-size: 12px; }
+html[data-vivid-skin="animal-island"] .island-parameter-card .bg-schemes-surface-container-high { border-radius: 12px; padding: 2px 7px; }
+html[data-vivid-skin="animal-island"] .slider::-webkit-slider-thumb { background: var(--animal-primary-color); border: 2px solid var(--animal-primary-color-active); box-shadow: var(--animal-shadow-sm); }
+html[data-vivid-skin="animal-island"] .slider::-moz-range-thumb { background: var(--animal-primary-color); border: 2px solid var(--animal-primary-color-active); box-shadow: var(--animal-shadow-sm); }
+
+/* One background, border and stacked shadow across both button targets. */
+html[data-vivid-skin="animal-island"] .primary-action-group { height: 40px; border: 2px solid var(--animal-bg-color); border-radius: 50px; background: var(--animal-bg-color); box-shadow: 0 5px 0 var(--animal-shadow-warm); transition: transform .15s var(--animal-motion-ease), box-shadow .15s var(--animal-motion-ease); }
+html[data-vivid-skin="animal-island"] .primary-action-group:hover:not(.action-disabled) { transform: translateY(-1px); box-shadow: 0 6px 0 var(--animal-shadow-warm); }
+html[data-vivid-skin="animal-island"] .primary-action-group:has(>button:active:enabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--animal-shadow-warm); }
+html[data-vivid-skin="animal-island"] .primary-action-group .primary-button,
+html[data-vivid-skin="animal-island"] .primary-action-group [data-testid=primary-action-dropdown] { height: 100%; min-height: 0; margin: 0; background: transparent; border: 0; box-shadow: none; transform: none; }
+html[data-vivid-skin="animal-island"] .primary-action-group .primary-button { border-radius: 50px 0 0 50px; }
+html[data-vivid-skin="animal-island"] .primary-action-group:not(:has([data-testid=primary-action-dropdown])) .primary-button { border-radius: 50px; }
+html[data-vivid-skin="animal-island"] .primary-action-group [data-testid=primary-action-dropdown] { border-left: 1px solid var(--animal-border-color-light); border-radius: 0 50px 50px 0; }
+html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:hover,
+html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:active { background: transparent; box-shadow: none; transform: none; }
+html[data-vivid-skin="animal-island"] .primary-action-group .button-text-primary { color: var(--animal-text-color); font-weight: 600; font-size: 14px; }
+html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled { background: var(--animal-bg-color-disabled); border-color: var(--animal-bg-color-disabled); box-shadow: none; }
+html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:disabled { opacity: 1; }
+html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled .button-text-primary { color: var(--animal-text-color-disabled); }
+html[data-vivid-skin="animal-island"] .secondary-button { height: 40px; background: var(--animal-bg-color); border: 2px solid var(--animal-border-color); box-shadow: var(--animal-shadow-sm); }
+html[data-vivid-skin="animal-island"] .button-text-secondary { color: var(--animal-text-color); font-weight: 600; }
+html[data-vivid-skin="animal-island"] .secondary-button:disabled { border-color: var(--animal-border-color-light); }
+html[data-vivid-skin="animal-island"] .secondary-button:disabled .button-text-secondary { color: var(--animal-text-color-disabled); }
+html[data-vivid-skin="animal-island"] .account-action.animal-btn > span { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+
+.island-canvas-welcome { text-align: center; }
+.island-seascape { position: relative; width: 220px; height: 150px; margin: 0 auto 18px; overflow: hidden; }
+.island-seascape::before { content: ''; position: absolute; width: 174px; height: 136px; left: 23px; bottom: 4px; background: var(--animal-primary-color-bg); border-radius: 49% 51% 39% 61% / 56% 42% 58% 44%; }
+.island-sun { position: absolute; top: 5px; left: 29px; transform: rotate(-15deg) scale(.8); }
+.island-cloud { position: absolute; right: 13px; top: 0; transform: scale(.8); }
+.island-sea { position: absolute; width: 185px; height: 50px; bottom: 10px; left: 17px; border-radius: 50% 45% 46% 55%; background: var(--animal-primary-color); }
+.island-sea-back { bottom: 15px; opacity: .2; transform: rotate(-7deg); }
+.island-sea-front { height: 29px; bottom: 0; opacity: .4; transform: rotate(5deg); }
+.island-boat { position: absolute; left: 57px; bottom: 12px; transform: scale(.8) rotate(-4deg); animation: island-bob 5s ease-in-out infinite; }
+.island-sprig { position: absolute; right: 8px; bottom: 22px; transform: rotate(22deg) scale(.8); }
+.island-canvas-welcome h3 { color: var(--animal-text-color); font-size: 20px; font-weight: 700; }
+.island-canvas-welcome p { color: var(--animal-text-color-secondary); font-size: 12px; font-weight: 400; line-height: 1.8; margin-top: 10px; }
+html[data-vivid-skin="animal-island"] .workspace-header .nav-leaf { position: absolute; right: 13px; top: 10px; transform: rotate(22deg); }
+html[data-vivid-skin="animal-island"] #desktop-resources { margin: 0 16px; padding: 0; border: 0; border-radius: 0; background: transparent; }
+html[data-vivid-skin="animal-island"] .resource-overlay#desktop-resources { background: var(--animal-bg-color); border: 1px solid var(--island-line); border-radius: 24px; padding: 12px; }
+html[data-vivid-skin="animal-island"] [data-testid=gallery-card] { border: 4px solid var(--animal-bg-color); border-radius: 18px; outline: 1px solid var(--island-line); margin-top: 2px; }
+html[data-vivid-skin="animal-island"] .history-item { border-radius: 18px; }
+html[data-vivid-skin="animal-island"] .history-heading > div:last-of-type { font-weight: 600; }
+.island-history-count { color: var(--animal-text-color-secondary); font-size: 10px; padding-top: 2px; }
+.island-history-empty { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 150px; color: var(--animal-text-color-secondary); font-size: 12px; border: 1px dashed var(--island-line); border-radius: 18px; background: var(--animal-bg-color); }
+html[data-vivid-skin="animal-island"] .status-bar .text-schemes-outline-variant { color: var(--animal-text-color-secondary); }
+html[data-vivid-skin="animal-island"] .status-bar .bg-schemes-outline-variant { background: var(--animal-text-color-disabled); }
+@keyframes island-bob { 0%,100% { transform: scale(.8) translateY(0) rotate(-4deg); } 50% { transform: scale(.8) translateY(4px) rotate(1deg); } }
+@media(max-width:767px) { html[data-vivid-skin="animal-island"] .brand .island-brand-mark { display: none; }html[data-vivid-skin="animal-island"] .runtime-entry>span:last-child { display: none; }.island-seascape { transform: scale(.85); margin-bottom: 0; }.island-canvas-welcome h3 { font-size: 16px; } }
+@media(prefers-reduced-motion:reduce) { .island-boat { animation: none; } }

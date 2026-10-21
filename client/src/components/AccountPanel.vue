@@ -23,6 +23,16 @@
         </div>
       </header>
       <section v-if="settingsOpen" id="desktop-account-settings" class="account-settings" aria-label="客户端设置">
+        <fieldset class="skin-settings">
+          <legend>界面皮肤</legend>
+          <div class="skin-options">
+            <button v-for="option in skinOptions" :key="option.id" type="button" :aria-pressed="uiStore.skin === option.id" @click="uiStore.setSkin(option.id)">
+              <span class="skin-preview" :class="`skin-preview-${option.id}`" aria-hidden="true" />
+              <span>{{ option.label }}</span>
+              <span class="skin-selected">{{ uiStore.skin === option.id ? '使用中' : '选择' }}</span>
+            </button>
+          </div>
+        </fieldset>
         <button type="button" @click="$emit('import')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m3 16 5-5 4 4 3-3 6 6M15 7h3m-1.5-1.5v3"/></svg><span>导入图库</span><span class="settings-arrow" aria-hidden="true">›</span></button>
         <button type="button" @click="$emit('output')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg><span>输出目录</span><span class="settings-arrow" aria-hidden="true">›</span></button>
         <button type="button" @click="$emit('agent')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 9 3 3-3 3m6 0h4"/></svg><span>Agent 接口</span><span class="settings-arrow" aria-hidden="true">›</span></button>
@@ -64,6 +74,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/useAuthStore.js'
+import { useUIStore } from '@/stores/useUIStore.js'
 import Button from '@/ui/Button.vue'
 import Input from '@/ui/Input.vue'
 import IconButton from '@/ui/IconButton.vue'
@@ -72,6 +83,8 @@ import Panel from '@/ui/Panel.vue'
 const props = defineProps({ open: { type: Boolean, default: false } })
 const emit = defineEmits(['close', 'import', 'output', 'agent'])
 const store = useAuthStore()
+const uiStore = useUIStore()
+const skinOptions = [{ id: 'original', label: '经典深色' }, { id: 'animal-island', label: 'Animal Island · 海岛' }]
 const username = ref('')
 const password = ref('')
 const retrySeconds = ref(0)
@@ -184,6 +197,7 @@ async function openRegistration() {
 .settings-entry{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 6px;border:0;border-radius:7px;background:transparent;color:var(--text-secondary);font-size:12px;cursor:pointer}
 .settings-entry:hover,.settings-entry[aria-expanded=true]{background:var(--workspace-card-bg);color:var(--text-primary)}
 .account-settings{display:grid;gap:4px}
+.skin-settings{min-width:0;margin:0 0 12px;padding:0 0 16px;border:0;border-bottom:1px solid var(--border-color)}.skin-settings legend{margin-bottom:12px;color:var(--text-secondary);font-size:12px}.skin-options{display:grid;gap:8px}.skin-options button{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border:1px solid var(--border-color);border-radius:12px;color:var(--text-primary);font-size:12px;text-align:left;cursor:pointer}.skin-options button[aria-pressed=true]{border-color:var(--brand-primary);background:var(--workspace-card-bg)}.skin-preview{width:38px;height:26px;flex:none;border:1px solid var(--border-color);border-radius:8px}.skin-preview-original{background:linear-gradient(135deg,#211f26 65%,#c5aef6 65%)}.skin-preview-animal-island{background:linear-gradient(135deg,#f7f3df 65%,#19c8b9 65%)}.skin-selected{margin-left:auto;color:var(--text-secondary);font-size:10px;white-space:nowrap}
 .account-settings>button{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:0 12px;border:0;border-radius:8px;background:transparent;color:var(--text-primary);font-size:12px;cursor:pointer;text-align:left}
 .account-settings>button:hover{background:var(--workspace-card-bg)}
 .account-settings svg{width:16px;height:16px;color:var(--text-secondary)}

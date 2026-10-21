@@ -1,14 +1,15 @@
 <template>
   <!-- History Section - Full width with title and toggle -->
-  <div class="w-full mt-4 mb-0">
+  <div class="history-section w-full mt-4 mb-0" :class="{ 'island-history-expanded': isExpanded }">
     <!-- Title and Toggle Header -->
-    <div class="flex flex-row gap-[3px] items-start justify-start flex-wrap content-start w-full h-7 mb-2 border-t border-schemes-outline-variant pt-2">
+    <div class="history-heading flex flex-row gap-[3px] items-start justify-start flex-wrap content-start w-full h-7 mb-2 border-t border-schemes-outline-variant pt-2">
       <!-- History icon (also toggle button) -->
       <div
         class="cursor-pointer" role="button" tabindex="0" :aria-label="isExpanded ? '收起历史记录' : '展开历史记录'" :aria-expanded="isExpanded" @keydown.enter.prevent="toggleExpansion" @keydown.space.prevent="toggleExpansion"
         @click="toggleExpansion"
       >
-        <img
+        <IslandIcon v-if="uiStore.skin === 'animal-island'" name="Book" :size="20" />
+        <img v-else
           class="shrink-0 w-6 h-6 relative overflow-visible transition-transform duration-300"
           :class="isExpanded ? 'rotate-180' : ''"
           :src="historyIcon"
@@ -19,13 +20,14 @@
       <div class="text-schemes-on-surface text-left font-m3-title-medium-font-family text-m3-title-medium-font-size leading-m3-title-medium-line-height font-m3-title-medium-font-weight relative flex-1 letter-spacing-m3-title-medium">
         历史记录
       </div>
+      <span v-if="uiStore.skin === 'animal-island'" class="island-history-count">{{ displayItems.length }} 次记录</span>
     </div>
     <div v-if="historyDegraded" class="text-xs text-yellow-500 mb-2">部分历史暂时不可用</div>
     <div v-if="historySyncHint" class="text-xs text-blue-500 mb-2">{{ historySyncHint }}</div>
 
     <!-- History Content Container -->
     <div
-      class="rounded-sm w-full transition-all duration-300 ease-in-out relative overflow-hidden"
+      class="history-scroll rounded-sm w-full transition-all duration-300 ease-in-out relative overflow-hidden"
       :class="isExpanded ? 'h-[531px]' : 'h-[177px]'"
     >
       <!-- History Images Container with auto-wrap and vertical scroll -->
@@ -185,9 +187,11 @@
           <!-- Placeholder items (always visible) -->
           <div
             v-for="n in Math.max(0, 12 - displayItems.length)"
+            v-if="uiStore.skin !== 'animal-island'"
             :key="`placeholder-${n}`" aria-hidden="true"
             class="bg-state-layers-secondary-opacity-08 rounded-xl shrink-0 w-[165px] h-[165px] relative"
           ></div>
+          <div v-if="uiStore.skin === 'animal-island' && displayItems.length === 0" class="island-history-empty"><IslandIcon name="Image" :size="23" /><span>这里会收好你的每一次创作</span></div>
         </div>
         <ImageActionsMenu
           :visible="menuVisible"
@@ -216,11 +220,12 @@ import { useImagePreviewMenu } from '@/composables/useImagePreviewMenu.js'
 import ImagePreviewModal from './ui/ImagePreviewModal.vue'
 import ImageActionsMenu from './ui/ImageActionsMenu.vue'
 import { success, error } from '@/utils/toast.js'
+import { Icon as IslandIcon } from 'animal-island-vue'
 
 export default {
   name: 'HistorySection',
   emits: ['expansion-change','image-select','preview-select'],
-  components: { ImagePreviewModal, ImageActionsMenu },
+  components: { ImagePreviewModal, ImageActionsMenu, IslandIcon },
   setup(props, { emit }) {
     // 使用 JobStore
     const jobStore = useJobStore()
@@ -556,6 +561,7 @@ export default {
     }
 
     return {
+      uiStore,
       // Store 数据
       displayItems,
       historyDegraded,

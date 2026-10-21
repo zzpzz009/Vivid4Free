@@ -39,6 +39,7 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   const persisted = readPersisted()
+  const skin = ref(persisted?.skin === 'animal-island' ? 'animal-island' : 'original')
   const activeRightTab = ref(['common', 'gallery'].includes(persisted?.activeRightTab) || persisted?.activeRightTab === null ? persisted.activeRightTab : 'common')
   const activeWorkspaceTab = ref(typeof persisted?.activeWorkspaceTab === 'string' ? persisted.activeWorkspaceTab : 'workspace')
   const isRightPanelExpanded = ref(typeof persisted?.isRightPanelExpanded === 'boolean' ? persisted.isRightPanelExpanded : false)
@@ -61,6 +62,7 @@ export const useUIStore = defineStore('ui', () => {
   const mockCancelAfterMs = ref(Number.isFinite(Number(persisted?.mockCancelAfterMs)) ? Number(persisted.mockCancelAfterMs) : 900)
 
   const persist = () => writePersisted({
+    skin: skin.value,
     activeRightTab: activeRightTab.value,
     activeWorkspaceTab: activeWorkspaceTab.value,
     isRightPanelExpanded: isRightPanelExpanded.value,
@@ -82,6 +84,10 @@ export const useUIStore = defineStore('ui', () => {
 
   const setActiveRightTab = (tab) => {
     activeRightTab.value = tab === null ? null : (['common', 'gallery'].includes(tab) ? tab : 'common')
+    persist()
+  }
+  const setSkin = (value) => {
+    skin.value = value === 'animal-island' ? 'animal-island' : 'original'
     persist()
   }
   const setActiveWorkspaceTab = (tab) => {
@@ -159,6 +165,7 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   return {
+    skin, setSkin,
     activeRightTab, activeWorkspaceTab, isRightPanelExpanded, isRightPanelVisible, gallerySearchText, rightPanelScrollTop,
     comparisonSliderPosition, selectedHistoryId, selectedResultJobId, selectedResultUrl, selectedResultInputUrl, isHistoryExpanded,
     showShortcutsHelp, useGenerationMock, mockScenario, mockFailAtPercent, mockFailRate, mockCancelAfterMs,

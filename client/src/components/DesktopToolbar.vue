@@ -1,7 +1,10 @@
 <template>
   <header class="desktop-toolbar">
-    <div class="brand"><strong>VividDesktop</strong><span>本地 AI 渲染</span></div>
+    <div class="brand"><img v-if="uiStore.skin === 'animal-island'" class="island-brand-mark" :src="islandLogo" alt="Vivid4Free 海岛 Logo" /><strong>VividDesktop</strong><span>本地 AI 渲染</span></div>
     <div class="toolbar-actions">
+      <button type="button" class="skin-entry" :aria-pressed="uiStore.skin === 'animal-island'" :title="`当前皮肤：${uiStore.skin === 'animal-island' ? '海岛' : '经典深色'}，点击切换`" aria-label="切换海岛皮肤" @click="uiStore.setSkin(uiStore.skin === 'animal-island' ? 'original' : 'animal-island')">
+        <span class="skin-swatch" aria-hidden="true" /><span class="skin-label">{{ uiStore.skin === 'animal-island' ? '海岛皮肤' : '经典深色' }}</span>
+      </button>
       <button type="button" class="runtime-entry" :title="`运行环境：${engineLabel}`" :aria-label="`运行环境：${engineLabel}`" @click="$emit('runtime')">
         <span class="engine-dot" :class="engineReady ? 'ready' : 'waiting'" aria-hidden="true" />
         <span>{{ engineReady ? '引擎已连接' : engineLabel === '运行包未安装' ? '安装运行包' : '引擎未就绪' }}</span>
@@ -22,6 +25,10 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useUIStore } from '@/stores/useUIStore.js'
+import islandLogo from '@/assets/brand/island-logo.svg'
+
+const uiStore = useUIStore()
 
 const props = defineProps({
   engineReady: Boolean,
@@ -50,5 +57,9 @@ onBeforeUnmount(() => unsubscribeWindow?.())
 .toolbar-actions button:hover,.toolbar-actions button[aria-expanded=true]{background:#2d2a33}.toolbar-actions button:focus-visible{outline:2px solid var(--schemes-primary);outline-offset:2px}.toolbar-actions svg{width:16px;height:16px;flex:none}
 .engine-dot{width:6px;height:6px;flex:none;border-radius:50%}.engine-dot.ready{background:#74d29a}.engine-dot.waiting{background:#e6bc66}.toolbar-divider{height:16px;width:1px;background:#393640;flex:none}
 .account-name{max-width:140px;overflow:hidden;text-overflow:ellipsis}.window-controls{display:flex;gap:2px;margin-left:8px;padding-left:8px;border-left:1px solid #393640}.toolbar-actions .window-control{width:36px;padding:0}.toolbar-actions .window-control svg{width:14px;height:14px}.toolbar-actions .window-close:hover{background:var(--schemes-error-container);color:var(--schemes-on-error-container)}
+.skin-swatch{width:14px;height:14px;flex:none;border:1px solid currentColor;border-radius:50%;background:linear-gradient(135deg,var(--schemes-surface-container) 50%,var(--schemes-primary) 50%)}
+.island-brand-mark{width:32px;height:28px;object-fit:contain;flex:none}
+.skin-entry[aria-pressed=true] .skin-swatch{background:linear-gradient(135deg,var(--animal-primary-color) 50%,var(--island-paper) 50%)}
+@media(max-width:767px){.skin-label{display:none}}
 @media(max-width:767px){.desktop-toolbar{padding:0 12px;gap:8px}.brand span{display:none}.brand{font-size:14px}.toolbar-actions{gap:4px}.toolbar-actions button{padding:0 8px}.account-name{max-width:88px}}
 </style>
