@@ -38,20 +38,20 @@ html[data-vivid-skin="animal-island"] .slider::-webkit-slider-thumb { background
 html[data-vivid-skin="animal-island"] .slider::-moz-range-thumb { background: var(--animal-primary-color); border: 2px solid var(--animal-primary-color-active); box-shadow: var(--animal-shadow-sm); }
 
 /* One background, border and stacked shadow across both button targets. */
-html[data-vivid-skin="animal-island"] .primary-action-group { height: 40px; border: 2px solid var(--animal-bg-color); border-radius: 50px; background: var(--animal-bg-color); box-shadow: 0 5px 0 var(--animal-shadow-warm); transition: transform .15s var(--animal-motion-ease), box-shadow .15s var(--animal-motion-ease); }
-html[data-vivid-skin="animal-island"] .primary-action-group:hover:not(.action-disabled) { transform: translateY(-1px); box-shadow: 0 6px 0 var(--animal-shadow-warm); }
-html[data-vivid-skin="animal-island"] .primary-action-group:has(>button:active:enabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--animal-shadow-warm); }
+html[data-vivid-skin="animal-island"] .primary-action-group { height: 40px; border: 2px solid var(--animal-primary-color); border-radius: 50px; background: var(--animal-primary-color); box-shadow: 0 5px 0 var(--animal-shadow-warm); transition: transform .15s var(--animal-motion-ease), box-shadow .15s var(--animal-motion-ease); }
+html[data-vivid-skin="animal-island"] .primary-action-group:hover:not(.action-disabled) { background: var(--animal-primary-color-hover); border-color: var(--animal-primary-color-hover); transform: translateY(-1px); box-shadow: 0 6px 0 var(--animal-shadow-warm); }
+html[data-vivid-skin="animal-island"] .primary-action-group:has(>button:active:enabled) { background: var(--animal-primary-color-active); border-color: var(--animal-primary-color-active); transform: translateY(2px); box-shadow: 0 1px 0 var(--animal-shadow-warm); }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button,
 html[data-vivid-skin="animal-island"] .primary-action-group [data-testid=primary-action-dropdown] { height: 100%; min-height: 0; margin: 0; background: transparent; border: 0; box-shadow: none; transform: none; }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button { border-radius: 50px 0 0 50px; padding: 0; }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button > span { min-width: 0; width: 100%; }
 html[data-vivid-skin="animal-island"] .island-action-dock .secondary-button.animal-btn { min-width: 0; padding: 0; }
 html[data-vivid-skin="animal-island"] .primary-action-group:not(:has([data-testid=primary-action-dropdown])) .primary-button { border-radius: 50px; }
-html[data-vivid-skin="animal-island"] .primary-action-group [data-testid=primary-action-dropdown] { border-left: 1px solid var(--animal-border-color-light); border-radius: 0 50px 50px 0; }
+html[data-vivid-skin="animal-island"] .primary-action-group [data-testid=primary-action-dropdown] { border-left: 1px solid var(--animal-primary-color-active); border-radius: 0 50px 50px 0; }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:hover,
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:active { background: transparent; box-shadow: none; transform: none; }
 html[data-vivid-skin="animal-island"] .primary-action-group .button-text-primary { color: var(--animal-text-color); font-weight: 600; font-size: 14px; }
-html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled { background: var(--animal-bg-color-disabled); border-color: var(--animal-bg-color-disabled); box-shadow: none; }
+html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled { background: var(--animal-primary-color-bg); border-color: var(--animal-primary-color-bg); box-shadow: none; }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:disabled { opacity: 1; }
 html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled .button-text-primary { color: var(--animal-text-color-disabled); }
 html[data-vivid-skin="animal-island"] .secondary-button { height: 40px; background: var(--animal-bg-color); border: 2px solid var(--animal-border-color); box-shadow: var(--animal-shadow-sm); }
