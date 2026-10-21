@@ -58,7 +58,7 @@ html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:disa
 html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled .button-text-primary { color: var(--animal-text-color-disabled); }
 html[data-vivid-skin="animal-island"] .secondary-button { height: 40px; background: var(--animal-bg-color); border: 2px solid var(--animal-border-color); box-shadow: var(--animal-shadow-sm); }
 html[data-vivid-skin="animal-island"] .button-text-secondary { color: var(--animal-text-color); font-weight: 600; }
-html[data-vivid-skin="animal-island"] .secondary-button:disabled { border-color: var(--animal-border-color-light); }
+html[data-vivid-skin="animal-island"] .secondary-button:disabled { border-color: var(--animal-border-color); border-style: dashed; box-shadow: none; opacity: 1; }
 html[data-vivid-skin="animal-island"] .secondary-button:disabled .button-text-secondary { color: var(--animal-text-color-disabled); }
 html[data-vivid-skin="animal-island"] .account-action.animal-btn > span { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 
