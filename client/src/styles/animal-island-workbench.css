@@ -35,7 +35,9 @@ html[data-vivid-skin="animal-island"] .primary-action-group:hover:not(.action-di
 html[data-vivid-skin="animal-island"] .primary-action-group:has(>button:active:enabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--animal-shadow-warm); }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button,
 html[data-vivid-skin="animal-island"] .primary-action-group [data-testid=primary-action-dropdown] { height: 100%; min-height: 0; margin: 0; background: transparent; border: 0; box-shadow: none; transform: none; }
-html[data-vivid-skin="animal-island"] .primary-action-group .primary-button { border-radius: 50px 0 0 50px; }
+html[data-vivid-skin="animal-island"] .primary-action-group .primary-button { border-radius: 50px 0 0 50px; padding: 0; }
+html[data-vivid-skin="animal-island"] .primary-action-group .primary-button > span { min-width: 0; width: 100%; }
+html[data-vivid-skin="animal-island"] .island-action-dock .secondary-button.animal-btn { min-width: 0; padding: 0; }
 html[data-vivid-skin="animal-island"] .primary-action-group:not(:has([data-testid=primary-action-dropdown])) .primary-button { border-radius: 50px; }
 html[data-vivid-skin="animal-island"] .primary-action-group [data-testid=primary-action-dropdown] { border-left: 1px solid var(--animal-border-color-light); border-radius: 0 50px 50px 0; }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:hover,
@@ -75,3 +77,8 @@ html[data-vivid-skin="animal-island"] .status-bar .bg-schemes-outline-variant { 
 @keyframes island-bob { 0%,100% { transform: scale(.8) translateY(0) rotate(-4deg); } 50% { transform: scale(.8) translateY(4px) rotate(1deg); } }
 @media(max-width:767px) { html[data-vivid-skin="animal-island"] .brand .island-brand-mark { display: none; }html[data-vivid-skin="animal-island"] .runtime-entry>span:last-child { display: none; }.island-seascape { transform: scale(.85); margin-bottom: 0; }.island-canvas-welcome h3 { font-size: 16px; } }
 @media(prefers-reduced-motion:reduce) { .island-boat { animation: none; } }
+
+/* Feedback uses the library paper surface and semantic status tokens. */
+html[data-vivid-skin="animal-island"] .island-toast { padding: 0; border: 2px solid var(--animal-border-color-light); border-left-color: var(--toast-accent); border-radius: 24px; background: var(--animal-bg-color); box-shadow: var(--animal-shadow-base); }
+html[data-vivid-skin="animal-island"] .island-toast::before { display: none; }
+html[data-vivid-skin="animal-island"] .island-toast .toast-inner { background: var(--animal-bg-color); }

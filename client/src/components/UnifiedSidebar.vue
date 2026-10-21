@@ -4,7 +4,7 @@
       <div class="flex flex-col gap-4 m-4 pb-8">
         <!-- Upload Image Area -->
         <component :is="uiStore.skin === 'animal-island' ? IslandCard : 'div'"
-          v-bind="uiStore.skin === 'animal-island' ? { type: 'dashed', pattern: 'app-teal' } : {}"
+          v-bind="uiStore.skin === 'animal-island' ? { type: 'dashed', pattern: 'default' } : {}"
           class="island-upload-card bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center w-[265px] overflow-hidden cursor-pointer transition-colors duration-200 relative"
           :class="[
             multipleImages ? 'min-h-[182px]' : 'h-[182px]',
@@ -389,7 +389,9 @@
                 <label class="text-schemes-on-surface-variant text-xs font-medium">
                   参考图匹配
                 </label>
-                <span class="text-xs bg-schemes-surface-container-high px-1.5 py-0.5 rounded text-schemes-on-surface-variant">{{ referenceStrengthLabel }}</span>
+                <component :is="uiStore.skin === 'animal-island' ? IslandTag : 'span'"
+                  v-bind="uiStore.skin === 'animal-island' ? { size: 'small', variant: 'soft' } : {}"
+                  :class="uiStore.skin === 'animal-island' ? 'island-parameter-value' : 'text-xs bg-schemes-surface-container-high px-1.5 py-0.5 rounded text-schemes-on-surface-variant'">{{ referenceStrengthLabel }}</component>
               </div>
               <Slider
                 v-model="referenceStrength"
@@ -407,7 +409,9 @@
                 <label class="text-schemes-on-surface-variant text-xs font-medium">
                   颜色匹配
                 </label>
-                <span class="text-xs bg-schemes-surface-container-high px-1.5 py-0.5 rounded text-schemes-on-surface-variant">{{ colorMatchStrengthLabel }}</span>
+                <component :is="uiStore.skin === 'animal-island' ? IslandTag : 'span'"
+                  v-bind="uiStore.skin === 'animal-island' ? { size: 'small', variant: 'soft' } : {}"
+                  :class="uiStore.skin === 'animal-island' ? 'island-parameter-value' : 'text-xs bg-schemes-surface-container-high px-1.5 py-0.5 rounded text-schemes-on-surface-variant'">{{ colorMatchStrengthLabel }}</component>
               </div>
               <Slider
                 v-model="colorMatchStrength"
@@ -464,7 +468,9 @@
                 <label class="text-schemes-on-surface-variant text-xs font-medium">
                   重绘幅度
                 </label>
-                <span class="text-xs bg-schemes-surface-container-high px-1.5 py-0.5 rounded text-schemes-on-surface-variant">{{ redraw }}</span>
+                <component :is="uiStore.skin === 'animal-island' ? IslandTag : 'span'"
+                  v-bind="uiStore.skin === 'animal-island' ? { size: 'small', variant: 'soft' } : {}"
+                  :class="uiStore.skin === 'animal-island' ? 'island-parameter-value' : 'text-xs bg-schemes-surface-container-high px-1.5 py-0.5 rounded text-schemes-on-surface-variant'">{{ redraw }}</component>
               </div>
               <Slider
                 v-model="redraw"
@@ -566,7 +572,8 @@
       <div class="w-[265px] flex flex-row gap-3 items-center justify-between">
           <div class="flex-1 h-10 relative">
             <HMenu as="div" class="primary-action-group rounded-2xl flex flex-row items-center justify-center w-full h-full relative" :class="{ 'action-disabled': isPrimaryActionDisabled }">
-              <button
+              <component :is="uiStore.skin === 'animal-island' ? IslandButton : 'button'"
+                v-bind="uiStore.skin === 'animal-island' ? { type: 'primary', htmlType: 'button' } : {}"
                 class="primary-button flex-1 h-10 min-w-0"
                 :class="showActionDropdown ? 'rounded-r-none' : ''"
                 :disabled="isPrimaryActionDisabled"
@@ -579,7 +586,7 @@
                     {{ primaryActionText }}
                   </div>
                 </div>
-              </button>
+              </component>
 
               <HMenuButton
                 v-if="showActionDropdown"
@@ -631,7 +638,8 @@
             </HMenu>
           </div>
 
-          <button
+          <component :is="uiStore.skin === 'animal-island' ? IslandButton : 'button'"
+            v-bind="uiStore.skin === 'animal-island' ? { type: 'default', htmlType: 'button' } : {}"
             class="secondary-button flex-1 h-10"
             :disabled="isCancelDisabled"
             data-testid="cancel-button"
@@ -643,7 +651,7 @@
                 {{ cancelActionText }}
               </div>
             </div>
-          </button>
+          </component>
 
           <!-- <div v-if="!showBrushButton" class="flex-1 h-10 relative"> -->
           <!-- <div v-if="!showBrushButton&& selectedTabIndex==0" class="flex-1 h-10 relative ">
@@ -813,7 +821,7 @@ import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Menu as HMenu, MenuButton as HMenuButton, MenuItems as HMenuItems, MenuItem as HMenuItem } from '@headlessui/vue'
 import Slider from './ui/Slider.vue'
-import { Card as IslandCard, Title as IslandTitle, Icon as IslandIcon, Switch as IslandSwitch } from 'animal-island-vue'
+import { Card as IslandCard, Title as IslandTitle, Icon as IslandIcon, Switch as IslandSwitch, Button as IslandButton, Tag as IslandTag } from 'animal-island-vue'
 import { useImageStore, useJobStore, useAssetStore, useUIStore,useXMStore } from '../stores'
 import { icons } from '../utils/assets.js'
 import { success, error } from '../utils/toast.js'
@@ -827,6 +835,8 @@ export default {
     HMenuItems,
     HMenuItem,
     IslandCard,
+    IslandButton,
+    IslandTag,
     IslandTitle,
     IslandIcon,
     IslandSwitch,
@@ -1511,6 +1521,8 @@ export default {
     return {
       uiStore,
       IslandCard,
+      IslandButton,
+      IslandTag,
       actionModes,
       currentActionMode,
       isActionDisabled,

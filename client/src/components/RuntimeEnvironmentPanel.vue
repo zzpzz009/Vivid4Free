@@ -45,7 +45,10 @@
             <span>{{ progressLabel }}</span>
             <span>{{ byteLabel }}</span>
           </div>
-          <div class="progress-track" role="progressbar" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">
+          <div v-if="uiStore.skin === 'animal-island'" role="progressbar" :aria-label="progressLabel" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">
+            <IslandProgress :percent="progress" variant="forest-grove" size="small" :show-info="false" aria-hidden="true" />
+          </div>
+          <div v-else class="progress-track" role="progressbar" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">
             <div class="progress-fill" :style="{ width: `${progress}%` }" />
           </div>
         </div>
@@ -99,10 +102,13 @@ import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import Button from '@/ui/Button.vue'
 import Panel from '@/ui/Panel.vue'
 import IconButton from '@/ui/IconButton.vue'
+import { Progress as IslandProgress } from 'animal-island-vue'
+import { useUIStore } from '@/stores/useUIStore.js'
 import { useRuntimeEnvironment } from '@/composables/useRuntimeEnvironment.js'
 
 const props = defineProps({ open: { type: Boolean, default: false } })
 const emit = defineEmits(['close', 'status'])
+const uiStore = useUIStore()
 const surface = ref(null)
 let opener
 function closePanel(restore = true) { emit('close'); if (restore && opener?.isConnected) opener.focus() }

@@ -144,3 +144,38 @@ test('uses the library font on legacy text classes and readable neutral comparis
     return document.fonts.check('500 14px Nunito') && document.fonts.check('500 14px "Noto Sans SC"')
   })).toBe(true)
 })
+
+
+test('island components share neutral surfaces and preserve action feedback and progress', async ({ page }) => {
+  await page.getByRole('button', { name: '切换海岛皮肤', exact: true }).click()
+  const cards = page.locator('.island-upload-card')
+  for (const card of await cards.all()) {
+    await expect(card).toHaveClass(/animal-card--pattern-default/)
+  }
+  await expect(page.locator('.island-parameter-value.animal-tag')).toHaveCount(2)
+  await page.locator('#workspace-inputs input[type=file]').first().setInputFiles(fixture)
+  const action = page.getByTestId('primary-action-button')
+  await expect(action).toHaveClass(/animal-btn--primary/)
+  await expect(action).toBeEnabled()
+  const feedback = page.locator('.toast-outer').filter({ hasText: '平面图已选择' })
+  await expect(feedback).toBeVisible()
+  await expect(feedback).toHaveClass(/island-toast/)
+  await expect(feedback).not.toHaveClass(/animate-spin-slow/)
+  await expect(feedback.locator('.toast-inner')).toHaveCSS('background-color', 'rgb(248, 248, 240)')
+  await feedback.getByRole('button', { name: '关闭提示' }).click()
+  await expect(feedback).toHaveCount(0)
+  // Clicking the actual library button must still reach the existing validation.
+  await action.click()
+  await expect(page.locator('.status-bar')).toContainText('渲染需要风格参考图')
+  await page.evaluate(() => {
+    window.vividDesktop.runtimeStatus = async () => ({ installed: true, state: 'paused', progress: 37, version: '0.3.0' })
+  })
+  await page.locator('.runtime-entry').click()
+  const progress = page.getByRole('progressbar', { name: '下载已暂停' })
+  await expect(progress).toHaveAttribute('aria-valuenow', '37')
+  await expect(progress.locator('.animal-progress--forest-grove')).toHaveCount(1)
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: '切换海岛皮肤', exact: true }).click()
+  await expect(action).not.toHaveClass(/animal-btn/)
+  await expect(page.locator('.island-parameter-value')).toHaveCount(0)
+})
