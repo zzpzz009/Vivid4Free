@@ -943,9 +943,9 @@ export default {
 
     const redraw = ref(Number(xm.chfd) || 0)
     const cktjx = ref(String(xm.jx) === 'true' ? 'true' : 'false')
-    const referenceStrength = ref(Number(xm.referenceStrength ?? 0.8))
+    const referenceStrength = ref(Number(xm.referenceStrength ?? 1))
     const referenceStrengthLabel = computed(() => Number(referenceStrength.value).toFixed(2))
-    const colorMatchStrength = ref(Number(xm.colorMatchStrength ?? 0.8))
+    const colorMatchStrength = ref(Number(xm.colorMatchStrength ?? 0.285403))
     const colorMatchStrengthLabel = computed(() => Number(colorMatchStrength.value).toFixed(2))
 
     // 随机种子码

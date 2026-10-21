@@ -77,7 +77,7 @@ export default {
       handlePromptChange,
       handleSizeChange,
       selectimg
-    } = useWorkspaceAssetInputs()
+    } = useWorkspaceAssetInputs({ preserveOriginalWhenWithinLimits: true })
 
     const {
       previewimgurl,

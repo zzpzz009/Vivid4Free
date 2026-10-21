@@ -171,7 +171,7 @@ export const useWorkspaceAssetInputs = (options = {}) => {
       }
     }
 
-    const resizeResult = await resizeImageFileForWorkspace(type, file)
+    const resizeResult = await resizeImageFileForWorkspace(type, file, options.preserveOriginalWhenWithinLimits === true)
     if (resizeResult.resized) {
       const { originalWidth, originalHeight, targetWidth, targetHeight } = resizeResult.plan
       info(`图片过大，已自动缩放：${originalWidth}×${originalHeight} → ${targetWidth}×${targetHeight}`)

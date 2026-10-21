@@ -162,7 +162,7 @@ function createTaskService(root, comfyUrl = 'http://127.0.0.1:18295', options = 
       graph['735'].inputs.boolean = p.mirror ?? false;
       graph['1322'].inputs.value = p.referenceStrength ?? 1;
       graph['1323'].inputs.value = p.colorMatchStrength ?? .285403;
-      graph.vivid_scene.inputs.boolean = p.addScene ?? true;
+      if (p.addScene === false) graph['1329'].inputs.positive = '不增加任何场景，不要增加任何配景，如人、车、植物';
     } else {
       const anchors = [['48','LoadImage'], ['127','KSampler (Efficient)'], ['130','InjectLatentNoise+'],
         ['271','SeedVR2VideoUpscaler'], ['277','If ANY execute A else B'], ['278','ImpactCompare'],

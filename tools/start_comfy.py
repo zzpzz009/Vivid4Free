@@ -66,7 +66,9 @@ def main(action):
     env = {**os.environ, 'PYTHONNOUSERSITE': '1', 'HF_HUB_OFFLINE': '1',
            'TRANSFORMERS_OFFLINE': '1', 'HF_HOME': str(BASE / 'cache/huggingface'),
            'TORCH_HOME': str(BASE / 'cache/torch')}
-    node_packs = ['ComfyUI-EditUtils', 'ComfyUI-MingNodes', 'sd-perturbed-attention', 'vivid_nodes']
+    node_packs = ['ComfyUI-EditUtils', 'ComfyUI-MingNodes', 'sd-perturbed-attention', 'vivid_nodes',
+                  'rgthree-comfy', 'ComfyUI-Crystools', 'TextConditional', 'was-node-suite-comfyui',
+                  'comfyui_essentials', 'Comfyui_TTP_Toolset', 'comfyui-easy-use', 'comfyui-custom-scripts']
     development_profile = BASE / 'upscale-node-profile.json'
     if development_profile.is_file() and not (BASE / 'runtime.json').is_file():
         node_packs += json.loads(development_profile.read_text(encoding='utf8')).get('customNodePacks', [])

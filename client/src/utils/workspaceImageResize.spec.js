@@ -1,11 +1,43 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   WORKSPACE_IMAGE_RESIZE_RULES,
   computeImageResizePlan,
-  getWorkspaceImageResizeRule
+  getWorkspaceImageResizeRule,
+  resizeImageFileForWorkspace
 } from './workspaceImageResize.js'
 
+afterEach(() => vi.unstubAllGlobals())
+
+const imageDimensions = (width, height) => {
+  vi.stubGlobal('Image', class {
+    naturalWidth = width
+    naturalHeight = height
+    set src(value) { this.onload() }
+  })
+  vi.stubGlobal('URL', { createObjectURL: () => 'blob:test', revokeObjectURL: vi.fn() })
+}
+
 describe('workspaceImageResize', () => {
+  it.each(['dcl', 'ck'])('preserves the original file bytes for a %s image within limits', async type => {
+    imageDimensions(1600, 1200)
+    const file = new File(['original image bytes'], 'input.png', { type: 'image/png' })
+    const result = await resizeImageFileForWorkspace(type, file, true)
+    expect(result.file).toBe(file)
+    expect(result.resized).toBe(false)
+    expect(result.converted).toBe(false)
+  })
+
+  it('still shrinks oversized main images before upload', async () => {
+    imageDimensions(6400, 3600)
+    const context = { fillRect: vi.fn(), drawImage: vi.fn() }
+    const canvas = { getContext: () => context, toBlob: (done, type) => done(new Blob(['resized'], { type })) }
+    vi.stubGlobal('document', { createElement: () => canvas })
+    const result = await resizeImageFileForWorkspace('dcl', new File(['large image'], 'input.png', { type: 'image/png' }), true)
+    expect(result.resized).toBe(true)
+    expect(canvas.width * canvas.height).toBeLessThanOrEqual(2400000)
+    expect(result.file.type).toBe('image/jpeg')
+    expect(context.drawImage).toHaveBeenCalledOnce()
+  })
   it('keeps images within limits unchanged', () => {
     const plan = computeImageResizePlan(1600, 1200, WORKSPACE_IMAGE_RESIZE_RULES.dcl)
 

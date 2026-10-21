@@ -120,7 +120,7 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
     activeTaskId = 'submitting'
     const parameters = {
       kind, mainImage, ...(kind === 'render' ? { referenceImage } : {}), prompt: xm.tsc || '',
-      seed: Number(xm.seed) || 0, mirror: Boolean(xm.jx), referenceStrength: Number(xm.referenceStrength),
+      seed: Number(xm.seed) || 0, mirror: String(xm.jx) === 'true', referenceStrength: Number(xm.referenceStrength),
       colorMatchStrength: Number(xm.colorMatchStrength), addScene: Boolean(xm.addScene),
       size: Number(xm.size) || 4096, denoise: Number(xm.chfd), requestId
     }
