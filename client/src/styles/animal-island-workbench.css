@@ -1,5 +1,6 @@
 /* Layout stays shared with the original skin. Library components own their
- * colors and patterns; the grouped action follows the packaged primary Button.
+ * colors and patterns. The main action keeps the packaged Button's cream
+ * surface and stacked shadow; supporting controls stay flat.
  */
 html[data-vivid-skin="animal-island"] .desktop-shell { background: var(--island-paper); }
 html[data-vivid-skin="animal-island"] .desktop-toolbar { height: 52px; padding: 0 18px; }
@@ -18,7 +19,9 @@ html[data-vivid-skin="animal-island"] .island-upload-card .text-schemes-primary 
 html[data-vivid-skin="animal-island"] .island-upload-card .text-schemes-outline { font-size: 11px; }
 html[data-vivid-skin="animal-island"] .island-reference-card [title="参考图镜像"] { left: auto; right: 10px; top: 8px; background: var(--animal-bg-color-secondary); }
 html[data-vivid-skin="animal-island"] .island-reference-card [title="参考图镜像"] span { font-size: 10px; }
-html[data-vivid-skin="animal-island"] .island-parameter-heading { justify-content: center; position: relative; }
+html[data-vivid-skin="animal-island"] .island-parameter-heading { justify-content: flex-start; position: relative; }
+.island-parameter-title { color: var(--island-ink); font-size: 12px; font-weight: 600; padding-left: 12px; }
+.island-parameter-title small { margin-left: 8px; color: var(--animal-text-color-secondary); font-size: 10px; font-weight: 400; }
 html[data-vivid-skin="animal-island"] .island-parameter-heading > div:last-child { position: absolute; right: 6px; }
 html[data-vivid-skin="animal-island"] .island-parameter-heading + div { display: none; }
 html[data-vivid-skin="animal-island"] .island-parameter-card { padding: 12px; border: 1px solid var(--island-line); border-radius: 24px; background: var(--animal-bg-color); gap: 16px; }
@@ -30,22 +33,27 @@ html[data-vivid-skin="animal-island"] .slider::-webkit-slider-thumb { background
 html[data-vivid-skin="animal-island"] .slider::-moz-range-thumb { background: var(--animal-primary-color); border: 2px solid var(--animal-primary-color-active); box-shadow: var(--animal-shadow-sm); }
 
 /* One background, border and stacked shadow across both button targets. */
-html[data-vivid-skin="animal-island"] .primary-action-group { height: 40px; border: 2px solid var(--animal-bg-color); border-radius: 50px; background: var(--animal-bg-color); box-shadow: 0 5px 0 var(--animal-shadow-warm); transition: transform .15s var(--animal-motion-ease), box-shadow .15s var(--animal-motion-ease); }
+html[data-vivid-skin="animal-island"] .primary-action-group { height: 44px; border: 2px solid var(--animal-bg-color); border-radius: 50px; background: var(--animal-bg-color); box-shadow: 0 5px 0 var(--animal-shadow-warm); transition: transform .15s var(--animal-motion-ease), box-shadow .15s var(--animal-motion-ease); }
 html[data-vivid-skin="animal-island"] .primary-action-group:hover:not(.action-disabled) { transform: translateY(-1px); box-shadow: 0 6px 0 var(--animal-shadow-warm); }
 html[data-vivid-skin="animal-island"] .primary-action-group:has(>button:active:enabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--animal-shadow-warm); }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button,
 html[data-vivid-skin="animal-island"] .primary-action-group [data-testid=primary-action-dropdown] { height: 100%; min-height: 0; margin: 0; background: transparent; border: 0; box-shadow: none; transform: none; }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button { border-radius: 50px 0 0 50px; padding: 0; }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button > span { min-width: 0; width: 100%; }
-html[data-vivid-skin="animal-island"] .island-action-dock .secondary-button.animal-btn { min-width: 0; padding: 0; }
+html[data-vivid-skin="animal-island"] .primary-action-group .primary-button > span > div { justify-content: center; }
+html[data-vivid-skin="animal-island"] .island-action-dock .secondary-button.animal-btn { flex: 0 0 80px; min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+html[data-vivid-skin="animal-island"] .island-action-row { gap: 12px; }
+html[data-vivid-skin="animal-island"] .island-action-primary { height: 44px; }
+.island-action-hint { margin: 0 0 8px; padding-left: 12px; color: var(--animal-text-color-secondary); font-size: 11px; line-height: 1.5; }
+html[data-vivid-skin="animal-island"] .primary-action-group [data-testid=primary-action-dropdown] img { filter: sepia(1) saturate(.7) brightness(.65); }
 html[data-vivid-skin="animal-island"] .primary-action-group:not(:has([data-testid=primary-action-dropdown])) .primary-button { border-radius: 50px; }
 html[data-vivid-skin="animal-island"] .primary-action-group [data-testid=primary-action-dropdown] { border-left: 1px solid var(--animal-border-color-light); border-radius: 0 50px 50px 0; }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:hover,
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:active { background: transparent; box-shadow: none; transform: none; }
-html[data-vivid-skin="animal-island"] .primary-action-group .button-text-primary { color: var(--animal-text-color); font-weight: 600; font-size: 14px; }
-html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled { background: var(--animal-bg-color-disabled); border-color: var(--animal-bg-color-disabled); box-shadow: none; }
+html[data-vivid-skin="animal-island"] .primary-action-group .button-text-primary { color: var(--animal-text-color); font-weight: 700; font-size: 14px; line-height: 1.4; }
+html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled { background: var(--animal-bg-color-disabled); border-color: var(--animal-bg-color-disabled); box-shadow: 0 3px 0 var(--animal-shadow-warm); }
 html[data-vivid-skin="animal-island"] .primary-action-group .primary-button:disabled { opacity: 1; }
-html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled .button-text-primary { color: var(--animal-text-color-disabled); }
+html[data-vivid-skin="animal-island"] .primary-action-group.action-disabled .button-text-primary { color: var(--animal-text-color-secondary); }
 html[data-vivid-skin="animal-island"] .secondary-button { height: 40px; background: var(--animal-bg-color); border: 2px solid var(--animal-border-color); box-shadow: var(--animal-shadow-sm); }
 html[data-vivid-skin="animal-island"] .button-text-secondary { color: var(--animal-text-color); font-weight: 600; }
 html[data-vivid-skin="animal-island"] .secondary-button:disabled { border-color: var(--animal-border-color-light); }
@@ -53,7 +61,7 @@ html[data-vivid-skin="animal-island"] .secondary-button:disabled .button-text-se
 html[data-vivid-skin="animal-island"] .account-action.animal-btn > span { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 
 .island-canvas-welcome { text-align: center; }
-.island-seascape { position: relative; width: 220px; height: 150px; margin: 0 auto 18px; overflow: hidden; }
+.island-seascape { position: relative; width: 220px; height: 150px; margin: 0 auto 12px; overflow: hidden; }
 .island-seascape::before { content: ''; position: absolute; width: 174px; height: 136px; left: 23px; bottom: 4px; background: var(--animal-primary-color-bg); border-radius: 49% 51% 39% 61% / 56% 42% 58% 44%; }
 .island-sun { position: absolute; top: 5px; left: 29px; transform: rotate(-15deg) scale(.8); }
 .island-cloud { position: absolute; right: 13px; top: 0; transform: scale(.8); }
@@ -62,14 +70,14 @@ html[data-vivid-skin="animal-island"] .account-action.animal-btn > span { displa
 .island-sea-front { height: 29px; bottom: 0; opacity: .4; transform: rotate(5deg); }
 .island-boat { position: absolute; left: 57px; bottom: 12px; transform: scale(.8) rotate(-4deg); animation: island-bob 5s ease-in-out infinite; }
 .island-sprig { position: absolute; right: 8px; bottom: 22px; transform: rotate(22deg) scale(.8); }
-.island-canvas-welcome h3 { color: var(--animal-text-color); font-size: 20px; font-weight: 700; }
+.island-canvas-welcome h3 { color: var(--island-ink); font-size: 18px; font-weight: 600; }
 .island-canvas-welcome p { color: var(--animal-text-color-secondary); font-size: 12px; font-weight: 400; line-height: 1.8; margin-top: 10px; }
 html[data-vivid-skin="animal-island"] .workspace-header .nav-leaf { position: absolute; right: 13px; top: 10px; transform: rotate(22deg); }
 html[data-vivid-skin="animal-island"] #desktop-resources { margin: 0 16px; padding: 0; border: 0; border-radius: 0; background: transparent; }
 html[data-vivid-skin="animal-island"] .resource-overlay#desktop-resources { background: var(--animal-bg-color); border: 1px solid var(--island-line); border-radius: 24px; padding: 12px; }
 html[data-vivid-skin="animal-island"] [data-testid=gallery-card] { border: 4px solid var(--animal-bg-color); border-radius: 18px; outline: 1px solid var(--island-line); margin-top: 2px; }
 html[data-vivid-skin="animal-island"] .history-item { border-radius: 18px; }
-html[data-vivid-skin="animal-island"] .history-heading > div:last-of-type { font-weight: 600; }
+html[data-vivid-skin="animal-island"] .history-heading > div:last-of-type { color: var(--island-ink); font-size: 12px; font-weight: 600; }
 .island-history-count { color: var(--animal-text-color-secondary); font-size: 10px; padding-top: 2px; }
 .island-history-empty { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 150px; color: var(--animal-text-color-secondary); font-size: 12px; border: 1px dashed var(--island-line); border-radius: 18px; background: var(--animal-bg-color); }
 html[data-vivid-skin="animal-island"] .status-bar .text-schemes-outline-variant { color: var(--animal-text-color-secondary); }

@@ -20,12 +20,14 @@
       @generate="handleUpscale"
       @preview="handlePreview"
       @cancel-rw="handleCancel"
+      @action-mode-change="actionMode = $event"
     />
 
     <WorkspaceCanvasPanel
       ref="canvasPanel"
       :original-image="previewOriginalImage"
       :result-image="previewimgurl"
+      :action-label="actionMode === 'generate' ? '放大' : '预览'"
       :comparison-position="comparisonPosition"
       @position-change="handleComparisonPositionChange"
       @image-select="selectimg"
@@ -56,6 +58,7 @@ export default {
     const uiStore = useUIStore()
     const jobStore = useJobStore()
     const canvasPanel = ref(null)
+    const actionMode = ref('preview')
     const comparisonPosition = computed({
       get: () => uiStore.comparisonSliderPosition,
       set: (value) => uiStore.setComparisonSliderPosition(value)
@@ -100,6 +103,7 @@ export default {
 
     return {
       canvasPanel,
+      actionMode,
       comparisonPosition,
       uploadedReferenceFile,
       uploadedImage,

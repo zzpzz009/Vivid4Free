@@ -26,8 +26,8 @@
           <span class="island-boat"><IslandIcon name="Sailboat" :size="108" /></span>
           <span class="island-sprig"><IslandIcon name="Leaf" :size="36" /></span>
         </div>
-        <h3>请上传图片开始处理</h3>
-        <p>在左侧面板中选择待处理图片</p>
+        <h3>{{ actionLabel }}效果将在这里显示</h3>
+        <p>{{ actionLabel === '放大' ? '从左侧选择主图，开始放大。' : '从左侧选择图片，调整参数后开始预览。' }}</p>
       </div>
       <div v-else class="text-schemes-on-surface-variant text-center">
         <div class="font-m3-body-large-emphasized-font-family text-m3-body-large-emphasized-font-size mb-2">
@@ -61,6 +61,7 @@ export default {
     IslandIcon
   },
   props: {
+    actionLabel: { type: String, default: '预览' },
     originalImage: {
       type: String,
       default: ''

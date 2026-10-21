@@ -8,7 +8,7 @@
         class="cursor-pointer" role="button" tabindex="0" :aria-label="isExpanded ? '收起历史记录' : '展开历史记录'" :aria-expanded="isExpanded" @keydown.enter.prevent="toggleExpansion" @keydown.space.prevent="toggleExpansion"
         @click="toggleExpansion"
       >
-        <IslandIcon v-if="uiStore.skin === 'animal-island'" name="Book" :size="20" />
+        <IslandIcon v-if="uiStore.skin === 'animal-island'" name="Book" :size="16" />
         <img v-else
           class="shrink-0 w-6 h-6 relative overflow-visible transition-transform duration-300"
           :class="isExpanded ? 'rotate-180' : ''"

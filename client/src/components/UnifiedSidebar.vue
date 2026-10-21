@@ -5,7 +5,7 @@
         <!-- Upload Image Area -->
         <component :is="uiStore.skin === 'animal-island' ? IslandCard : 'div'"
           v-bind="uiStore.skin === 'animal-island' ? { type: 'dashed', pattern: 'default' } : {}"
-          class="island-upload-card bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center w-[265px] overflow-hidden cursor-pointer transition-colors duration-200 relative"
+          class="island-upload-card island-main-card bg-schemes-surface-container rounded-lg flex flex-col gap-0 items-center justify-center w-[265px] overflow-hidden cursor-pointer transition-colors duration-200 relative"
           :class="[
             multipleImages ? 'min-h-[182px]' : 'h-[182px]',
             isDragOverImage ? 'bg-schemes-surface-container-high' : ''
@@ -320,7 +320,7 @@
           class="island-parameter-heading flex flex-row items-center justify-between w-[265px] group focus:outline-none py-2"
           @click.stop="toggleAdvancedOpen"
         >
-          <IslandTitle v-if="uiStore.skin === 'animal-island'" size="small" color="app-teal">高级参数</IslandTitle>
+          <span v-if="uiStore.skin === 'animal-island'" class="island-parameter-title">高级参数 <small>可选</small></span>
           <div v-else class="text-schemes-primary-container font-medium text-sm flex items-center gap-2">
             高级参数
           </div>
@@ -569,8 +569,9 @@
       </div>
     </div>
     <div class="island-action-dock shrink-0 m-4 mt-4">
-      <div class="w-[265px] flex flex-row gap-3 items-center justify-between">
-          <div class="flex-1 h-10 relative">
+      <p v-if="uiStore.skin === 'animal-island'" id="workspace-action-hint" class="island-action-hint" role="status">{{ islandActionHint }}</p>
+      <div class="island-action-row w-[265px] flex flex-row gap-3 items-center justify-between">
+          <div class="island-action-primary flex-1 h-10 relative">
             <HMenu as="div" class="primary-action-group rounded-2xl flex flex-row items-center justify-center w-full h-full relative" :class="{ 'action-disabled': isPrimaryActionDisabled }">
               <component :is="uiStore.skin === 'animal-island' ? IslandButton : 'button'"
                 v-bind="uiStore.skin === 'animal-island' ? { type: 'primary', htmlType: 'button' } : {}"
@@ -578,10 +579,12 @@
                 :class="showActionDropdown ? 'rounded-r-none' : ''"
                 :disabled="isPrimaryActionDisabled"
                 data-testid="primary-action-button"
+                :aria-describedby="uiStore.skin === 'animal-island' ? 'workspace-action-hint' : undefined"
                 :data-mode="mode"
                 @click="handlePrimaryAction"
               >
                 <div class="pt-2.5 pr-2.5 pb-2.5 pl-3 flex flex-row gap-1 items-center justify-start flex-1 relative">
+                  <IslandIcon v-if="uiStore.skin === 'animal-island'" :name="currentActionMode.id === 'preview' ? 'Eye' : 'Search'" :size="18" aria-hidden="true" />
                   <div class="button-text-primary letter-spacing-m3-title-medium-emphasized truncate">
                     {{ primaryActionText }}
                   </div>
@@ -639,7 +642,7 @@
           </div>
 
           <component :is="uiStore.skin === 'animal-island' ? IslandButton : 'button'"
-            v-bind="uiStore.skin === 'animal-island' ? { type: 'default', htmlType: 'button' } : {}"
+            v-bind="uiStore.skin === 'animal-island' ? { type: 'text', htmlType: 'button' } : {}"
             class="secondary-button flex-1 h-10"
             :disabled="isCancelDisabled"
             data-testid="cancel-button"
@@ -821,7 +824,7 @@ import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Menu as HMenu, MenuButton as HMenuButton, MenuItems as HMenuItems, MenuItem as HMenuItem } from '@headlessui/vue'
 import Slider from './ui/Slider.vue'
-import { Card as IslandCard, Title as IslandTitle, Icon as IslandIcon, Switch as IslandSwitch, Button as IslandButton, Tag as IslandTag } from 'animal-island-vue'
+import { Card as IslandCard, Icon as IslandIcon, Switch as IslandSwitch, Button as IslandButton, Tag as IslandTag } from 'animal-island-vue'
 import { useImageStore, useJobStore, useAssetStore, useUIStore,useXMStore } from '../stores'
 import { icons } from '../utils/assets.js'
 import { success, error } from '../utils/toast.js'
@@ -837,7 +840,6 @@ export default {
     IslandCard,
     IslandButton,
     IslandTag,
-    IslandTitle,
     IslandIcon,
     IslandSwitch,
     Slider
@@ -957,6 +959,7 @@ export default {
     }
   },
   emits: [
+    'action-mode-change',
     'upload-image', 'upload-images', 'upload-reference', 'upload-references',
     'clear-image', 'clear-images', 'clear-reference', 'clear-references',
     'prompt-change', 'generate', 'preview', 'open-mask-editor', 'cancel-rw'
@@ -1109,6 +1112,16 @@ export default {
     const canGenerate = canPreview
     const isActionDisabled = computed(() => currentActionMode.value.id === 'preview' ? !canPreview.value : !canGenerate.value)
     const isRunBusy = computed(() => props.previewUpscaleRunState !== 'idle')
+    const islandActionHint = computed(() => {
+      const action = currentActionMode.value.id === 'generate' ? '放大' : '预览'
+      if (props.submitting) return '正在提交，请稍候'
+      if (isRunBusy.value) return props.previewUpscaleRunState === 'cancelling' ? '正在取消任务…' : '任务运行中，可用右侧取消'
+      if (isImageUploading.value || isReferenceUploading.value) return '正在准备图片…'
+      if (!uploadedImage.value) return action === '预览' ? '添加主图与参考图' : '添加需要放大的图片'
+      if (action === '预览' && !uploadedReference.value) return '还需要一张风格参考图'
+      if (!props.engineReady) return '等待引擎就绪'
+      return '素材已就绪'
+    })
     const primaryActionText = computed(() => {
       if (props.submitting) return '正在提交…'
       if (props.previewUpscaleRunState === 'cancelling') {
@@ -1480,6 +1493,7 @@ export default {
     const selectActionMode = (m) => {
       if (isRunBusy.value) return
       currentActionMode.value = m
+      emit('action-mode-change', m.id)
     }
 
     const handlePrimaryAction = () => {
@@ -1529,6 +1543,7 @@ export default {
       isPrimaryActionDisabled,
       isCancelDisabled,
       primaryActionText,
+      islandActionHint,
       cancelActionText,
       selectActionMode,
       handlePrimaryAction,
