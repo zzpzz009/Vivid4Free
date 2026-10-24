@@ -413,6 +413,10 @@ class RuntimeManager extends EventEmitter {
     const previousSettings = this.settings, previousRoot = this.getRuntimeRoot(), previousInfo = this.activeInfo;
     const rollback = this.beforeActivate ? await this.beforeActivate({ previousRoot, runtimeRoot: finalPath, version: info.version }) : null;
     try {
+      if (previousRoot && path.resolve(previousRoot) !== path.resolve(finalPath)) {
+        this._set({ state: 'installing', message: '正在保留原图和历史结果', error: null });
+        await this._preserveUserImages(previousRoot, finalPath);
+      }
       this._saveSettings({ ...previousSettings, activePath: finalPath, activeVersion: info.version,
         activeStorageDir: this.storageDir, external: false, ...patch });
       this.activeRoot = finalPath; this.activeInfo = info;
@@ -432,6 +436,30 @@ class RuntimeManager extends EventEmitter {
         try { await rollback(); } catch (restoreError) { errors.push(`旧版引擎恢复失败：${restoreError.message}`); }
       }
       throw new Error(errors.join('；'));
+    }
+  }
+  async _preserveUserImages(previousRoot, finalPath) {
+    const copy = async (source, destination) => {
+      const stat = fs.lstatSync(source);
+      if (stat.isSymbolicLink()) throw new Error('原图或历史结果包含链接，未切换引擎');
+      const target = fs.existsSync(destination) ? fs.lstatSync(destination) : null;
+      if (target?.isSymbolicLink()) throw new Error('新版图片目录包含链接，未切换引擎');
+      if (stat.isDirectory()) {
+        if (target && !target.isDirectory()) throw new Error('新版图片目录存在同名文件，未覆盖');
+        fs.mkdirSync(destination, { recursive: true });
+        for (const name of fs.readdirSync(source)) await copy(path.join(source, name), path.join(destination, name));
+      } else if (stat.isFile()) {
+        if (target) {
+          if (!target.isFile() || target.size !== stat.size || await hashFile(source) !== await hashFile(destination)) {
+            throw new Error('新版原图或历史结果存在同名但不同的文件，未覆盖；请使用独立的新版目录');
+          }
+        } else await fs.promises.copyFile(source, destination, fs.constants.COPYFILE_EXCL);
+      } else throw new Error('原图或历史结果包含特殊文件，未切换引擎');
+    };
+    // User images are outside the package manifest; retain independent copies for rollback.
+    for (const name of ['input', 'output']) {
+      const source = path.join(previousRoot, name);
+      if (fs.existsSync(source)) await copy(source, path.join(finalPath, name));
     }
   }
   async _verifyDeltaBase(delta, target) {

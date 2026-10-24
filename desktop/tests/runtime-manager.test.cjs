@@ -483,6 +483,49 @@ test('client policy approval still rolls back if the activated engine lacks requ
   assert.equal(manager.status().version, '0.3.0'); assert.equal(manager.status().runtimeCompatible, true);
 });
 
+test('engine activation carries uploaded images and nested history outputs without changing the old runtime', async () => {
+  const old = path.join(tempRoot, 'old'), next = path.join(tempRoot, 'next');
+  writeActivatedRuntime(old, '1.0.0'); writeActivatedRuntime(next, '2.0.0');
+  fs.mkdirSync(path.join(old, 'input'), { recursive: true }); fs.writeFileSync(path.join(old, 'input', 'photo.png'), 'original photo');
+  fs.mkdirSync(path.join(old, 'output', 'history'), { recursive: true }); fs.writeFileSync(path.join(old, 'output', 'history', 'result.jpg'), 'saved result');
+  fs.mkdirSync(path.join(next, 'input'), { recursive: true }); fs.writeFileSync(path.join(next, 'input', 'photo.png'), 'original photo');
+  const manager = new RuntimeManager({ userData: path.join(tempRoot, 'user') }); await manager.connectDirectory(old);
+  manager.afterActivate = async () => {
+    assert.equal(fs.readFileSync(path.join(next, 'output', 'history', 'result.jpg'), 'utf8'), 'saved result');
+    return { ready: true };
+  };
+  await manager.connectDirectory(next);
+  assert.equal(manager.status().state, 'ready'); assert.equal(manager.getRuntimeRoot(), next);
+  fs.writeFileSync(path.join(next, 'input', 'photo.png'), 'new engine edit');
+  assert.equal(fs.readFileSync(path.join(old, 'input', 'photo.png'), 'utf8'), 'original photo');
+  assert.equal(fs.readFileSync(path.join(old, 'output', 'history', 'result.jpg'), 'utf8'), 'saved result');
+});
+
+test('image migration refuses conflicting files and restores the old runtime before starting the new one', async () => {
+  const old = path.join(tempRoot, 'old'), next = path.join(tempRoot, 'next');
+  writeActivatedRuntime(old, '1.0.0'); writeActivatedRuntime(next, '2.0.0');
+  for (const root of [old, next]) fs.mkdirSync(path.join(root, 'output'));
+  fs.writeFileSync(path.join(old, 'output', 'result.jpg'), 'old image'); fs.writeFileSync(path.join(next, 'output', 'result.jpg'), 'new image');
+  const manager = new RuntimeManager({ userData: path.join(tempRoot, 'user') }); await manager.connectDirectory(old);
+  let restored = 0, started = 0;
+  manager.beforeActivate = async () => async () => { restored++; };
+  manager.afterActivate = async () => { started++; return { ready: true }; };
+  await assert.rejects(manager.connectDirectory(next), /同名但不同/);
+  assert.equal(restored, 1); assert.equal(started, 0); assert.equal(manager.getRuntimeRoot(), old);
+  assert.equal(fs.readFileSync(path.join(next, 'output', 'result.jpg'), 'utf8'), 'new image');
+  assert.equal(JSON.parse(fs.readFileSync(manager.settingsPath)).activePath, old);
+});
+
+test('image migration rejects directory links instead of copying outside the old runtime', async () => {
+  const old = path.join(tempRoot, 'old'), next = path.join(tempRoot, 'next'), outside = path.join(tempRoot, 'outside');
+  writeActivatedRuntime(old, '1.0.0'); writeActivatedRuntime(next, '2.0.0'); fs.mkdirSync(outside);
+  fs.writeFileSync(path.join(outside, 'unrelated.png'), 'unrelated file');
+  const manager = new RuntimeManager({ userData: path.join(tempRoot, 'user') }); await manager.connectDirectory(old);
+  fs.symlinkSync(outside, path.join(old, 'input'), process.platform === 'win32' ? 'junction' : 'dir');
+  await assert.rejects(manager.connectDirectory(next), /包含链接/);
+  assert.equal(manager.getRuntimeRoot(), old); assert.equal(fs.existsSync(path.join(next, 'input')), false);
+});
+
 test('cloud links reject lookalike hosts and protocols and clear stale offers', async () => {
   fs.mkdirSync(tempRoot, { recursive: true }); const pkg = cloudBundle(); const host = source(pkg); const origin = await host.start(); live.push(host.server);
   const manager = makeManager(tempRoot, origin); await manager.check();
