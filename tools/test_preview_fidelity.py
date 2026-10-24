@@ -4,7 +4,8 @@ import unittest
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+import os
+sys.path.insert(0, str(Path(os.environ.get('VIVID_WORKFLOW_SOURCE_DIR', Path(__file__).resolve().parents[2] / 'VividPrivate/workflows')).parent / 'tools'))
 from compile_preview import SOURCE, compile_graph
 
 
@@ -24,8 +25,13 @@ class PreviewFidelityTests(unittest.TestCase):
                 return nodes[key]['widgets_values'][0]
             return value
 
-        exceptions = {('536', 'image'), ('605', 'image'), ('622', 'show_previews')}
+        added = {'9100', '9101', '9102', '9103', '9104', '9105', '9106'}
+        self.assertEqual(set(graph) - set(nodes), added)
+        exceptions = {('536', 'image'), ('605', 'image'), ('622', 'show_previews'),
+                      ('1294', 'sigmas'), ('1298', 'samples')}
         for key, compiled in graph.items():
+            if key in added:
+                continue
             original = nodes[key]
             if key == '760':
                 self.assertEqual(compiled['class_type'], 'VividLocalCaption')
@@ -38,10 +44,9 @@ class PreviewFidelityTests(unittest.TestCase):
                 actual = [value for name, value in compiled['inputs'].items() if name.startswith('lora_')]
                 self.assertEqual(len(actual), len(enabled))
                 for index, (before, after) in enumerate(zip(enabled, actual)):
-                    self.assertEqual({k: v for k, v in before.items() if k != 'lora'},
-                                     {k: v for k, v in after.items() if k != 'lora'})
-                    if index:
-                        self.assertEqual(before['lora'], after['lora'])
+                    authorized = {'lora', 'strength'} if index else {'lora'}
+                    self.assertEqual({k: v for k, v in before.items() if k not in authorized},
+                                     {k: v for k, v in after.items() if k not in authorized})
                 continue
             widget_index = 0
             for item in original.get('inputs', []):
@@ -61,6 +66,34 @@ class PreviewFidelityTests(unittest.TestCase):
         self.assertEqual(graph['622']['inputs']['extension'], 'jpg')
         self.assertEqual(graph['622']['inputs']['quality'], 100)
         self.assertEqual(graph['622']['inputs']['dpi'], 72)
+
+    def test_first_step_only_continues_the_same_four_step_schedule(self):
+        graph = compile_graph()
+        self.assertEqual(graph['1307']['inputs']['steps'], 4)
+        self.assertEqual(graph['1280']['inputs']['sampler_name'], 'euler')
+        self.assertEqual(graph['9100'], {'class_type': 'SplitSigmas', 'inputs': {'sigmas': ['1307', 0], 'step': 1}})
+        self.assertEqual(graph['1294']['inputs']['sigmas'], ['9100', 0])
+        self.assertEqual(graph['9106']['inputs']['sigmas'], ['9100', 1])
+        self.assertEqual(graph['9106']['inputs']['latent_image'], ['1294', 0])
+        self.assertEqual(graph['9105']['class_type'], 'DisableNoise')
+        self.assertEqual(graph['9106']['inputs']['noise'], ['9105', 0])
+        self.assertEqual(graph['1298']['inputs']['samples'], ['9106', 0])
+        early, late = graph['1318']['inputs'], graph['9101']['inputs']
+        self.assertTrue(early['lora_1']['on'])
+        self.assertTrue(early['lora_1']['lora'].endswith('vivid_klein_v1.4_000076275.safetensors'))
+        self.assertEqual(early['lora_1']['strength'], 1)
+        self.assertEqual(late['model'], early['model'])
+        self.assertEqual(late['clip'], early['clip'])
+        self.assertEqual(late['lora_2'], early['lora_2'])
+        self.assertEqual([v['lora'] for k, v in late.items() if k.startswith('lora_') and v['on']], ['klein\\Klein 一致性增强.safetensors'])
+        self.assertTrue(early['lora_2']['on'])
+        self.assertEqual(late['lora_2']['strength'], .7)
+        self.assertEqual(graph['9104']['inputs']['positive'], graph['1308']['inputs']['positive'])
+        self.assertEqual(graph['9104']['inputs']['negative'], graph['1308']['inputs']['negative'])
+        self.assertEqual(graph['9102']['inputs']['shift'], 3.1)
+        self.assertEqual(graph['9103']['inputs']['strength'], 1)
+        self.assertEqual(graph['9104']['inputs']['cfg'], 1)
+        self.assertEqual(graph['760']['class_type'], 'VividLocalCaption')
 
 
 if __name__ == '__main__':

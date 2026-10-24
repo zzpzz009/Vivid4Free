@@ -31,14 +31,14 @@ function zip(entries) {
   end.writeUInt32LE(directory.length, 12); end.writeUInt32LE(offset, 16);
   return Buffer.concat([...locals, directory, end]);
 }
-function bundle({ version = '1.0.0', entries } = {}) {
+function bundle({ version = '1.0.0', entries, compatibleClientVersions } = {}) {
   const files = entries || [['python/python.exe', 'fixture executable'], ['tools/start_comfy.py', 'fixture launcher']];
   const metadata = files.map(([file, content]) => ({ path: file, bytes: Buffer.byteLength(content), sha256: crypto.createHash('sha256').update(content).digest('hex') }));
   const runtime = JSON.stringify({ schemaVersion: 1, id: 'vivid-comfy', version, protocolVersion: 1, platform: 'win32-x64',
-    entry: { python: 'python/python.exe', launcher: 'tools/start_comfy.py' }, files: metadata });
+    entry: { python: 'python/python.exe', launcher: 'tools/start_comfy.py' }, compatibleClientVersions, files: metadata });
   const archive = zip([...files, ['runtime.json', runtime]]);
   return { archive, zipEntries: [...files, ['runtime.json', runtime]], manifest: { schemaVersion: 1, id: 'vivid-comfy', version, protocolVersion: 1, platform: 'win32-x64',
-    archive: { url: '/runtime.zip', bytes: archive.length, sha256: crypto.createHash('sha256').update(archive).digest('hex'), unpackedBytes: metadata.reduce((sum, item) => sum + item.bytes, Buffer.byteLength(runtime)) },
+    compatibleClientVersions, archive: { url: '/runtime.zip', bytes: archive.length, sha256: crypto.createHash('sha256').update(archive).digest('hex'), unpackedBytes: metadata.reduce((sum, item) => sum + item.bytes, Buffer.byteLength(runtime)) },
     entry: { python: 'python/python.exe', launcher: 'tools/start_comfy.py' }, requiredFiles: files.map(([file]) => file) } };
 }
 function writeActivatedRuntime(root, version) {
@@ -84,7 +84,20 @@ function source(bundleValue, { rangeUnsupported = false, delay = 0, pauseFirst =
     }
     res.writeHead(404); res.end();
   });
-  return { requests, server, start: () => new Promise(resolve => server.listen(0, '127.0.0.1', () => resolve(`http://127.0.0.1:${server.address().port}`))) };
+  return { requests, server, start: async () => {
+    // Windows may allocate a low ephemeral port blocked by the Fetch standard.
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const port = crypto.randomInt(20000, 60000);
+      try {
+        await new Promise((resolve, reject) => {
+          server.once('error', reject);
+          server.listen(port, '127.0.0.1', () => { server.removeListener('error', reject); resolve(); });
+        });
+        return `http://127.0.0.1:${port}`;
+      } catch (error) { if (error.code !== 'EADDRINUSE') throw error; }
+    }
+    throw new Error('No Fetch-compatible fixture port was allocated');
+  } };
 }
 function makeManager(base, origin, extras = {}) {
   fs.mkdirSync(base, { recursive: true });
@@ -93,6 +106,14 @@ function makeManager(base, origin, extras = {}) {
   const manager = new RuntimeManager({ userData, feedPath, env: { VIVID_RUNTIME_ALLOW_LOCAL_TEST: '1' }, ...extras });
   manager.setStorageDirectory(storage); return manager;
 }
+test('runtime manifest and archive requests both use the supplied client network transport', async () => {
+  const host = source(bundle()); const origin = await host.start(); live.push(host.server);
+  const calls = [];
+  const manager = makeManager(tempRoot, origin, { fetchImpl: (url, options) => { calls.push(String(url)); return fetch(url, options); } });
+  await manager.check(); await manager.install();
+  assert.deepEqual(calls, [`${origin}/manifest.json`, `${origin}/runtime.zip`]);
+  assert.equal(manager.status().version, '1.0.0');
+});
 afterEach(async () => {
   await Promise.all(live.splice(0).map(item => new Promise(resolve => item.close(resolve))));
   fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -156,13 +177,13 @@ test('verified archive is reused after activation is deferred without leaving st
 
 test('ZIP path traversal, absolute path, ADS, duplicate overwrite, and symlink entries are rejected', async () => {
   fs.mkdirSync(tempRoot, { recursive: true });
-  for (const name of ['../escape.txt', '/absolute.txt', 'folder/secret:stream', 'same.txt']) {
+  for (const name of ['../escape.txt', '/absolute.txt', 'folder/secret:stream', 'folder/CON.txt', 'folder/file. ', 'same.txt']) {
     const entries = name === 'same.txt' ? [['same.txt', 'one'], ['same.txt', 'two']] : [[name, 'bad']];
     const file = path.join(tempRoot, 'bad.zip'); fs.writeFileSync(file, zip(entries)); await assert.rejects(validateZip(file));
   }
   const link = zip([['link', 'target']]);
   const central = link.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02])); link.writeUInt32LE((0xa1ff << 16) >>> 0, central + 38);
-  const linkFile = path.join(tempRoot, 'link.zip'); fs.writeFileSync(linkFile, link); await assert.rejects(validateZip(linkFile), /link or special file/i);
+  const linkFile = path.join(tempRoot, 'link.zip'); fs.writeFileSync(linkFile, link); await assert.rejects(validateZip(linkFile), /ZIP/);
 });
 
 test('protocol mismatch, disk shortage, and concurrent install fail or coalesce safely', async () => {
@@ -193,4 +214,329 @@ test('storage selection rejects client install and userData paths, including jun
   try { fs.symlinkSync(clientInstall, junction, 'junction'); }
   catch { return; }
   assert.throws(() => manager.setStorageDirectory(path.join(junction, 'runtime')), /独立位置/);
+});
+
+test('offline ZIP installs without a download source and does not copy or remove the source archive', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const pkg = bundle();
+  const file = path.join(tempRoot, 'offline.zip'); fs.writeFileSync(file, pkg.archive);
+  const manager = new RuntimeManager({ userData: path.join(tempRoot, 'user'), feedPath: path.join(tempRoot, 'no-feed.json'), env: {} });
+  manager.setStorageDirectory(path.join(tempRoot, 'storage'));
+  await manager.importArchive(file);
+  assert.equal(manager.status().installed, true); assert.equal(manager.status().downloadConfigured, false);
+  await manager.importArchive(file); assert.equal(manager.status().state, 'installed');
+  assert.deepEqual(fs.readFileSync(file), pkg.archive);
+  assert.deepEqual(fs.readdirSync(path.join(manager.storageDir, 'downloads')), []);
+  const restarted = new RuntimeManager({ userData: manager.userData });
+  assert.equal(restarted.getRuntimeRoot(), manager.getRuntimeRoot());
+});
+
+test('existing official directory is verified and persists independently of the update storage directory', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const root = path.join(tempRoot, 'unpacked'); writeActivatedRuntime(root, '1.0.0');
+  fs.mkdirSync(path.join(root, 'output')); fs.writeFileSync(path.join(root, 'output', 'user-image.jpg'), 'keep');
+  const manager = new RuntimeManager({ userData: path.join(tempRoot, 'user') });
+  await manager.connectDirectory(root);
+  assert.equal(manager.getRuntimeRoot(), root);
+  const info = JSON.parse(fs.readFileSync(path.join(root, 'runtime.json')));
+  assert.equal(manager.status().downloadedBytes, info.files.reduce((sum, item) => sum + item.bytes, 0));
+  assert.equal(manager.status().downloadedBytes, manager.status().totalBytes);
+  assert.equal(manager.status().availableVersion, null);
+  manager.setStorageDirectory(path.join(tempRoot, 'future-updates'));
+  const restarted = new RuntimeManager({ userData: manager.userData });
+  assert.equal(restarted.getRuntimeRoot(), root); assert.equal(restarted.status().installed, true);
+  assert.equal(fs.readFileSync(path.join(root, 'output', 'user-image.jpg'), 'utf8'), 'keep');
+});
+
+test('corrupt or linked directory cannot replace the active runtime; ordinary ComfyUI is rejected', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const root = path.join(tempRoot, 'good'); writeActivatedRuntime(root, '1.0.0');
+  const manager = new RuntimeManager({ userData: path.join(tempRoot, 'user') }); await manager.connectDirectory(root);
+  const bad = path.join(tempRoot, 'bad'); writeActivatedRuntime(bad, '2.0.0');
+  fs.writeFileSync(path.join(bad, 'python', 'python.exe'), 'corrupt executable');
+  await assert.rejects(manager.connectDirectory(bad), /大小错误|校验失败/); assert.equal(manager.getRuntimeRoot(), root);
+  const ordinary = path.join(tempRoot, 'ordinary'); fs.mkdirSync(ordinary);
+  await assert.rejects(manager.connectDirectory(ordinary), /普通 ComfyUI/);
+  const link = path.join(tempRoot, 'linked'); fs.symlinkSync(root, link, 'junction');
+  await assert.rejects(manager.connectDirectory(link), /实体/); assert.equal(manager.getRuntimeRoot(), root);
+});
+
+test('offline startup failure restores old settings and engine and retains the users source files', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const root = path.join(tempRoot, 'old'); writeActivatedRuntime(root, '1.0.0');
+  let restores = 0;
+  const manager = new RuntimeManager({ userData: path.join(tempRoot, 'user'),
+    beforeActivate: async ({ previousRoot }) => previousRoot ? async () => { restores++; } : null,
+    afterActivate: async ({ version }) => { if (version === '2.0.0') throw new Error('缺少当前工作流节点'); return { ready: true }; } });
+  await manager.connectDirectory(root); manager.setStorageDirectory(path.join(tempRoot, 'updates'));
+  const oldSettings = fs.readFileSync(manager.settingsPath, 'utf8');
+  const file = path.join(tempRoot, 'new.zip'); fs.writeFileSync(file, bundle({ version: '2.0.0' }).archive);
+  await assert.rejects(manager.importArchive(file), /缺少当前工作流节点/);
+  assert.equal(manager.getRuntimeRoot(), root); assert.equal(restores, 1);
+  assert.equal(fs.readFileSync(manager.settingsPath, 'utf8'), oldSettings);
+  assert.equal(fs.existsSync(file), true); assert.equal(fs.readdirSync(path.join(manager.storageDir, 'versions')).length, 1);
+  manager.afterActivate = async () => ({ ready: true });
+  await manager.importArchive(file); assert.equal(manager.status().version, '2.0.0');
+});
+
+test('first connection fails closed when engine cannot start and never deletes the selected directory', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const root = path.join(tempRoot, 'new'); writeActivatedRuntime(root, '1.0.0');
+  const manager = new RuntimeManager({ userData: path.join(tempRoot, 'user'), afterActivate: async () => ({ ready: false, error: '缺少 GPU 驱动' }) });
+  await assert.rejects(manager.connectDirectory(root), /GPU/);
+  assert.equal(manager.getRuntimeRoot(), null); assert.equal(manager.status().installed, false);
+  assert.equal(fs.existsSync(path.join(root, 'python', 'python.exe')), true);
+});
+
+test('same-version check avoids redownloading and failed checks clear stale update offers', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const host = source(bundle()); const origin = await host.start(); live.push(host.server);
+  const manager = makeManager(tempRoot, origin); await manager.check(); await manager.install();
+  await manager.check(); assert.equal(manager.status().updateAvailable, false);
+  await manager.install(); assert.equal(host.requests.filter(request => request.url === '/runtime.zip').length, 1);
+  manager.env.VIVID_RUNTIME_MANIFEST_URL = 'file:///not-a-feed';
+  await assert.rejects(manager.check(), /HTTPS/);
+  assert.equal(manager.available, null); assert.equal(manager.status().availableVersion, null);
+  assert.equal(manager.status().installed, true); assert.equal(manager.status().state, 'installed');
+});
+
+test('changing update storage retains a managed active version from the original storage', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const host = source(bundle()); const origin = await host.start(); live.push(host.server);
+  const manager = makeManager(tempRoot, origin); await manager.check(); await manager.install();
+  const root = manager.getRuntimeRoot(); manager.setStorageDirectory(path.join(tempRoot, 'new-storage'));
+  assert.equal(manager.getRuntimeRoot(), root);
+  assert.equal(new RuntimeManager({ userData: manager.userData }).getRuntimeRoot(), root);
+});
+
+function cloudBundle(options = {}) {
+  const pkg = bundle({ version: '1.1.0', compatibleClientVersions: ['0.6.0'], ...options });
+  pkg.manifest.archive.url = null;
+  pkg.manifest.downloads = [
+    { provider: 'quark', url: 'https://pan.quark.cn/s/fixture', extractionCode: 'q123' },
+    { provider: 'baidu', url: 'https://pan.baidu.com/s/fixture?pwd=b123', extractionCode: 'b123' }
+  ];
+  return pkg;
+}
+
+test('cloud release enables Quark, disables Baidu, and only installs an imported ZIP after whole-archive verification', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const pkg = cloudBundle();
+  const host = source(pkg); const origin = await host.start(); live.push(host.server);
+  let activations = 0;
+  const manager = makeManager(tempRoot, origin, { clientVersion: '0.6.0', supportedRuntimeVersions: ['1.0.0'], afterActivate: async () => { activations++; return { ready: true }; } });
+  const old = path.join(tempRoot, 'previous'); writeActivatedRuntime(old, '1.0.0'); await manager.connectDirectory(old);
+  await manager.check();
+  assert.deepEqual(manager.status().downloadSources.map(s => s.provider), ['quark', 'baidu']);
+  assert.equal(manager.downloadSource('quark').extractionCode, 'q123');
+  assert.deepEqual(manager.status().downloadSources.map(s => s.enabled), [true, false]);
+  assert.throws(() => manager.downloadSource('baidu'), /暂未开放/);
+  assert.throws(() => manager.downloadSource('https://evil.test'), /尚未配置/);
+  assert.equal(manager.status().updateAvailable, true); assert.equal(manager.status().availableCompatible, true);
+  assert.deepEqual(manager.status().supportedRuntimeVersions, ['1.0.0', '1.1.0']);
+  await assert.rejects(manager.install(), /官方客户端下载 ZIP/);
+  assert.equal(host.requests.some(r => r.url === '/runtime.zip'), false);
+  const file = path.join(tempRoot, 'downloaded.zip'); const corrupt = Buffer.from(pkg.archive); corrupt[50] ^= 1; fs.writeFileSync(file, corrupt);
+  await assert.rejects(manager.importArchive(file), /SHA256/); assert.equal(manager.getRuntimeRoot(), old); assert.equal(activations, 1);
+  fs.writeFileSync(file, pkg.archive); await manager.importArchive(file);
+  assert.equal(manager.status().version, '1.1.0'); assert.equal(manager.status().runtimeCompatible, true); assert.equal(activations, 2);
+  assert.equal(manager.status().updateAvailable, false); assert.deepEqual(fs.readFileSync(file), pkg.archive);
+  const restarted = new RuntimeManager({ userData: manager.userData, clientVersion: '0.6.0', supportedRuntimeVersions: ['1.0.0'] });
+  assert.equal(restarted.status().runtimeCompatible, true); assert.equal(restarted.status().version, '1.1.0');
+});
+
+test('publisher-generated Quark-only release is read and imported by the client without downloading archive bytes', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true });
+  const script = String.raw`import sys, json
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import package_runtime as package
+root = Path(sys.argv[2])
+source = root / 'fixture-source'
+for name in ('python/python.exe', 'comfyui/main.py', 'custom_nodes/fixture/__init__.py', 'models/fixture.safetensors', 'llama/llama-server.exe'):
+    file = source / name
+    file.parent.mkdir(parents=True, exist_ok=True)
+    file.write_bytes(b'fixture only; not a working engine')
+for name in ('tools/start_comfy.py', 'workflows/preview.json', 'workflows/upscale.json'):
+    file = root / name
+    file.parent.mkdir(parents=True, exist_ok=True)
+    file.write_bytes(b'fixture only')
+package.ROOT = root
+result = package.create(source, '1.1.0', None, root / 'release', node_packs=('fixture',), models=('fixture.safetensors',),
+                        compatible_clients=['0.6.0'], quark_share_url='https://pan.quark.cn/s/fixture', quark_extraction_code='q123')
+(root / 'generated-result.json').write_text(json.dumps(result), encoding='utf-8')`;
+  const generated = spawnSync('python', ['-X', 'utf8', '-c', script, path.resolve(__dirname, '../../tools'), tempRoot], { encoding: 'utf8' });
+  assert.equal(generated.status, 0, generated.stderr);
+  const result = JSON.parse(fs.readFileSync(path.join(tempRoot, 'generated-result.json'), 'utf8'));
+  const host = source({ manifest: JSON.parse(fs.readFileSync(result.manifest, 'utf8')) });
+  const origin = await host.start(); live.push(host.server);
+  let activations = 0;
+  const manager = makeManager(path.join(tempRoot, 'client'), origin, { clientVersion: '0.6.0', afterActivate: async () => { activations++; return { ready: true }; } });
+  await manager.check();
+  assert.deepEqual(manager.status().downloadSources.map(s => s.provider), ['quark']);
+  assert.equal(manager.downloadSource('quark').extractionCode, 'q123');
+  await assert.rejects(manager.install(), /官方客户端下载 ZIP/);
+  await manager.importArchive(result.archive);
+  assert.equal(manager.status().state, 'ready'); assert.equal(manager.status().version, '1.1.0');
+  assert.equal(manager.status().runtimeCompatible, true); assert.equal(activations, 1);
+  assert.deepEqual(host.requests.map(request => request.url), ['/manifest.json']);
+  assert.equal(fs.existsSync(result.archive), true);
+});
+
+test('front-end upgrade reports required CF update and incompatible imports cannot stop or replace the active engine', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const old = path.join(tempRoot, 'old'); writeActivatedRuntime(old, '1.0.0');
+  const original = new RuntimeManager({ userData: path.join(tempRoot, 'user') }); await original.connectDirectory(old);
+  let switches = 0;
+  const upgraded = new RuntimeManager({ userData: original.userData, clientVersion: '0.7.0', supportedRuntimeVersions: ['2.0.0'], beforeActivate: async () => { switches++; } });
+  assert.equal(upgraded.status().clientVersion, '0.7.0'); assert.equal(upgraded.status().runtimeCompatible, false);
+  assert.match(upgraded.status().compatibilityMessage, /必须更新引擎.*不保证兼容性和出图可靠性/);
+  const incompatible = path.join(tempRoot, 'not-compatible'); writeActivatedRuntime(incompatible, '3.0.0');
+  await assert.rejects(upgraded.connectDirectory(incompatible), /未声明兼容/);
+  assert.equal(switches, 0); assert.equal(upgraded.getRuntimeRoot(), old);
+  const compatible = path.join(tempRoot, 'compatible'); writeActivatedRuntime(compatible, '2.0.0');
+  await upgraded.connectDirectory(compatible); assert.equal(upgraded.status().runtimeCompatible, true); assert.equal(switches, 1);
+});
+
+test('cloud CF requiring a different front-end is shown but rejected before ZIP inspection and activation', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const pkg = cloudBundle({ compatibleClientVersions: ['0.7.0'] });
+  const host = source(pkg); const origin = await host.start(); live.push(host.server);
+  const manager = makeManager(tempRoot, origin, { clientVersion: '0.6.0', supportedRuntimeVersions: ['1.0.0'] });
+  await manager.check(); assert.equal(manager.status().availableCompatible, false);
+  assert.match(manager.status().compatibilityMessage, /先更新客户端/);
+  const file = path.join(tempRoot, 'new.zip'); fs.writeFileSync(file, pkg.archive);
+  await assert.rejects(manager.importArchive(file), /未声明兼容/); assert.equal(manager.status().installed, false);
+});
+
+test('cloud links reject lookalike hosts and protocols and clear stale offers', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const pkg = cloudBundle(); const host = source(pkg); const origin = await host.start(); live.push(host.server);
+  const manager = makeManager(tempRoot, origin); await manager.check();
+  for (const url of ['https://pan.quark.cn.evil.test/s/a', 'file:///tmp/a', 'https://user:pass@pan.quark.cn/s/a', 'https://pan.baidu.com/s/a']) {
+    pkg.manifest.downloads[0].url = url;
+    await assert.rejects(manager.check()); assert.equal(manager.status().downloadSources.length, 0);
+  }
+  pkg.manifest.downloads[0].url = 'https://pan.quark.cn/s/fixture'; delete pkg.manifest.compatibleClientVersions;
+  await assert.rejects(manager.check(), /兼容客户端版本/);
+});
+
+test('cloud import rejects a ZIP whose internal version differs from its trusted release metadata', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const pkg = cloudBundle(); pkg.manifest.version = '1.2.0';
+  const host = source(pkg); const origin = await host.start(); live.push(host.server); const manager = makeManager(tempRoot, origin);
+  const file = path.join(tempRoot, 'wrong-version.zip'); fs.writeFileSync(file, pkg.archive);
+  await manager.check(); await assert.rejects(manager.importArchive(file), /不是已检查的 引擎 1.2.0/); assert.equal(manager.status().installed, false);
+});
+
+test('managed install rejects redirected working directories and linked partial paths without writing their targets', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true }); const host = source(bundle()); const origin = await host.start(); live.push(host.server);
+  const protectedRoot = path.join(tempRoot, 'protected'); fs.mkdirSync(protectedRoot);
+  const manager = makeManager(path.join(tempRoot, 'linked-directory'), origin); await manager.check();
+  fs.symlinkSync(protectedRoot, path.join(manager.storageDir, 'staging'), 'junction');
+  await assert.rejects(manager.install(), /链接|重定向/); assert.deepEqual(fs.readdirSync(protectedRoot), []);
+  const second = makeManager(path.join(tempRoot, 'linked-file'), origin); await second.check();
+  const downloads = path.join(second.storageDir, 'downloads'); fs.mkdirSync(downloads);
+  const target = path.join(protectedRoot, 'original'); fs.writeFileSync(target, 'keep');
+  fs.symlinkSync(protectedRoot, path.join(downloads, 'vivid-comfy-1.0.0.zip.part'), 'junction');
+  await assert.rejects(second.install(), /链接|特殊文件/); assert.equal(fs.readFileSync(target, 'utf8'), 'keep');
+});
+
+function publisherPair(root) {
+  fs.mkdirSync(root, { recursive: true });
+  const script = String.raw`import sys,json
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+import package_runtime as p
+root=Path(sys.argv[2]); source=root/'source'
+for name in ('python/python.exe','comfyui/main.py','comfyui/obsolete.py','custom_nodes/fixture/__init__.py','models/fixture.safetensors','llama/llama-server.exe'):
+    file=source/name; file.parent.mkdir(parents=True,exist_ok=True); file.write_bytes(b'fixture only; not an executable')
+kwargs=dict(node_packs=('fixture',),models=('fixture.safetensors',),compatible_clients=['0.6.1'],quark_share_url='https://pan.quark.cn/s/fixture')
+base=p.create(source,'1.0.0',None,root/'base',**kwargs)
+(source/'comfyui/obsolete.py').unlink()
+(source/'comfyui/main.py').write_bytes(b'new fixture code')
+target=p.create(source,'1.1.0',None,root/'target',base_archive=Path(base['archive']),**kwargs)
+print(json.dumps(dict(base=base,target=target)))`;
+  const result = spawnSync('python', ['-X', 'utf8', '-c', script, path.resolve(__dirname, '../../tools'), root], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const pair = JSON.parse(result.stdout.trim().split('\n').at(-1));
+  pair.delta = path.join(path.dirname(pair.target.archive), pair.target.incremental.filename);
+  return pair;
+}
+function offlineManager(root, extras = {}) {
+  const feedPath = path.join(root, 'no-feed.json'); fs.mkdirSync(root, { recursive: true });
+  fs.writeFileSync(feedPath, JSON.stringify({ schemaVersion: 1, manifestUrl: null }));
+  const manager = new RuntimeManager({ userData: path.join(root, 'user'), feedPath, env: {}, clientVersion: '0.6.1', ...extras });
+  manager.setStorageDirectory(path.join(root, 'engine')); return manager;
+}
+test('publisher full and incremental ZIPs produce identical independent native installations and omit deleted files', async () => {
+  const pair = publisherPair(path.join(tempRoot, 'publisher'));
+  const deltaManager = offlineManager(path.join(tempRoot, 'delta'));
+  await deltaManager.importArchive(pair.base.archive); const old = deltaManager.getRuntimeRoot();
+  fs.writeFileSync(path.join(old, 'user-output.txt'), 'retained user data');
+  deltaManager.available = JSON.parse(fs.readFileSync(pair.target.manifest, 'utf8'));
+  assert.equal(deltaManager.status().recommendedPackage, 'incremental');
+  await deltaManager.importArchive(pair.delta);
+  const fullManager = offlineManager(path.join(tempRoot, 'full'));
+  fullManager.available = deltaManager.available;
+  assert.equal(fullManager.status().recommendedPackage, 'full');
+  await fullManager.importArchive(pair.target.archive);
+  const next = deltaManager.getRuntimeRoot(), full = fullManager.getRuntimeRoot();
+  const raw = fs.readFileSync(path.join(next, 'runtime.json'));
+  assert.deepEqual(raw, fs.readFileSync(path.join(full, 'runtime.json')));
+  for (const item of JSON.parse(raw).files) assert.deepEqual(fs.readFileSync(path.join(next, item.path)), fs.readFileSync(path.join(full, item.path)));
+  assert.equal(fs.existsSync(path.join(next, 'comfyui/obsolete.py')), false);
+  assert.equal(fs.existsSync(path.join(old, 'comfyui/obsolete.py')), true);
+  assert.equal(fs.existsSync(path.join(next, 'user-output.txt')), false);
+  assert.equal(fs.readFileSync(path.join(old, 'user-output.txt'), 'utf8'), 'retained user data');
+  await deltaManager.importArchive(pair.delta); assert.equal(deltaManager.getRuntimeRoot(), next);
+  fs.writeFileSync(path.join(next, 'models/fixture.safetensors'), 'changed after install');
+  assert.equal(fs.readFileSync(path.join(old, 'models/fixture.safetensors'), 'utf8'), 'fixture only; not an executable');
+});
+test('incremental import rejects missing, altered and mismatched bases without switching the active engine', async () => {
+  const pair = publisherPair(path.join(tempRoot, 'publisher'));
+  const manager = offlineManager(path.join(tempRoot, 'client'));
+  await assert.rejects(manager.importArchive(pair.delta), /仅适用于/);
+  await manager.importArchive(pair.base.archive); const old = manager.getRuntimeRoot();
+  const original = fs.readFileSync(path.join(old, 'runtime.json'));
+  fs.appendFileSync(path.join(old, 'runtime.json'), '\n');
+  await assert.rejects(manager.importArchive(pair.delta), /基线.*不符/);
+  fs.writeFileSync(path.join(old, 'runtime.json'), original);
+  fs.writeFileSync(path.join(old, 'comfyui/main.py'), 'tampered');
+  await assert.rejects(manager.importArchive(pair.delta), /文件大小错误|校验失败/);
+  assert.equal(manager.getRuntimeRoot(), old); assert.equal(manager.status().version, '1.0.0');
+  assert.equal(fs.existsSync(path.join(manager.storageDir, 'versions/vivid-comfy-1.1.0')), false);
+});
+test('incremental startup failure restores old settings, supports retry and rejects damaged released ZIPs', async () => {
+  const pair = publisherPair(path.join(tempRoot, 'publisher'));
+  let restores = 0;
+  const manager = offlineManager(path.join(tempRoot, 'client'), {
+    beforeActivate: async ({ previousRoot }) => previousRoot ? async () => { restores++; } : null,
+    afterActivate: async ({ version }) => { if (version === '1.1.0') throw new Error('fixture startup failed'); return { ready: true }; }
+  });
+  await manager.importArchive(pair.base.archive); const old = manager.getRuntimeRoot();
+  manager.available = JSON.parse(fs.readFileSync(pair.target.manifest));
+  manager.available.incremental.archive.sha256 = '0'.repeat(64);
+  await assert.rejects(manager.importArchive(pair.delta), /SHA256/);
+  assert.equal(manager.getRuntimeRoot(), old);
+  manager.available = JSON.parse(fs.readFileSync(pair.target.manifest));
+  const settings = fs.readFileSync(manager.settingsPath);
+  await assert.rejects(manager.importArchive(pair.delta), /fixture startup failed/);
+  assert.equal(manager.getRuntimeRoot(), old); assert.equal(restores, 1);
+  assert.deepEqual(fs.readFileSync(manager.settingsPath), settings);
+  manager.afterActivate = async () => ({ ready: true });
+  await manager.importArchive(pair.delta); assert.equal(manager.status().version, '1.1.0');
+});
+test('offline incremental rejects extra payload, incomplete change declarations and insufficient reconstruction space', async () => {
+  const pair = publisherPair(path.join(tempRoot, 'publisher'));
+  const manager = offlineManager(path.join(tempRoot, 'client'));
+  await manager.importArchive(pair.base.archive); const old = manager.getRuntimeRoot();
+  const mutate = (mode) => {
+    const output = path.join(tempRoot, `${mode}.zip`);
+    const script = String.raw`import sys,json,zipfile
+with zipfile.ZipFile(sys.argv[1]) as src:
+    entries={n:src.read(n) for n in src.namelist()}
+if sys.argv[3]=='extra': entries['unlisted.py']=b'not declared'
+else:
+    delta=json.loads(entries['delta.json']); delta['files']=[]; entries['delta.json']=json.dumps(delta).encode()
+with zipfile.ZipFile(sys.argv[2],'w') as dst:
+    for name,data in entries.items(): dst.writestr(name,data)`;
+    const result = spawnSync('python', ['-c', script, pair.delta, output, mode], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr); return output;
+  };
+  await assert.rejects(manager.importArchive(mutate('extra')), /载荷.*不一致/);
+  await assert.rejects(manager.importArchive(mutate('incomplete')), /变更.*不一致/);
+  manager.freeBytes = () => 0;
+  await assert.rejects(manager.importArchive(pair.delta), /磁盘空间不足/);
+  assert.equal(manager.getRuntimeRoot(), old);
+  assert.equal(fs.existsSync(path.join(manager.storageDir, 'versions/vivid-comfy-1.1.0')), false);
+  assert.deepEqual(fs.readdirSync(path.join(manager.storageDir, 'staging')), []);
 });

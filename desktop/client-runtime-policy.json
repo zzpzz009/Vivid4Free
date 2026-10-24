@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "supportedRuntimeVersions": ["0.3.0", "0.3.2"],
+  "note": "引擎 0.3.2 不含产品明文工作流，支持全量安装和从官方 0.3.1 增量升级。0.3.0 仅支持本机已修正环境，旧 ZIP 不属于已验收组合。",
+  "clientDownloadUrl": "https://github.com/zzpzz009/Vivid4Free/releases/latest"
+}

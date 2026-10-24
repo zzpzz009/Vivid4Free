@@ -11,6 +11,23 @@ function deferred() {
 describe('runtime environment controller', () => {
   afterEach(() => vi.useRealTimers())
 
+  it('opens the selected cloud provider and reports external failures without changing the runtime', async () => {
+    const status = { state: 'installed', installed: true, version: '0.3.0', updateAvailable: true }
+    const bridge = { runtimeStatus: vi.fn(async () => status), runtimeOpenDownload: vi.fn()
+      .mockResolvedValueOnce({ opened: true, message: '百度已打开，返回导入 ZIP' })
+      .mockResolvedValueOnce({ opened: false, message: '系统无法打开夸克链接' }) }
+    const controller = createRuntimeEnvironmentController(bridge)
+    await controller.refresh()
+    expect(await controller.run('opening-baidu', 'runtimeOpenDownload', 'baidu')).toBe(true)
+    expect(bridge.runtimeOpenDownload).toHaveBeenLastCalledWith('baidu')
+    expect(controller.actionMessage.value).toContain('导入 ZIP')
+    expect(await controller.run('opening-quark', 'runtimeOpenDownload', 'quark')).toBe(false)
+    expect(controller.error.value).toBe('系统无法打开夸克链接')
+    expect(controller.actionMessage.value).toBe('')
+    expect(controller.status.value.version).toBe('0.3.0')
+    controller.dispose()
+  })
+
   it('keeps a failed operation retryable and replaces the error after a successful retry', async () => {
     const status = { state: 'not_installed', installed: false, available: true, downloadedBytes: 0, totalBytes: 100 }
     const bridge = {
@@ -119,5 +136,27 @@ describe('runtime environment controller', () => {
     controller.dispose()
     await vi.advanceTimersByTimeAsync(5400)
     expect(bridge.runtimeStatus).toHaveBeenCalledTimes(2)
+  })
+
+  it('reports actionable connection errors while the previous runtime remains installed', async () => {
+    const status = { state: 'installed', installed: true, version: '1.0.0', error: '新版缺少工作流节点，已恢复旧版' }
+    const bridge = { runtimeStatus: vi.fn(async () => status), runtimeConnectDirectory: vi.fn(async () => { throw new Error('IPC failed') }) }
+    const controller = createRuntimeEnvironmentController(bridge)
+    await controller.refresh()
+    expect(await controller.run('connecting', 'runtimeConnectDirectory')).toBe(false)
+    expect(controller.error.value).toBe(status.error)
+    expect(controller.status.value.version).toBe('1.0.0')
+    controller.dispose()
+  })
+
+  it('cancelling a native file picker leaves the runtime unchanged without an error', async () => {
+    const status = { state: 'not_installed', installed: false }
+    const bridge = { runtimeStatus: vi.fn(async () => status), runtimeImportArchive: vi.fn(async () => ({ cancelled: true })) }
+    const controller = createRuntimeEnvironmentController(bridge)
+    await controller.refresh()
+    expect(await controller.run('importing', 'runtimeImportArchive')).toBe(false)
+    expect(controller.error.value).toBe('')
+    expect(controller.status.value).toEqual(status)
+    controller.dispose()
   })
 })

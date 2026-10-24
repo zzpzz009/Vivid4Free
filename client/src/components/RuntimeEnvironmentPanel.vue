@@ -1,97 +1,57 @@
 <template>
-  <section v-if="open" ref="surface" class="runtime-backdrop" role="presentation" @click.self="$emit('close')">
+  <section v-if="open" ref="surface" class="runtime-backdrop" role="presentation" @click.self="closePanel()">
     <article class="runtime-panel" role="dialog" aria-modal="true" aria-labelledby="runtime-title">
       <header class="panel-header">
-        <div>
-          <p class="eyebrow">VIVID DESKTOP</p>
-          <h1 id="runtime-title">运行环境</h1>
-        </div>
-        <button class="icon-button" type="button" aria-label="关闭运行环境面板" data-runtime-close @click="$emit('close')">×</button>
+        <h1 id="runtime-title">运行环境</h1>
+        <button class="icon-button" type="button" aria-label="关闭运行环境面板" data-runtime-close @click="closePanel()">×</button>
       </header>
-
       <div class="panel-body">
-        <div class="runtime-intro">
-          <span class="runtime-mark" aria-hidden="true">V</span>
-          <div>
-            <h2>CF 独立运行包</h2>
-            <p>运行包单独下载和更新；客户端与图库会保留。</p>
-          </div>
-          <span class="state-pill" :class="`state-${status?.state || (bridgeUnavailable ? 'error' : 'checking')}`">
-            {{ stateLabel }}
-          </span>
+        <div class="version-row">
+          <div><span class="version-label">客户端</span><strong>{{ status?.clientVersion || '—' }}</strong><button class="version-action" type="button" aria-label="更新客户端" :title="status?.clientUpdateConfigured ? '更新客户端' : '客户端更新入口待配置'" :disabled="locked || !status?.clientUpdateConfigured" @click="updateClient">更新</button></div>
+          <div><span class="version-label">引擎</span><strong>{{ status?.version || '未安装' }}</strong><button class="version-action" type="button" aria-label="检查引擎新版" :disabled="locked" @click="checkRuntime">{{ busyAction === 'checking' ? '检查中…' : '检查更新' }}</button></div>
         </div>
+        <p class="compatibility-line">此客户端支持引擎 {{ supportedVersions }}</p>
 
-        <div v-if="bridgeUnavailable" class="notice notice-warning" role="status">
-          此功能需要桌面客户端中的运行包管理接口。图库仍可使用。
+        <div v-if="status?.compatibilityMessage" class="notice notice-warning" role="alert">
+          <strong>{{ status.runtimeCompatible === false ? '必须更新引擎' : '请先更新客户端' }}</strong>
+          <span>{{ status.runtimeCompatible === false ? `请更新至 引擎 ${supportedVersions}，否则不保证兼容性和出图可靠性。` : `新版 引擎 需要客户端 ${status.compatibleClientVersions?.join('、') || '指定版本'}。` }}</span>
         </div>
-        <div v-else-if="!status && !error" class="notice" role="status">正在读取运行包状态…</div>
-        <div v-else-if="status && !status.installed" class="notice notice-warning" role="status">
-          <strong>{{ availabilityMessage }}</strong>
-          <span>本地渲染和放大暂不可用；安装运行包后即可使用，图库不受影响。</span>
-        </div>
+        <p v-else-if="status?.updateAvailable" class="update-line" role="status">引擎 {{ status.availableVersion }} 可更新</p>
+        <p v-else-if="!status?.downloadConfigured" class="quiet-message" role="status">正式下载链接待配置，已有 ZIP 可直接导入。</p>
+        <p v-if="bridgeUnavailable" class="quiet-message" role="status">请在桌面客户端安装运行包。</p>
 
-        <dl class="runtime-details">
-          <div><dt>已安装版本</dt><dd>{{ status?.version || '未安装' }}</dd></div>
-          <div><dt>可用版本</dt><dd>{{ status?.availableVersion || (status?.available ? '检查中' : '暂无') }}</dd></div>
-          <div class="directory-row">
-            <dt>安装目录</dt>
-            <dd>{{ status?.storageDir || '尚未选择' }}</dd>
-            <button type="button" class="text-button" :disabled="isBusy || isTransitioning || bridgeUnavailable" @click="chooseDirectory">选择</button>
-          </div>
-        </dl>
-
-        <div class="download-block">
-          <div class="download-labels">
-            <span>{{ progressLabel }}</span>
-            <span>{{ byteLabel }}</span>
-          </div>
-          <div v-if="uiStore.skin === 'animal-island'" role="progressbar" :aria-label="progressLabel" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">
-            <IslandProgress :percent="progress" variant="forest-grove" size="small" :show-info="false" aria-hidden="true" />
-          </div>
-          <div v-else class="progress-track" role="progressbar" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">
-            <div class="progress-fill" :style="{ width: `${progress}%` }" />
+        <div class="download-sources">
+          <div v-for="source in sources" :key="source.provider">
+            <button type="button" class="button button-secondary" :aria-label="`打开${source.label}`" :title="source.provider === 'baidu' ? '暂未开放' : source.configured ? '打开夸克网盘下载页' : '下载链接待配置'" :disabled="locked || !source.configured" @click="openDownload(source.provider)">{{ source.label }}{{ source.provider === 'baidu' ? '（暂未开放）' : ' ↗' }}</button>
+            <span v-if="source.configured && source.extractionCode">提取码：{{ source.extractionCode }}</span>
           </div>
         </div>
+        <button type="button" class="button import-button" :disabled="locked || status?.availableCompatible === false" @click="importArchive">{{ busyAction === 'importing' ? '正在校验 / 安装…' : '导入 ZIP 并安装' }}</button>
+        <p class="helper-text">用网盘官方客户端下载后导入，无需解压。</p>
+        <p v-if="status?.available" class="helper-text">{{ packageHint }}</p>
 
-        <div v-if="userStatusMessage" class="status-message" role="status">{{ userStatusMessage }}</div>
-        <div v-if="error" class="notice notice-error" role="alert">
-          <strong>{{ error }}</strong>
-          <span>检查网络和安装目录后可以重试。</span>
+        <div v-if="showProgress" class="download-block">
+          <div class="download-labels"><span>{{ progressLabel }}</span><span>{{ progress }}%</span></div>
+          <div v-if="uiStore.skin === 'animal-island'" role="progressbar" :aria-label="progressLabel" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100"><IslandProgress :percent="progress" variant="forest-grove" size="small" :show-info="false" aria-hidden="true" /></div>
+          <div v-else class="progress-track" role="progressbar" :aria-label="progressLabel" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill" :style="{ width: `${progress}%` }" /></div>
         </div>
+        <p v-if="actionMessage" class="action-message" role="status">{{ actionMessage }}</p>
+        <div v-if="error" class="notice notice-error" role="alert">{{ error }}</div>
 
-        <div class="actions">
-          <button type="button" class="button button-secondary" :disabled="isBusy || isTransitioning || bridgeUnavailable" @click="checkRuntime">
-            {{ busyAction === 'checking' ? '正在检查…' : '检查运行包' }}
-          </button>
-          <button
-            type="button"
-            class="button button-primary"
-            :disabled="isBusy || isTransitioning || bridgeUnavailable || !status?.available"
-            @click="installRuntime"
-          >
-            {{ installLabel }}
-          </button>
-          <button
-            v-if="status?.state === 'downloading'"
-            type="button"
-            class="button button-secondary"
-            :disabled="pausePending || !canPause || bridgeUnavailable"
-            @click="pauseRuntime"
-          >暂停下载</button>
-          <button
-            v-if="status?.installed"
-            type="button"
-            class="button button-secondary"
-            :disabled="isBusy || isTransitioning || bridgeUnavailable"
-            @click="startEngine"
-          >{{ busyAction === 'starting' ? '正在启动…' : '启动 / 重试引擎' }}</button>
-        </div>
-
-        <footer class="panel-footer">
-          <span>VividAI 统一账号</span>
-          <span>本地渲染与放大不扣额度</span>
-          <span>创意工坊尚未开放</span>
-        </footer>
+        <details class="advanced-options">
+          <summary>高级选项</summary>
+          <dl class="runtime-details">
+            <div class="directory-row"><dt>引擎安装位置</dt><dd>{{ status?.storageDir || '导入时选择' }}</dd><button type="button" class="text-button" :disabled="locked" @click="chooseDirectory">选择</button></div>
+            <div v-if="status?.activePath"><dt>当前运行目录</dt><dd>{{ status.activePath }}</dd></div>
+          </dl>
+          <p v-if="status?.compatibilityNote" class="quiet-message">{{ status.compatibilityNote }}</p>
+          <p v-if="status?.available" class="quiet-message">引擎 {{ status.availableVersion }} 支持客户端 {{ status.compatibleClientVersions?.join('、') || '待确认' }}。导入后核对 ZIP、逐文件校验，成功后切换；失败保留旧环境。</p>
+          <p v-else class="quiet-message">未获取发布信息时，仅校验 ZIP 内部清单与文件。</p>
+          <div class="secondary-actions">
+            <button type="button" class="text-button" :disabled="locked" @click="connectDirectory">接入已有环境</button>
+            <button v-if="status?.installed" type="button" class="text-button" :disabled="locked || status?.runtimeCompatible === false" @click="startEngine">启动 / 重试引擎</button>
+          </div>
+        </details>
       </div>
     </article>
   </section>
@@ -99,9 +59,6 @@
 
 <script setup>
 import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
-import Button from '@/ui/Button.vue'
-import Panel from '@/ui/Panel.vue'
-import IconButton from '@/ui/IconButton.vue'
 import { Progress as IslandProgress } from 'animal-island-vue'
 import { useUIStore } from '@/stores/useUIStore.js'
 import { useRuntimeEnvironment } from '@/composables/useRuntimeEnvironment.js'
@@ -118,101 +75,65 @@ watch(() => props.open, async open => { if (open) { opener = document.activeElem
 onMounted(() => { document.addEventListener('keydown', onEscape); document.addEventListener('pointerdown', onOutside, true) })
 onBeforeUnmount(() => { document.removeEventListener('keydown', onEscape); document.removeEventListener('pointerdown', onOutside, true) })
 const runtime = useRuntimeEnvironment(typeof window === 'undefined' ? null : window.vividDesktop)
-const { status, busyAction, pausePending, error, bridgeUnavailable } = runtime
+const { status, busyAction, error, actionMessage, bridgeUnavailable } = runtime
 const isBusy = computed(() => Boolean(busyAction.value))
 const isTransitioning = computed(() => ['checking', 'downloading', 'verifying', 'installing', 'starting'].includes(status.value?.state))
-const canPause = computed(() => busyAction.value === 'installing' && status.value?.state === 'downloading')
-const userStatusMessage = computed(() => {
-  if (!status.value?.message) return ''
-  if (status.value.state === 'error') return status.value.message.includes('运行包下载地址尚未配置') ? status.value.message : '运行包操作失败，请检查安装目录后重试。'
-  return status.value.message
+const locked = computed(() => isBusy.value || isTransitioning.value || bridgeUnavailable.value)
+const supportedVersions = computed(() => status.value?.supportedRuntimeVersions?.join('、') || '待确认')
+const packageHint = computed(() => {
+  const current = status.value
+  const size = bytes => bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.ceil(bytes / 1e6)} MB`
+  return current?.recommendedPackage === 'incremental'
+    ? `建议下载 ${current.incrementalBaseVersion} → ${current.availableVersion} 增量包（${size(current.incrementalPackageBytes)}）；也可使用全量包。`
+    : `请下载全量包${current?.fullPackageBytes ? `（${size(current.fullPackageBytes)}）` : ''}，适合首次安装或跨版本升级。`
 })
-const progress = computed(() => {
-  const value = Number(status.value?.progress)
-  if (Number.isFinite(value)) return Math.min(100, Math.max(0, Math.round(value)))
-  const downloaded = Number(status.value?.downloadedBytes || 0)
-  const total = Number(status.value?.totalBytes || 0)
-  return total > 0 ? Math.min(100, Math.round(downloaded / total * 100)) : 0
-})
-const byteLabel = computed(() => `${formatBytes(status.value?.downloadedBytes)} / ${formatBytes(status.value?.totalBytes)}`)
-const progressLabel = computed(() => {
-  const state = status.value?.state
-  if (state === 'verifying') return '正在校验运行包'
-  if (state === 'installing') return '正在安装运行包'
-  if (state === 'starting') return '正在启动引擎'
-  if (state === 'ready') return '引擎已就绪'
-  if (state === 'paused') return '下载已暂停'
-  if (state === 'installed') return '运行包已安装'
-  return '下载进度'
-})
-const availabilityMessage = computed(() => {
-  if (status.value?.available) return '运行包尚未安装'
-  if (status.value?.message?.includes('运行包下载地址尚未配置')) return '运行包下载地址尚未配置'
-  return status.value?.message || '运行包暂不可用，请稍后检查。'
-})
-const installLabel = computed(() => {
-  if (busyAction.value === 'installing') return '正在安装…'
-  if (status.value?.state === 'paused') return '继续下载 / 安装'
-  if (status.value?.installed && status.value?.available) return '下载并更新'
-  return status.value?.downloadedBytes > 0 ? '继续下载 / 安装' : '下载并安装'
-})
-const stateLabels = {
-  not_installed: '未安装', checking: '检查中', downloading: '下载中', paused: '已暂停',
-  verifying: '校验中', installing: '安装中', installed: '已安装', starting: '启动中',
-  ready: '已就绪', error: '出错了'
-}
-const stateLabel = computed(() => stateLabels[status.value?.state] || (bridgeUnavailable.value ? '不可用' : '读取状态'))
+const sources = computed(() => ['quark', 'baidu'].map(provider => {
+  const source = status.value?.downloadSources?.find(item => item.provider === provider)
+  return { provider, label: provider === 'quark' ? '夸克网盘' : '百度网盘', ...source, configured: provider === 'quark' && Boolean(source) && source.enabled !== false }
+}))
+const showProgress = computed(() => ['downloading', 'verifying', 'installing', 'starting'].includes(status.value?.state))
+const progress = computed(() => Math.min(100, Math.max(0, Math.round(Number(status.value?.progress) || 0))))
+const progressLabel = computed(() => ({ downloading: '正在下载', verifying: '正在校验', installing: '正在安装', starting: '正在启动' }[status.value?.state] || '正在处理'))
 
-function formatBytes(value) {
-  const bytes = Number(value)
-  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
-  if (bytes < 1024) return `${bytes} B`
-  const units = ['KB', 'MB', 'GB', 'TB']
-  let size = bytes / 1024
-  let index = 0
-  while (size >= 1024 && index < units.length - 1) { size /= 1024; index += 1 }
-  return `${size.toFixed(size >= 10 ? 0 : 1)} ${units[index]}`
-}
-
-async function refresh() {
-  await runtime.refresh()
+async function refresh() { await runtime.refresh(); emit('status', status.value) }
+async function operate(action, method, ...args) {
+  const result = await runtime.run(action, method, ...args)
   emit('status', status.value)
+  if (status.value?.compatibilityMessage) {
+    await nextTick()
+    const panel = surface.value?.querySelector('.runtime-panel')
+    if (panel) panel.scrollTop = 0
+  }
+  return result
 }
-
-async function operate(action, method) {
-  await runtime.run(action, method)
-  emit('status', status.value)
-}
-
 function checkRuntime() { return operate('checking', 'runtimeCheck') }
-function installRuntime() { return operate('installing', 'runtimeInstall') }
-async function pauseRuntime() {
-  await runtime.pause()
-  emit('status', status.value)
-}
+function openDownload(provider) { return operate(`opening-${provider}`, 'runtimeOpenDownload', provider) }
+function updateClient() { return operate('opening-client-update', 'clientOpenUpdate') }
 function chooseDirectory() { return operate('choosing-directory', 'chooseRuntimeDirectory') }
+async function importArchive() {
+  if (!status.value?.storageDir) {
+    await chooseDirectory()
+    if (!status.value?.storageDir) return
+  }
+  return operate('importing', 'runtimeImportArchive')
+}
+function connectDirectory() { return operate('connecting', 'runtimeConnectDirectory') }
 function startEngine() { return operate('starting', 'startEngine') }
-
-watch(() => props.open, (open) => {
-  if (open) {
-    runtime.startPolling()
-    void refresh()
-  } else runtime.stopPolling()
-}, { immediate: true })
-
-onMounted(async () => {
-  await refresh()
-  if (status.value && !status.value.installed) emit('status', status.value)
-})
+watch(() => props.open, open => { if (open) { runtime.startPolling(); void refresh() } else runtime.stopPolling() }, { immediate: true })
+onMounted(async () => { await refresh(); if (status.value?.downloadConfigured) await checkRuntime() })
 </script>
 
 <style scoped>
 .runtime-backdrop{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;padding:24px;background:#100e14aa;backdrop-filter:blur(5px)}
-.runtime-panel{width:min(620px,100%);max-height:min(760px,calc(100vh - 48px));overflow:auto;border:1px solid #48434f;border-radius:18px;background:#211f27;color:#f5f1f8;box-shadow:0 24px 80px #0008}
-.panel-header{display:flex;align-items:center;justify-content:space-between;padding:22px 26px 18px;border-bottom:1px solid #393640}.eyebrow{margin:0 0 5px;color:#aaa4b0;font-size:10px;letter-spacing:.16em}.panel-header h1{margin:0;font-size:22px;font-weight:650}.icon-button{width:34px;height:34px;border:1px solid #514c59;border-radius:50%;background:transparent;color:#ddd7e2;font-size:23px;line-height:1;cursor:pointer}
-.panel-body{padding:22px 26px 18px}.runtime-intro{display:flex;align-items:center;gap:14px;margin-bottom:20px}.runtime-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(145deg,#9c7dff,#6f54d8);font-size:22px;font-weight:750}.runtime-intro h2{margin:0 0 5px;font-size:15px}.runtime-intro p{margin:0;color:#aaa5b1;font-size:12px}.state-pill{margin-left:auto;padding:6px 10px;border:1px solid #4c4853;border-radius:99px;color:#c8c2cd;font-size:11px;white-space:nowrap}.state-ready,.state-installed{border-color:#387954;color:#84e3a7}.state-error{border-color:#8d4e4e;color:#ffaaa5}.state-downloading,.state-verifying,.state-installing,.state-starting,.state-checking{border-color:#7762ba;color:#c7b8ff}.state-paused{color:#f0ce85}
-.notice{display:flex;flex-direction:column;gap:5px;margin:0 0 16px;padding:12px 14px;border:1px solid #4a4651;border-radius:10px;color:#c7c1cd;font-size:12px;line-height:1.55}.notice strong{font-size:13px;color:#f0edf2}.notice-warning{border-color:#655338;background:#4a3b251c}.notice-warning strong{color:#f3d18b}.notice-error{border-color:#744747;background:#4a25251c}.notice-error strong{color:#ffaaa5}
-.runtime-details{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:0 0 22px}.runtime-details>div{min-width:0}.runtime-details dt{margin-bottom:5px;color:#a9a4b0;font-size:11px}.runtime-details dd{margin:0;color:#eeeaf1;font-size:13px;overflow-wrap:anywhere}.directory-row{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px;padding-top:12px;border-top:1px solid #393640}.directory-row dt{grid-column:1/-1}.directory-row dd{font-size:12px;color:#c9c4ce}.text-button{padding:5px 10px;border:1px solid #56515d;border-radius:7px;background:#2e2b34;color:#ded9e3;font-size:11px;cursor:pointer}.text-button:disabled,.button:disabled{opacity:.45;cursor:not-allowed}
-.download-block{margin-bottom:14px}.download-labels{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;color:#c8c3cd;font-size:11px}.progress-track{height:8px;overflow:hidden;border-radius:99px;background:#403c47}.progress-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#9c7dff,#70d3a1);transition:width .25s ease}.status-message{margin:0 0 14px;color:#aaa5b1;font-size:12px;line-height:1.5}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}.button{min-height:37px;padding:0 13px;border:1px solid #514c59;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}.button-primary{border-color:#8a72ee;background:#8068e2;color:#fff}.button-primary:hover:not(:disabled){background:#907af0}.button-secondary{background:#302d36;color:#e7e2eb}.button-secondary:hover:not(:disabled){background:#3a3741}.panel-footer{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:22px;padding-top:14px;border-top:1px solid #393640;color:#96919d;font-size:10px}
-@media(max-width:560px){.runtime-backdrop{padding:12px}.runtime-panel{max-height:calc(100vh - 24px);border-radius:14px}.panel-header,.panel-body{padding-left:18px;padding-right:18px}.runtime-intro{align-items:flex-start}.state-pill{font-size:10px}.runtime-details{gap:12px}}
+.runtime-panel{width:min(460px,100%);max-height:calc(100vh - 48px);overflow:auto;border:1px solid var(--schemes-outline-variant,#48434f);border-radius:18px;background:var(--schemes-surface-container,#211f27);color:var(--schemes-on-surface,#f5f1f8);box-shadow:0 24px 80px #0005}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0}.panel-header h1{margin:0;font-size:20px;font-weight:650}.icon-button{width:30px;height:30px;border:0;border-radius:50%;background:transparent;color:inherit;font-size:24px;cursor:pointer}
+.panel-body{padding:20px 24px 22px}.version-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}.version-row>div{display:flex;align-items:center;gap:8px;min-width:0}.version-label{font-size:12px;color:var(--schemes-on-surface-variant,#aaa5b1)}.version-row strong{font-size:17px;font-weight:600}.version-action{padding:2px 0;margin-left:auto;border:0;background:transparent;color:var(--schemes-primary,#b7a5ff);font-size:11px;cursor:pointer}.version-action:disabled{opacity:.4;cursor:not-allowed}
+.compatibility-line{margin:10px 0 22px;color:var(--schemes-on-surface-variant,#aaa5b1);font-size:12px}.update-line{margin:0 0 12px;font-size:13px;font-weight:600;color:var(--schemes-primary,#b7a5ff)}.quiet-message{margin:0 0 12px;color:var(--schemes-on-surface-variant,#aaa5b1);font-size:11px;line-height:1.6}
+.download-sources{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}.download-sources>div{display:flex;flex-direction:column;gap:5px;min-width:0}.download-sources span{font-size:10px;color:var(--schemes-on-surface-variant,#aaa5b1);text-align:center}.button{min-height:39px;padding:0 12px;border:1px solid var(--schemes-outline-variant,#514c59);border-radius:9px;font-size:12px;font-weight:600;cursor:pointer}.button-secondary{background:transparent;color:inherit}.button:disabled,.text-button:disabled{opacity:.4;cursor:not-allowed}.runtime-panel .import-button{width:100%;background:var(--schemes-primary,#8068e2);border-color:transparent;color:var(--schemes-on-primary,#fff);box-shadow:none}.helper-text{margin:10px 0 0;text-align:center;color:var(--schemes-on-surface-variant,#aaa5b1);font-size:11px}
+.notice{display:flex;flex-direction:column;gap:4px;padding:11px 12px;margin:0 0 16px;border:1px solid var(--schemes-outline-variant,#655338);border-radius:9px;font-size:12px;line-height:1.6}.notice-warning{background:#e6bc6610;border-color:#c59c58}.notice-error{color:var(--schemes-error,#ffaaa5);border-color:currentColor}.action-message{font-size:12px;line-height:1.6;margin:14px 0 0}
+.download-block{margin-top:18px}.download-labels{display:flex;justify-content:space-between;font-size:11px;margin-bottom:7px}.progress-track{height:7px;border-radius:10px;background:#8883;overflow:hidden}.progress-fill{height:100%;background:var(--schemes-primary,#9c7dff)}
+.runtime-panel .import-button:hover:enabled{filter:brightness(.94);box-shadow:none}.runtime-panel .import-button:active:enabled{transform:translateY(1px);box-shadow:none}.runtime-panel .import-button:focus-visible{outline:2px solid var(--schemes-primary,#8068e2);outline-offset:3px}
+.advanced-options{margin-top:22px;padding-top:14px;border-top:1px solid var(--schemes-outline-variant,#393640);font-size:11px}.advanced-options summary{cursor:pointer;color:var(--schemes-on-surface-variant,#aaa5b1)}.runtime-details{margin:16px 0}.runtime-details dt{color:var(--schemes-on-surface-variant,#aaa5b1);margin-bottom:5px;font-size:11px}.runtime-details dd{margin:0;font-size:11px;overflow-wrap:anywhere}.runtime-details>div{margin-bottom:12px}.directory-row{display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:center}.directory-row dt{grid-column:1/-1}.text-button{border:1px solid var(--schemes-outline-variant,#514c59);padding:5px 9px;border-radius:6px;background:transparent;color:inherit;font-size:11px;cursor:pointer}.secondary-actions{display:flex;gap:8px;flex-wrap:wrap}
+.advanced-options{font-size:13px;line-height:1.7}.advanced-options summary{font-size:14px}.advanced-options :is(.runtime-details dt,.runtime-details dd,.quiet-message,.text-button){font-size:13px;line-height:1.7}
+@media(max-width:560px){.runtime-backdrop{padding:12px}.runtime-panel{max-height:calc(100vh - 24px)}.panel-header{padding:18px 18px 0}.panel-body{padding:18px}.version-row{gap:16px}}
 </style>

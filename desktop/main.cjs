@@ -5,8 +5,10 @@ const crypto = require('node:crypto');
 const { spawn } = require('node:child_process');
 const net = require('node:net');
 const { startServer } = require('./server.cjs');
+const { openWorkflows } = require('./workflow-store.cjs');
 const { RuntimeManager } = require('./runtime-manager.cjs');
 const { createAccountService } = require('./account-service.cjs');
+const clientPolicy = require('./client-runtime-policy.json');
 
 let window, server, root, manager, ownedEngineRoot = null, engineReady = false, engineStartPromise = null, engineStartRoot = null, closing = false;
 function listenPort(variable, fallback) {
@@ -17,11 +19,11 @@ function listenPort(variable, fallback) {
 }
 function runtimeRoot() {
   const development = !app.isPackaged && process.env.VIVID_RUNTIME_DEV_PATH;
-  return development ? path.resolve(development) : manager?.getRuntimeRoot();
+  return development ? path.resolve(development) : manager?.status().runtimeCompatible === false ? null : manager?.getRuntimeRoot();
 }
 function samePath(left, right) { return path.relative(path.resolve(left), path.resolve(right)) === ''; }
 function engine(action, engineRoot = runtimeRoot()) {
-  if (!engineRoot) return Promise.reject(new Error('尚未安装CF运行包'));
+  if (!engineRoot) return Promise.reject(new Error('尚未安装引擎运行包'));
   let info;
   try {
     const rootStat = fs.lstatSync(engineRoot);
@@ -63,21 +65,36 @@ function startEngine(options = {}) {
   return engineStartPromise;
 }
 async function startEngineOnce({ background = false, runtimePath } = {}) {
+  if (manager.status().runtimeCompatible === false) {
+    engineReady = false;
+    const error = manager.status().compatibilityMessage;
+    manager._set({ state: 'installed', message: error, error });
+    return { ready: false, error };
+  }
   const engineRoot = runtimePath || runtimeRoot();
   if (!engineRoot) {
     engineReady = false;
     manager.refreshInstalled();
-    return { ready: false, message: 'CF运行包尚未安装' };
+    return { ready: false, message: '引擎运行包尚未安装' };
   }
   manager._set({ state: 'starting', message: '正在启动本地引擎', error: null });
   try {
     try { await engine('status', engineRoot); }
     catch { await engine('start', engineRoot); ownedEngineRoot = engineRoot; }
     engineReady = true;
+    const capabilities = await server.service.capabilities();
+    if (!capabilities.capabilities.render.ready || !capabilities.capabilities.upscale.ready) {
+      const missing = [...capabilities.capabilities.render.missing, ...capabilities.capabilities.upscale.missing];
+      throw new Error(`运行包与当前客户端工作流不兼容，请使用更新的官方 引擎 包。缺少：${[...new Set(missing)].slice(0, 8).join('、') || '引擎能力'}`);
+    }
     manager._set({ state: 'ready', message: '本地引擎已就绪', error: null });
     return { ready: true, message: '本地引擎已就绪' };
   } catch (error) {
     engineReady = false;
+    if (ownedEngineRoot && samePath(ownedEngineRoot, engineRoot)) {
+      try { await engine('stop', engineRoot); ownedEngineRoot = null; }
+      catch (stopError) { throw new Error(`${error.message}；未能停止本次启动的引擎：${stopError.message}`); }
+    }
     manager._set({ state: manager.status().installed ? 'installed' : 'error', message: '运行包已安装，但引擎启动失败', error: error.message });
     if (!background) throw error;
     return { ready: false, message: '运行包已安装，但引擎启动失败', error: error.message };
@@ -112,6 +129,7 @@ async function beforeRuntimeActivate({ previousRoot }) {
   };
 }
 
+if (process.platform === 'win32') app.setAppUserModelId('cn.vividai.desktop');
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => { window?.show(); window?.focus(); });
@@ -119,18 +137,34 @@ else {
     root = app.getPath('userData');
     fs.mkdirSync(root, { recursive: true });
     manager = new RuntimeManager({ userData: root, feedPath: path.join(__dirname, 'runtime-feed.json'),
+      fetchImpl: (url, options) => electronNet.fetch(url, options),
+      clientVersion: app.getVersion(), supportedRuntimeVersions: clientPolicy.supportedRuntimeVersions, compatibilityNote: clientPolicy.note,
       forbiddenRoots: [path.dirname(app.getPath('exe'))], beforeActivate: beforeRuntimeActivate,
       afterActivate: ({ runtimeRoot: installedRoot }) => startEngine({ runtimePath: installedRoot, background: false }) });
     const token = crypto.randomBytes(32).toString('hex');
     const tokenPath = path.join(root, 'agent-control.json');
-    const workflowDir = path.join(__dirname, 'workflows');
-    const devWorkflowDir = path.resolve(__dirname, '../workflows');
-    const selectedWorkflowDir = !app.isPackaged && !fs.existsSync(workflowDir) ? devWorkflowDir : workflowDir;
-    server = await startServer({ root, uiDir: path.join(__dirname, 'ui'), workflowDir: selectedWorkflowDir,
+    const workflows = openWorkflows();
+    server = await startServer({ root, uiDir: path.join(__dirname, 'ui'), workflows,
       runtimeRoot, runtimeStatus: () => ({ ...manager.status(), engineReady }), agentToken: token,
-      port: listenPort('VIVID_TEST_UI_PORT', 17860), agentPort: listenPort('VIVID_TEST_AGENT_PORT', 17861) });
+      port: listenPort('VIVID_TEST_UI_PORT', 17860), agentPort: listenPort('VIVID_TEST_AGENT_PORT', 17861),
+      clientControl: {
+        status: () => ({ version: app.getVersion(), window: { available: Boolean(window && !window.isDestroyed()),
+          visible: Boolean(window && !window.isDestroyed() && window.isVisible()) },
+          workflowSha256: workflows.sha256('render'),
+          operations: ['status', 'screenshot', 'show-task', 'shutdown'] }),
+        screenshot: async () => {
+          if (!window || window.isDestroyed()) throw Object.assign(new Error('客户端窗口不可用'), { status: 503 });
+          return (await window.webContents.capturePage()).toPNG();
+        },
+        showTask: task => {
+          if (!window || window.isDestroyed()) throw Object.assign(new Error('客户端窗口不可用'), { status: 503 });
+          window.webContents.send('agent:show-task', task); window.show();
+        },
+        shutdown: () => app.quit()
+      } });
     fs.writeFileSync(tokenPath, JSON.stringify({ endpoint: `${server.agentOrigin}/v1`, token, protocolVersion: '1.0' }, null, 2));
     window = new BrowserWindow({ width: 1500, height: 960, minWidth: 640, minHeight: 720, title: 'VividAI 本地渲染', frame: false, thickFrame: true, autoHideMenuBar: true,
+      icon: path.join(__dirname, 'assets', 'app-icon.ico'),
       backgroundColor: '#0F0D13', webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
     const sender = event => {
       const frame = event.senderFrame;
@@ -186,18 +220,48 @@ else {
     });
     ipcMain.handle('agent:info', event => { sender(event); return { endpoint: `${server.agentOrigin}/v1`, tokenFile: tokenPath, version: '1.0' }; });
     ipcMain.handle('output:open', event => { sender(event); return shell.openPath(path.join(runtimeRoot() || root, 'output')); });
-    ipcMain.handle('runtime:status', event => { sender(event); return { ...manager.status(), engineReady }; });
+    ipcMain.handle('runtime:status', event => { sender(event); return { ...manager.status(), engineReady, clientUpdateConfigured: Boolean(clientPolicy.clientDownloadUrl) }; });
+    ipcMain.handle('client:open-update', async event => {
+      sender(event);
+      try {
+        if (!clientPolicy.clientDownloadUrl) throw new Error('客户端更新入口尚未配置');
+        const url = new URL(clientPolicy.clientDownloadUrl);
+        if (url.protocol !== 'https:' || url.username || url.password) throw new Error('客户端更新入口必须使用 HTTPS');
+        await shell.openExternal(url.href);
+        return { opened: true, message: '客户端更新页面已打开，安装新版客户端后请按兼容提示更新 引擎 ZIP' };
+      } catch (error) { return { opened: false, message: error.message || '客户端更新入口暂时无法打开' }; }
+    });
     ipcMain.handle('runtime:check', async event => { sender(event); return manager.check(); });
+    ipcMain.handle('runtime:open-download', async (event, provider) => {
+      sender(event);
+      try {
+        const source = manager.downloadSource(provider);
+        await shell.openExternal(source.url);
+        return { opened: true, message: `已打开${source.label}，请用官方客户端下载 ZIP，完成后返回客户端导入` };
+      } catch (error) { return { opened: false, message: error.message || '网盘链接暂时无法打开，请重试' }; }
+    });
     ipcMain.handle('runtime:install', async event => {
       sender(event);
       const runtime = await manager.install();
       return { runtime, engine: { ready: engineReady, error: runtime.error || null } };
     });
     ipcMain.handle('runtime:pause', event => { sender(event); return manager.pause(); });
+    ipcMain.handle('runtime:import-archive', async event => {
+      sender(event);
+      const result = await dialog.showOpenDialog(window, { title: '导入通过网盘下载的官方 引擎 ZIP（无需解压）', properties: ['openFile'], filters: [{ name: '引擎 运行包', extensions: ['zip'] }] });
+      if (result.canceled) return { cancelled: true };
+      return manager.importArchive(result.filePaths[0]);
+    });
+    ipcMain.handle('runtime:connect-directory', async event => {
+      sender(event);
+      const result = await dialog.showOpenDialog(window, { title: '选择含 runtime.json 的官方 引擎 版本目录', properties: ['openDirectory'] });
+      if (result.canceled) return { cancelled: true };
+      return manager.connectDirectory(result.filePaths[0]);
+    });
     ipcMain.handle('runtime:choose-directory', async event => {
       sender(event);
       for (;;) {
-        const result = await dialog.showOpenDialog(window, { title: '选择CF运行包存储目录', properties: ['openDirectory', 'createDirectory'] });
+        const result = await dialog.showOpenDialog(window, { title: '选择引擎运行包存储目录', properties: ['openDirectory', 'createDirectory'] });
         if (result.canceled) return { cancelled: true, status: manager.status() };
         try { return { cancelled: false, status: manager.setStorageDirectory(result.filePaths[0]) }; }
         catch (error) { await dialog.showMessageBox(window, { type: 'warning', title: '请选择独立存储位置', message: error.message }); }

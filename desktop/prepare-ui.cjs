@@ -4,8 +4,7 @@ const crypto = require('node:crypto');
 
 const source = path.resolve(__dirname, '../client/dist');
 const destination = path.join(__dirname, 'ui');
-const workflowSource = path.resolve(__dirname, '../workflows');
-const workflowDestination = path.join(__dirname, 'workflows');
+const { privateSource, packWorkflows } = require('../tools/build-workflows.cjs');
 const archiveRoot = path.join(__dirname, 'tests/.tmp');
 
 function tree(directory) {
@@ -54,7 +53,7 @@ function refresh(sourceDir, destinationDir, label, select) {
 
 if (!fs.existsSync(path.join(source, 'index.html'))) throw new Error(`前端尚未构建：缺少 ${path.join(source, 'index.html')}`);
 refresh(source, destination, 'ui-archive', files => files);
-const lightweight = tree(workflowSource).filter(file => ['preview.json', 'upscale.json'].includes(file));
-if (!lightweight.includes('preview.json')) throw new Error('轻量工作流缺少 preview.json');
-refresh(workflowSource, workflowDestination, 'workflow-archive', () => lightweight);
-process.stdout.write(`Desktop UI and ${lightweight.length} lightweight workflow file(s) refreshed safely.\n`);
+packWorkflows(privateSource(), path.join(__dirname, 'engine-data.dat'));
+// Retain any pre-migration copies only in the ignored rollback directory.
+archiveExisting(path.join(__dirname, 'workflows'), 'legacy-workflows');
+process.stdout.write('Desktop UI and sealed engine resource refreshed safely.\n');

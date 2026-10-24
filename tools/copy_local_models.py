@@ -11,6 +11,7 @@ ASSETS = {
     'text_encoders/qwen_3_8b_fp8mixed.safetensors': SOURCE / 'text_encoders/qwen_3_8b_fp8mixed.safetensors',
     'vae/flux2-vae.safetensors': SOURCE / 'vae/flux2-vae.safetensors',
     'loras/klein/vivid_klein_v1.4_000076275.safetensors': ROOT.parent / 'vivid模型/vivid_klein_v1.4_000076275.safetensors',
+    'loras/klein/Klein 一致性增强.safetensors': ROOT.parent / 'VividCFRuntime/versions/vivid-comfy-0.3.0/models/loras/klein/Klein 一致性增强.safetensors',
     'LLM/Qwen3.5-9B-Q4_K_M.gguf': Path(r'G:\Agent\llama\models\Qwen3.5-9B-Q4_K_M.gguf'),
     'LLM/mmproj-BF16.gguf': SOURCE / 'LLM/facade-facts-qwen35/mmproj-BF16.gguf',
     'upscale_models/2xNomosUni_span_multijpg_ldl.pth': SOURCE / 'upscale_models/2xNomosUni_span_multijpg_ldl.pth',

@@ -21,11 +21,12 @@ function file(res, base, name) {
   fs.createReadStream(resolved).pipe(res);
 }
 
-async function startServer({ root, uiDir, workflowDir, runtimeRoot, runtimeStatus, port = 17860, agentPort = 17861, agentToken, comfyUrl }) {
+async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus, port = 17860, agentPort = 17861, agentToken, comfyUrl, clientControl }) {
   if (!agentToken || agentToken.length < 32) throw new Error('Agent token must be at least 32 characters');
-  const service = createTaskService(root, comfyUrl, { workflowDir, runtimeRoot, runtimeStatus });
+  const service = createTaskService(root, comfyUrl, { workflows, runtimeRoot, runtimeStatus });
   let actualPort = port, actualAgentPort = agentPort;
   let origin = `http://127.0.0.1:${actualPort}`;
+  let clientShuttingDown = false, activeSubmissions = 0;
   const galleryDir = path.join(root, 'data/gallery');
   fs.mkdirSync(galleryDir, { recursive: true });
   const galleryPath = path.join(root, 'data/gallery.json');
@@ -53,7 +54,12 @@ async function startServer({ root, uiDir, workflowDir, runtimeRoot, runtimeStatu
     const endpoint = url.pathname.slice(prefix.length);
     if (req.method === 'GET' && endpoint === '/capabilities') return json(res, 200, await service.capabilities());
     if (req.method === 'GET' && endpoint === '/tasks') return json(res, 200, { tasks: await service.list() });
-    if (req.method === 'POST' && endpoint === '/tasks') return json(res, 202, { task: await service.submit(await body(req)) });
+    if (req.method === 'POST' && endpoint === '/tasks') {
+      if (clientShuttingDown) throw fail(409, '客户端正在退出');
+      activeSubmissions++;
+      try { return json(res, 202, { task: await service.submit(await body(req)) }); }
+      finally { activeSubmissions--; }
+    }
     const match = endpoint.match(/^\/tasks\/([a-zA-Z0-9-]+)(\/cancel)?$/);
     if (match && req.method === 'GET' && !match[2]) return json(res, 200, { task: await service.get(match[1]) });
     if (match && req.method === 'POST' && match[2]) return json(res, 200, { task: await service.cancel(match[1]) });
@@ -117,7 +123,43 @@ async function startServer({ root, uiDir, workflowDir, runtimeRoot, runtimeStatu
       if (req.headers.host !== `127.0.0.1:${actualAgentPort}` || req.headers.origin) throw fail(403, 'Agent 接口不接受网页来源');
       const expected = Buffer.from(`Bearer ${agentToken}`); const actual = Buffer.from(req.headers.authorization || '');
       if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) throw fail(401, '需要 Agent 控制令牌');
-      await taskRoutes(req, res, new URL(req.url, `http://127.0.0.1:${actualAgentPort}`), '/v1');
+      const url = new URL(req.url, `http://127.0.0.1:${actualAgentPort}`);
+      if (url.pathname.startsWith('/v1/client')) {
+        if (!clientControl) throw fail(503, '当前宿主未提供客户端控制');
+        if (req.method === 'GET' && url.pathname === '/v1/client') return json(res, 200, await clientControl.status());
+        if (req.method === 'GET' && url.pathname === '/v1/client/screenshot') {
+          const png = await clientControl.screenshot();
+          res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' }); return res.end(png);
+        }
+        if (req.method === 'POST' && url.pathname === '/v1/client/show-task') {
+          const input = await body(req);
+          if (!input || Object.keys(input).length !== 1 || typeof input.taskId !== 'string' || !/^[a-zA-Z0-9-]+$/.test(input.taskId)) throw fail(400, '只接受 taskId');
+          const task = await service.get(input.taskId);
+          if (task.status !== 'completed' || !task.resultImages?.length) throw fail(409, '任务尚未完成出图');
+          await clientControl.showTask(task); return json(res, 200, { selectedTaskId: task.id });
+        }
+        if (req.method === 'POST' && url.pathname === '/v1/client/shutdown') {
+          const input = await body(req);
+          if (!input || Array.isArray(input) || Object.keys(input).length) throw fail(400, '退出不接受参数');
+          if (clientShuttingDown || activeSubmissions) throw fail(409, '仍有任务提交或退出正在处理');
+          clientShuttingDown = true;
+          try {
+            const tasks = await service.list();
+            if (tasks.some(task => !['completed', 'failed', 'cancelled'].includes(task.status))) throw fail(409, '客户端仍有未结束任务');
+            let queue;
+            try {
+              const response = await fetch(`${service.comfyUrl}/queue`, { signal: AbortSignal.timeout(10000) });
+              if (!response.ok) throw new Error(); queue = await response.json();
+              if (!Array.isArray(queue.queue_running) || !Array.isArray(queue.queue_pending)) throw new Error();
+            } catch { throw fail(503, '无法确认引擎队列，未退出客户端'); }
+            if (queue.queue_running.length || queue.queue_pending.length) throw fail(409, '引擎队列仍有任务');
+            res.once('finish', () => setImmediate(() => clientControl.shutdown()));
+            return json(res, 202, { exiting: true });
+          } catch (error) { clientShuttingDown = false; throw error; }
+        }
+        throw fail(404, '客户端控制接口不存在');
+      }
+      await taskRoutes(req, res, url, '/v1');
     } catch (error) { json(res, error.status || 500, { error: error.status ? error.message : '本地服务暂时不可用' }); }
   });
   const listen = (server, number) => new Promise((resolve, reject) => {

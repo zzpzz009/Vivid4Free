@@ -112,7 +112,7 @@ def install(runtime, library, was_library):
     provenance_path = runtime / 'preview-fidelity.json'
     provenance_path.write_text(json.dumps(provenance, ensure_ascii=False, indent=2), encoding='utf8')
     entries = {row['path']: row for row in manifest['files']}
-    changed = [runtime / 'workflows/preview.json', runtime / 'workflows/preview-source.json', provenance_path]
+    changed = [provenance_path]
     for pack in additions + ['vivid_nodes', 'vivid_upscale_adapters']:
         changed.extend(path for path in (nodes / pack).rglob('*')
                        if path.is_file() and '__pycache__' not in path.parts

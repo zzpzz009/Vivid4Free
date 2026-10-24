@@ -1,11 +1,12 @@
 # 原工作流模型来源与核验
 
-当前执行决定：缺失权重联网查找原模型；禁止换用其他架构、基础版、精度或加速 LoRA 来顶替。用户另行明确的两项变化：预览 LoRA 使用 vivid_klein_v1.4_000076275；智谱反推替换为 FacadeStudio 参考的本地视觉模型。
+当前执行决定：缺失权重联网查找原模型；禁止换用其他架构、基础版、精度或加速 LoRA 来顶替。2026-10-22 用户选定预览正式采用 vivid_klein_v1.4_000076275（强度 1，仅首步）与 Klein 一致性增强（强度 0.7，全程）；智谱反推仍使用 FacadeStudio 参考的本地视觉模型。
 
 |模型|来源|当前状态|
 |---|---|---|
 |Klein 9B distilled 完整权重|[BFL 官方](https://huggingface.co/black-forest-labs/FLUX.2-klein-9B)，[同名完整权重公开镜像](https://huggingface.co/Nachert/Klein/blob/main/flux-2-klein-9b.safetensors)|已完整下载18157185168字节，SHA256 0975d6b77b5f510b99547d6724a208e36527df654e8f6134f59ece3f9f30da58；与官方revision 92196c8e11f7b6cf2b7493e037d8c5345c559216 的公开LFS元数据精确一致|
-|realistic LoRA|[dx8152 发布](https://huggingface.co/dx8152/Flux2-Klein-9B-Enhanced-Details/blob/main/realistic.safetensors)|已下载，SHA256 9788dcbeffb79a7823427aaadd47ea122077e3cd9f142de012b58649d50b897e|
+|Klein 一致性增强 LoRA|用户提供的 `Klein 一致性增强.safetensors`，独立副本保存在 CF 的 `models/loras/klein/`|331379600 字节，SHA256 90a874e6931d7e38c680e7e22c04052eecf6c718753270735706d7630fdf9d65；与 realistic 权重不同，无已配置的正式下载地址|
+|realistic LoRA（历史对照）|[dx8152 发布](https://huggingface.co/dx8152/Flux2-Klein-9B-Enhanced-Details/blob/main/realistic.safetensors)|已下载，SHA256 9788dcbeffb79a7823427aaadd47ea122077e3cd9f142de012b58649d50b897e；当前预览不再依赖|
 |SeedVR2 7B Q8_K_M|[GGUF 发布](https://huggingface.co/hk6668/SeedVR2-GGUF/blob/main/seedvr2_ema_7b-Q8_K_M.gguf)|已完整下载8835170080字节，SHA256 669788655e8f15f306284f267a444e9766c8a421869577b16a961e43029c737b，与固定发布版本655f2411e8e9d0a1f2ba3e209e5784fcdf860838元数据一致|
 |SeedVR2 VAE fp16|[numz 发布](https://huggingface.co/numz/SeedVR2_comfyUI/blob/8aceb16351dd998900da1ad01667dbd125376af0/ema_vae_fp16.safetensors)|已下载，SHA256 20678548f420d98d26f11442d3528f8b8c94e57ee046ef93dbb7633da8612ca1|
 |Flux Dev 四步 LoRA 原工作流同名版本|[原发布页](https://www.liblib.art/modelinfo/466cd07b9c9248369e236fd2b1a90414?versionUuid=968494ce6d9a470090299272d8a09281)，[明确引用该原版本的镜像](https://huggingface.co/victor42/Flux_Dev_4_step_lora)|已完整下载153268824字节，SHA256 c41f8106c9f02c94f89c0fbad50f143409b89d5007916e573cda39b78a3d8a37，固定镜像revision 0bfdabd11a74eaddd23ed7baef91313c32e163c3。镜像README明确绑定原Liblib模型和版本；尚无原作者独立二进制哈希可比对。未采用其他四步LoRA替代|

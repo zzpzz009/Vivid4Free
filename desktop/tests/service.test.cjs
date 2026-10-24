@@ -6,15 +6,15 @@ const os = require('node:os');
 const http = require('node:http');
 const { startServer } = require('../server.cjs');
 const { createTaskService } = require('../task-service.cjs');
+const { openWorkflows } = require('../workflow-store.cjs');
+const workflows = openWorkflows();
 
 const tempRoot = path.join(__dirname, '.tmp', 'service');
 const running = [];
 function freshRoot() {
   fs.mkdirSync(tempRoot, { recursive: true });
   const root = fs.mkdtempSync(path.join(tempRoot, 'desktop-'));
-  fs.mkdirSync(path.join(root, 'workflows'), { recursive: true });
-  for (const name of ['preview.json', 'upscale.json']) fs.copyFileSync(path.join(__dirname, '..', '..', 'workflows', name), path.join(root, 'workflows', name));
-  for (const relative of ['diffusion_models/flux-2-klein-9b.safetensors','text_encoders/qwen_3_8b_fp8mixed.safetensors','vae/flux2-vae.safetensors','loras/klein/vivid_klein_v1.4_000076275.safetensors','loras/klein/realistic.safetensors','LLM/Qwen3.5-9B-Q4_K_M.gguf','LLM/mmproj-BF16.gguf',
+  for (const relative of ['diffusion_models/flux-2-klein-9b.safetensors','text_encoders/qwen_3_8b_fp8mixed.safetensors','vae/flux2-vae.safetensors','loras/klein/vivid_klein_v1.4_000076275.safetensors','loras/klein/Klein 一致性增强.safetensors','LLM/Qwen3.5-9B-Q4_K_M.gguf','LLM/mmproj-BF16.gguf',
     'diffusion_models/flux.1-dev-SRPO-bf16.safetensors','text_encoders/SD3/clip_l.safetensors','text_encoders/SD3/t5xxl_fp16.safetensors','vae/ae.safetensors','loras/FLUX/Flux Dev模型4步出图lora_Flux Dev模型4步出图lora_Flux Dev 4-step.safetensors','upscale_models/2xNomosUni_span_multijpg_ldl.pth','SEEDVR2/seedvr2_ema_7b-Q8_K_M.gguf','SEEDVR2/ema_vae_fp16.safetensors']) {
     const file = path.join(root, 'runtime/models', relative); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, 'test');
   }
@@ -28,8 +28,8 @@ function fakeComfy({ promptDelay = 0, queue = { queue_running: [], queue_pending
     let data = ''; for await (const chunk of req) data += chunk;
     calls.push({ method: req.method, url: req.url, body: data ? JSON.parse(data) : null });
     const payload = req.url === '/system_stats' ? { system: {} }
-      : req.url === '/object_info' ? Object.fromEntries(['preview.json', 'upscale.json'].flatMap(name => {
-        const graph = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'workflows', name), 'utf8'));
+      : req.url === '/object_info' ? Object.fromEntries(['render', 'upscale'].flatMap(kind => {
+        const graph = workflows.load(kind);
         return [...new Set(Object.values(graph).map(node => node.class_type).filter(Boolean))].filter(type => type !== omitNode).map(type => [type, { input: { required: {} } }]);
       }).concat([['KSampler (Efficient)', { input: { required: { sampler_name: [samplerNames], scheduler: [schedulerNames] } } }]]))
       : req.url === '/prompt' ? await new Promise(resolve => setTimeout(() => resolve(promptResult), promptDelay))
@@ -68,6 +68,12 @@ test('render submits source strengths and original nodes, with explicit controls
   assert.equal(graph['1322'].inputs.value, 1);
   assert.equal(graph['1323'].inputs.value, 0.285403);
   assert.equal(graph['1318'].class_type, 'Power Lora Loader (rgthree)');
+  assert.equal(graph['1318'].inputs.lora_1.lora, 'klein\\vivid_klein_v1.4_000076275.safetensors');
+  assert.equal(graph['1318'].inputs.lora_1.strength, 1);
+  assert.equal(graph['1318'].inputs.lora_2.lora, 'klein\\Klein 一致性增强.safetensors');
+  assert.equal(graph['1318'].inputs.lora_2.strength, 0.7);
+  assert.deepEqual(graph['9101'].inputs.lora_2, graph['1318'].inputs.lora_2);
+  assert.equal(graph['9101'].inputs.lora_1, undefined);
   assert.equal(graph['622'].class_type, 'Image Save');
   assert.equal(graph['622'].inputs.extension, 'jpg');
   assert.deepEqual(graph['1330'].inputs.text_a, ['1329', 0]);
@@ -85,6 +91,58 @@ afterEach(async () => {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 });
 
+test('render requires the selected v1.4 and consistency weights without falling back to old LoRAs', async () => {
+  const root = freshRoot(); const comfy = fakeComfy();
+  const service = createTaskService(root, await comfy.start());
+  running.push({ close: service.close }, { close: () => new Promise(resolve => comfy.server.close(resolve)) });
+  for (const name of ['vivid_klein_v1.3_000035148.safetensors', 'realistic.safetensors']) {
+    fs.writeFileSync(path.join(root, 'runtime/models/loras/klein', name), 'old weight');
+  }
+  assert.equal((await service.capabilities()).capabilities.render.ready, true);
+  for (const name of ['vivid_klein_v1.4_000076275.safetensors', 'Klein 一致性增强.safetensors']) {
+    const relative = `loras/klein/${name}`;
+    const file = path.join(root, 'runtime/models', relative);
+    fs.renameSync(file, `${file}.held`);
+    const caps = await service.capabilities();
+    assert.equal(caps.capabilities.render.ready, false);
+    assert(caps.capabilities.render.missing.includes(relative));
+    await assert.rejects(service.submit({ kind: 'render', mainImage: 'main.png', referenceImage: 'ref.png' }), { status: 503 });
+    fs.renameSync(`${file}.held`, file);
+  }
+  assert.equal(comfy.calls.some(call => call.url === '/prompt'), false);
+});
+
+test('render progress spans both sampler stages and waits for the saved result', async () => {
+  const root = freshRoot(); let completed = false;
+  const comfy = fakeComfy({ queue: { queue_running: [], queue_pending: [['mine', 'mine']] },
+    history: () => completed ? { mine: { status: { completed: true, status_str: 'success' },
+      outputs: { '622': { images: [{ filename: 'render.jpg', subfolder: '', type: 'output' }] } } } } : {} });
+  const sockets = fakeWebSocketClass();
+  const service = createTaskService(root, await comfy.start(), { WebSocket: sockets.WebSocket });
+  running.push({ close: service.close }, { close: () => new Promise(resolve => comfy.server.close(resolve)) });
+  const task = await service.submit({ kind: 'render', mainImage: 'main.png', referenceImage: 'ref.png' });
+  const socket = sockets.instances[0];
+  const progress = (node, value, max) => socket.sendMessage({ type: 'progress', data: { prompt_id: 'mine', node, value, max } });
+  progress('760', 256, 256);
+  assert.equal((await service.get(task.id)).progress, 0);
+  progress('1294', 1, 1);
+  assert.equal((await service.get(task.id)).progress, 25);
+  progress('9106', 1, 3);
+  assert.equal((await service.get(task.id)).progress, 50);
+  progress('9106', 2, 3);
+  assert.equal((await service.get(task.id)).progress, 75);
+  progress('9106', 3, 3);
+  assert.equal((await service.get(task.id)).progress, 99);
+  progress('1294', 1, 1);
+  assert.equal((await service.get(task.id)).progress, 99);
+  completed = true;
+  const result = await service.get(task.id);
+  assert.equal(result.status, 'completed');
+  assert.equal(result.progress, 100);
+  progress('9106', 1, 3);
+  assert.equal((await service.get(task.id)).progress, 100);
+});
+
 test('Agent auth, origin rejection, unknown version, and strict task image validation', async () => {
   const root = freshRoot(); const comfy = fakeComfy(); const comfyUrl = await comfy.start(); running.push({ close: () => new Promise(resolve => comfy.server.close(resolve)) });
   const token = 'a'.repeat(64);
@@ -98,6 +156,50 @@ test('Agent auth, origin rejection, unknown version, and strict task image valid
   assert.equal(bad.status, 400);
   const rawGraph = await jsonFetch(`${server.agentOrigin}/v1/tasks`, { method: 'POST', headers: { ...auth, 'content-type': 'application/json' }, body: JSON.stringify({ kind: 'render', mainImage: 'main.png', referenceImage: 'ref.png', graph: {} }) });
   assert.equal(rawGraph.status, 400);
+});
+
+test('Agent client controls require auth, expose only fixed operations, and refuse shutdown with queued work', async () => {
+  const root = freshRoot(); const queue = { queue_running: [['other', 'other']], queue_pending: [] };
+  const comfy = fakeComfy({ queue, history: { mine: { status: { completed: true, status_str: 'success' },
+    outputs: { '622': { images: [{ filename: 'result.jpg', subfolder: '', type: 'output' }] } } } } });
+  running.push({ close: () => new Promise(resolve => comfy.server.close(resolve)) });
+  const actions = [], png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  const server = await startServer({ root, uiDir: root, port: 0, agentPort: 0, agentToken: 'c'.repeat(64), comfyUrl: await comfy.start(),
+    clientControl: { status: () => ({ version: '0.6.0' }), screenshot: () => png,
+      showTask: task => actions.push(task.id), shutdown: () => actions.push('shutdown') } }); running.push(server);
+  const base = `${server.agentOrigin}/v1/client`, auth = { authorization: `Bearer ${'c'.repeat(64)}` };
+  const post = input => ({ method: 'POST', headers: { ...auth, 'content-type': 'application/json' }, body: JSON.stringify(input) });
+  assert.equal((await jsonFetch(base)).status, 401);
+  assert.equal((await fetch(`${base}/screenshot`)).status, 401);
+  assert.equal((await fetch(`${base}/shutdown`, { method: 'POST' })).status, 401);
+  assert.equal((await jsonFetch(base, { headers: { ...auth, origin: 'http://evil.example' } })).status, 403);
+  assert.equal((await jsonFetch(base, { headers: auth })).body.version, '0.6.0');
+  const screenshot = await fetch(`${base}/screenshot`, { headers: auth });
+  assert.equal(screenshot.headers.get('content-type'), 'image/png');
+  assert.deepEqual(Buffer.from(await screenshot.arrayBuffer()), png);
+  assert.equal((await jsonFetch(`${base}/execute`, post({ code: 'not allowed' }))).status, 404);
+  assert.equal((await jsonFetch(`${base}/show-task`, post({ taskId: '../other' }))).status, 400);
+  const task = await server.service.submit({ kind: 'render', mainImage: 'main.png', referenceImage: 'ref.png' });
+  assert.equal((await jsonFetch(`${base}/show-task`, post({ taskId: task.id }))).body.selectedTaskId, task.id);
+  assert.deepEqual(actions, [task.id]);
+  assert.equal((await jsonFetch(`${base}/shutdown`, post({}))).status, 409);
+  assert.equal(actions.includes('shutdown'), false);
+  assert.equal((await jsonFetch(`${base}/shutdown`, post({ force: true }))).status, 400);
+  queue.queue_running = [];
+  assert.equal((await jsonFetch(`${base}/shutdown`, post({}))).status, 202);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(actions.includes('shutdown'), true);
+  assert.equal((await jsonFetch(`${server.agentOrigin}/v1/tasks`, post({ kind: 'render', mainImage: 'main.png', referenceImage: 'ref.png' }))).status, 409);
+});
+
+test('Agent shutdown refuses an unverifiable engine queue', async () => {
+  const root = freshRoot(); const comfy = fakeComfy({ queue: null }); let exited = false;
+  running.push({ close: () => new Promise(resolve => comfy.server.close(resolve)) });
+  const server = await startServer({ root, uiDir: root, port: 0, agentPort: 0, agentToken: 'd'.repeat(64), comfyUrl: await comfy.start(),
+    clientControl: { shutdown: () => { exited = true; } } }); running.push(server);
+  const result = await jsonFetch(`${server.agentOrigin}/v1/client/shutdown`, { method: 'POST',
+    headers: { authorization: `Bearer ${'d'.repeat(64)}`, 'content-type': 'application/json' }, body: '{}' });
+  assert.equal(result.status, 503); assert.equal(exited, false);
 });
 
 test('UI mutations require exact same-origin and fixed loopback Host', async () => {
@@ -208,7 +310,7 @@ test('upscale maps the real API graph controls, submits and cancels through the 
   const root = freshRoot(); const comfy = fakeComfy({ queue: { queue_running: [], queue_pending: [['mine', 'mine']] } });
   const comfyUrl = await comfy.start(); running.push({ close: () => new Promise(resolve => comfy.server.close(resolve)) });
   const service = createTaskService(root, comfyUrl); running.push({ close: service.close });
-  const original = JSON.parse(fs.readFileSync(path.join(root, 'workflows', 'upscale.json'), 'utf8'));
+  const original = workflows.load('upscale');
   const graph = service.build({ kind: 'upscale', mainImage: 'facade.png', seed: 123456789, size: 6000, denoise: 0.17 });
   assert.equal(graph['48'].inputs.image, 'facade.png');
   assert.equal(graph['127'].inputs.seed, 123456789);

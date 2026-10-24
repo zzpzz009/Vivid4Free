@@ -66,6 +66,8 @@ PodUI 样式、Element/运行时面板样式按实际加载页面和控件使用
 
 ### 1.6 字体、密度与图标
 
+Windows 应用图标独立于工作区操作图标，使用 `desktop/assets/app-icon.svg` 作为可编辑源。沿用海岛波带 Logo 的原曲线，以青绿圆角底、米白波带和金色日出形成高对比标识；小尺寸省略水纹、光线、文字和细高光，不改动现有顶栏、开屏或工作区图标。外侧保留透明边距。`app-icon.ico` 包含 16/20/24/32/40/48/64/128/256 像素帧，`app-icon.png` 为 256 像素预览。由 `tools/build-app-icon.cjs` 使用 sharp 从 SVG 生成，禁止手动分别改动各尺寸。EXE、安装/卸载程序和窗口统一使用此 ICO，Windows AppUserModelID 与安装配置保持一致。
+
 沿用 `client/tailwind.config.js` 中的 M3 字体和排印：正文 `Roboto-Regular`，标签/标题 `Roboto-Medium`，强调标签/标题 `Roboto-SemiBold`，均有 sans-serif 回退。不新增远程字体请求或替换平台回退字体。正文 14px、辅助文字 12px、小标签 11px、模块标题 16px；具体行高和字重继续取同名 M3 token，不对所有控件强设一个字号。
 
 顶栏按钮按 §1.2 使用 12px 文案和 7px 圆角；旧账号胶囊的 `rounded-corner-medium` 不再用于重设计后的顶栏。上传提示、种子字段和历史标题使用各自原 M3 class。工作区原 SVG 图标、24px 导航/历史图标、箭头方向和显示位置保持不变，不统一换成一套新图标。

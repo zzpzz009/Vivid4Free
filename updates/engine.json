@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "vivid-comfy",
+  "version": "0.3.2",
+  "protocolVersion": 1,
+  "platform": "win32-x64",
+  "entry": {
+    "python": "python/python.exe",
+    "launcher": "tools/start_comfy.py"
+  },
+  "compatibleClientVersions": [
+    "0.6.1"
+  ],
+  "archive": {
+    "url": null,
+    "bytes": 83726227760,
+    "sha256": "396c45ecaff09d968360bf11362e037bb09d51b418fb697feb7d1ee4ffd778b0",
+    "unpackedBytes": 87548206176
+  },
+  "requiredFiles": [
+    "python/python.exe",
+    "tools/start_comfy.py",
+    "comfyui/main.py",
+    "models/diffusion_models/flux-2-klein-9b.safetensors",
+    "models/text_encoders/qwen_3_8b_fp8mixed.safetensors",
+    "models/vae/flux2-vae.safetensors",
+    "models/loras/klein/vivid_klein_v1.4_000076275.safetensors",
+    "models/loras/klein/Klein 一致性增强.safetensors",
+    "models/LLM/Qwen3.5-9B-Q4_K_M.gguf",
+    "models/LLM/mmproj-BF16.gguf",
+    "models/upscale_models/2xNomosUni_span_multijpg_ldl.pth",
+    "models/vae/ae.safetensors",
+    "models/diffusion_models/flux.1-dev-SRPO-bf16.safetensors",
+    "models/text_encoders/SD3/clip_l.safetensors",
+    "models/text_encoders/SD3/t5xxl_fp16.safetensors",
+    "models/SEEDVR2/ema_vae_fp16.safetensors",
+    "models/SEEDVR2/seedvr2_ema_7b-Q8_K_M.gguf",
+    "models/loras/FLUX/Flux Dev模型4步出图lora_Flux Dev模型4步出图lora_Flux Dev 4-step.safetensors"
+  ],
+  "downloads": [
+    {
+      "provider": "quark",
+      "url": "https://pan.quark.cn/s/195bd3902d6e",
+      "extractionCode": "Mw2s"
+    }
+  ],
+  "incremental": {
+    "baseVersion": "0.3.1",
+    "baseManifestSha256": "7d87cc00fa615f37cd38377d60f5853eca1d6642cded1488a15ba36a2a1d7d5e",
+    "filename": "vivid-comfy-0.3.1-to-0.3.2-incremental-win32-x64.zip",
+    "archive": {
+      "url": null,
+      "bytes": 8994536,
+      "sha256": "c7567f6a8b6fda080b50cfc212ce45e9ba510056a88f7fb01bf7b4a8377132af",
+      "unpackedBytes": 8994318
+    }
+  }
+}

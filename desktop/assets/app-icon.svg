@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" role="img" aria-label="VividDesktop 海岛日出应用图标">
+  <defs>
+    <linearGradient id="sea" x1="90" y1="32" x2="418" y2="480" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#19c8b9"/>
+      <stop offset="1" stop-color="#079e99"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#sea)"/>
+  <g transform="translate(-4 64) scale(1.14)">
+    <circle cx="292" cy="92" r="26" fill="#ffcc00"/>
+    <path d="M103 115c27 63 39 127 83 127s62-127 105-127 48 63 69 127" stroke="#fffbe7" stroke-width="52" stroke-linecap="round"/>
+  </g>
+</svg>

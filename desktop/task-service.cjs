@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
+const { openWorkflows } = require('./workflow-store.cjs');
 
 const terminal = new Set(['completed', 'failed', 'cancelled']);
 const fail = (status, message) => Object.assign(new Error(message), { status });
@@ -42,7 +43,7 @@ function createTaskService(root, comfyUrl = 'http://127.0.0.1:18295', options = 
     if (typeof options.runtimeRoot === 'function') return options.runtimeRoot();
     return options.runtimeRoot || path.join(root, 'runtime');
   };
-  const workflowDir = options.workflowDir || path.join(root, 'workflows');
+  const workflows = options.workflows || openWorkflows(options.workflowBundle);
   const getRuntimeStatus = () => typeof options.runtimeStatus === 'function' ? options.runtimeStatus() : options.runtimeStatus || null;
   const save = () => {
     const temp = `${recordPath}.tmp`;
@@ -63,7 +64,7 @@ function createTaskService(root, comfyUrl = 'http://127.0.0.1:18295', options = 
   const modelRequirements = {
     render: ['diffusion_models/flux-2-klein-9b.safetensors', 'text_encoders/qwen_3_8b_fp8mixed.safetensors',
       'vae/flux2-vae.safetensors', 'loras/klein/vivid_klein_v1.4_000076275.safetensors',
-      'loras/klein/realistic.safetensors', 'LLM/Qwen3.5-9B-Q4_K_M.gguf', 'LLM/mmproj-BF16.gguf'],
+      'loras/klein/Klein 一致性增强.safetensors', 'LLM/Qwen3.5-9B-Q4_K_M.gguf', 'LLM/mmproj-BF16.gguf'],
     upscale: ['diffusion_models/flux.1-dev-SRPO-bf16.safetensors', 'text_encoders/SD3/clip_l.safetensors',
       'text_encoders/SD3/t5xxl_fp16.safetensors', 'vae/ae.safetensors',
       'loras/FLUX/Flux Dev模型4步出图lora_Flux Dev模型4步出图lora_Flux Dev 4-step.safetensors',
@@ -86,9 +87,9 @@ function createTaskService(root, comfyUrl = 'http://127.0.0.1:18295', options = 
     if (parts.some(part => !part || part === '.' || part === '..')) return null;
     return requiredModels.has(relative) ? relative : null;
   };
-  const nodeTypes = async (workflow) => {
+  const nodeTypes = async (kind) => {
     try {
-      const graph = JSON.parse(fs.readFileSync(path.join(workflowDir, workflow), 'utf8'));
+      const graph = workflows.load(kind);
       return [...new Set(Object.values(graph).map(node => node.class_type).filter(Boolean))];
     } catch { return null; }
   };
@@ -120,9 +121,8 @@ function createTaskService(root, comfyUrl = 'http://127.0.0.1:18295', options = 
     };
     const missing = Object.fromEntries(Object.entries(modelRequirements).map(([kind, names]) =>
       [kind, names.filter(name => !modelAvailable(name))]));
-    const workflows = { render: 'preview.json', upscale: 'upscale.json' };
-    const missingWorkflow = Object.fromEntries(Object.entries(workflows).map(([kind, name]) =>
-      [kind, !fs.existsSync(path.join(workflowDir, name))]));
+    const kinds = ['render', 'upscale'];
+    const missingWorkflow = Object.fromEntries(kinds.map(kind => [kind, !workflows.available(kind)]));
     let engine = false;
     const missingNodes = { render: [], upscale: [] };
     const runtime = getRuntimeStatus();
@@ -131,8 +131,8 @@ function createTaskService(root, comfyUrl = 'http://127.0.0.1:18295', options = 
         const [stats, info] = await Promise.all([comfy('/system_stats'), comfy('/object_info')]);
         engine = Boolean(stats.system);
         if (engine) ensureProgressSocket();
-        for (const [kind, workflow] of Object.entries(workflows)) {
-          const types = await nodeTypes(workflow);
+        for (const kind of kinds) {
+          const types = await nodeTypes(kind);
           missingNodes[kind] = types ? types.filter(type => !Object.hasOwn(info, type)) : ['工作流缺失或无效'];
         }
         const optionValues = value => Array.isArray(value) && Array.isArray(value[0]) ? value[0] : [];
@@ -145,15 +145,15 @@ function createTaskService(root, comfyUrl = 'http://127.0.0.1:18295', options = 
     const ready = kind => engine && !missingWorkflow[kind] && missing[kind].length === 0 && missingNodes[kind].length === 0;
     return { version: '1.0', engine, account: 'deferred', billing: 'local-free',
       runtime,
-      capabilities: { render: { ready: ready('render'), missing: [...missing.render, ...(missingWorkflow.render ? ['preview.json'] : []), ...missingNodes.render] },
-        upscale: { ready: ready('upscale'), missing: [...missing.upscale, ...(missingWorkflow.upscale ? ['upscale.json'] : []), ...missingNodes.upscale] },
+      capabilities: { render: { ready: ready('render'), missing: [...missing.render, ...(missingWorkflow.render ? ['客户端内置渲染资源'] : []), ...missingNodes.render] },
+        upscale: { ready: ready('upscale'), missing: [...missing.upscale, ...(missingWorkflow.upscale ? ['客户端内置放大资源'] : []), ...missingNodes.upscale] },
         gallery: { ready: true }, creativeWorkshop: { ready: false } } };
   };
   const build = (input) => {
     const p = validate(input);
-    const template = path.join(workflowDir, p.kind === 'render' ? 'preview.json' : 'upscale.json');
-    if (!fs.existsSync(template)) throw fail(503, '本地工作流文件缺失');
-    const graph = JSON.parse(fs.readFileSync(template, 'utf8'));
+    let graph;
+    try { graph = workflows.load(p.kind); }
+    catch { throw fail(503, '客户端内置资源缺失或损坏，请重新安装客户端'); }
     if (p.kind === 'render') {
       graph['536'].inputs.image = p.mainImage;
       graph['605'].inputs.image = p.referenceImage;
@@ -339,6 +339,16 @@ function createTaskService(root, comfyUrl = 'http://127.0.0.1:18295', options = 
         if (message.type !== 'progress') return;
         const task = jobs.find(job => job.promptId === message.data.prompt_id);
         if (task && message.data.max > 0) {
+          if (task.kind === 'render') {
+            if (terminal.has(task.status)) return;
+            const node = String(message.data.node);
+            if (!['1294', '9106'].includes(node)) return;
+            const fraction = Math.max(0, Math.min(1, message.data.value / message.data.max));
+            const combined = node === '1294' ? fraction * 25 : 25 + fraction * 75;
+            task.progress = Math.max(task.progress || 0, Math.min(99, Math.round(combined)));
+            task.stage = '渲染中';
+            return;
+          }
           task.progress = Math.round(message.data.value / message.data.max * 100);
           task.stage = '节点处理进度';
         }

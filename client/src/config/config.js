@@ -1,9 +1,3 @@
-import json1 from '@/json/1.json'//预览
-import json2 from '@/json/2.json'//生成
-import washV64SingleUpscale from '@/json/wash_v64_single_upscale.json'//洗图
-import vividKleinOutpaintApi from '@/json/vivid_klein_outpaint_api.json'
-import vividKleinInpaintApi from '@/json/vivid_klein_inpaint_ui_legacy.json'
-import vividKleinImageEditApi from '@/json/vivid_klein_image_edit_api.json'
 // src/config/config.js
 
 export default {
@@ -35,7 +29,6 @@ export default {
     ],
 
     yl:{//预览
-      jsonfile:json1,//导入json
       // input:{//输入的号码
       //   dcl:'536',//待处理
       //   ck:'605',//参考
@@ -61,7 +54,6 @@ export default {
       }
     },
     sc:{//洗图
-      jsonfile:washV64SingleUpscale,//导入json
       input:{//输入的号码
         dcl:'138',
         cc:'791',
@@ -72,7 +64,6 @@ export default {
       }
     },
     outpaint:{
-      jsonfile:vividKleinOutpaintApi,
       input:{
         dcl:'31',
         tsc:'22',
@@ -85,7 +76,6 @@ export default {
       }
     },
     inpaint:{
-      jsonfile:vividKleinInpaintApi,
       input:{
         dcl:'34',
         tsc:'39'
@@ -96,7 +86,6 @@ export default {
       }
     },
     imageEdit:{
-      jsonfile:vividKleinImageEditApi,
       input:{
         dcl:'28',
         tsc:'29'

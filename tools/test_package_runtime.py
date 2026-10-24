@@ -35,7 +35,7 @@ class PackageTests(unittest.TestCase):
         (self.root / 'workflows').mkdir()
         for kind in ('preview', 'upscale'):
             (self.root / f'workflows/{kind}.json').write_text('{}')
-        for name, value in [('ROOT', self.root), ('MODEL_FILES', ('exact.safetensors',)), ('NODE_PACKS', ('vivid_nodes',))]:
+        for name, value in [('ROOT', self.root), ('WORKFLOWS', self.root / 'workflows'), ('MODEL_FILES', ('exact.safetensors',)), ('NODE_PACKS', ('vivid_nodes',))]:
             context = patch.object(package, name, value)
             context.start()
             self.addCleanup(context.stop)
@@ -59,12 +59,14 @@ class PackageTests(unittest.TestCase):
         partial = self.source / 'models/original.gguf.part'
         partial.write_bytes(b'incomplete')
         archive = package.create(self.source, 'fixture-1', 'https://example.invalid/cf.zip', self.root / 'out',
-                                 node_packs=('vivid_nodes',), models=('exact.safetensors',))
+                                 node_packs=('vivid_nodes',), models=('exact.safetensors',), compatible_clients=['0.6.0', '0.6.1'])
         manifest = json.loads(Path(archive['manifest']).read_text())
+        self.assertEqual(manifest['compatibleClientVersions'], ['0.6.0', '0.6.1'])
         self.assertEqual(manifest['archive']['sha256'], package.sha256(Path(archive['archive'])))
         with zipfile.ZipFile(archive['archive']) as bundle:
             self.assertNotIn('models/original.gguf.part', bundle.namelist())
             internal = json.loads(bundle.read('runtime.json'))
+            self.assertEqual(internal['compatibleClientVersions'], manifest['compatibleClientVersions'])
             self.assertEqual(internal['customNodePacks'], ['vivid_nodes'])
             for item in internal['files']:
                 content = bundle.read(item['path'])
@@ -74,16 +76,67 @@ class PackageTests(unittest.TestCase):
             package.create(self.source, 'fixture-1', 'https://example.invalid/cf.zip', self.root / 'out',
                            node_packs=('vivid_nodes',), models=('exact.safetensors',))
 
-    def test_local_archive_contains_workflows_without_inventing_hosted_feed(self):
+    def test_local_archive_excludes_private_workflows_without_inventing_hosted_feed(self):
         result = package.create(self.source, 'local-fixture', None, self.root / 'local',
                                 node_packs=('vivid_nodes',), models=('exact.safetensors',))
         self.assertIsNone(result['manifest'])
         self.assertIsNone(result['url'])
         self.assertFalse(list((self.root / 'local').glob('*.json')))
         with zipfile.ZipFile(result['archive']) as bundle:
-            self.assertIn('workflows/preview.json', bundle.namelist())
-            self.assertIn('workflows/upscale.json', bundle.namelist())
+            self.assertFalse(any(name.startswith('workflows/') for name in bundle.namelist()))
             self.assertEqual(json.loads(bundle.read('runtime.json'))['id'], 'vivid-comfy')
+
+    def test_quark_release_emits_import_manifest_with_matching_archive_and_clients(self):
+        result = package.create(self.source, 'quark-fixture', None, self.root / 'quark',
+                                node_packs=('vivid_nodes',), models=('exact.safetensors',),
+                                compatible_clients=['0.6.0'], quark_share_url='https://pan.quark.cn/s/fixture',
+                                quark_extraction_code='q123')
+        manifest = json.loads(Path(result['manifest']).read_text(encoding='utf-8'))
+        self.assertIsNone(manifest['archive']['url'])
+        self.assertEqual(manifest['downloads'], [{'provider': 'quark', 'url': 'https://pan.quark.cn/s/fixture',
+                                                  'extractionCode': 'q123'}])
+        self.assertEqual(manifest['archive']['sha256'], package.sha256(Path(result['archive'])))
+        self.assertEqual(manifest['archive']['bytes'], Path(result['archive']).stat().st_size)
+        with zipfile.ZipFile(result['archive']) as bundle:
+            self.assertEqual(json.loads(bundle.read('runtime.json'))['compatibleClientVersions'],
+                             manifest['compatibleClientVersions'])
+
+    def test_quark_release_rejects_lookalike_hosts_and_missing_compatibility(self):
+        for url, code, clients in (
+                ('https://pan.quark.cn.evil.test/s/a', None, ['0.6.0']),
+                ('https://user:secret@pan.quark.cn/s/a', None, ['0.6.0']),
+                ('http://pan.quark.cn/s/a', None, ['0.6.0']),
+                ('https://pan.quark.cn/s/a', 'bad code', ['0.6.0']),
+                ('https://pan.quark.cn/s/a', None, None)):
+            with self.assertRaises(ValueError):
+                package.create(self.source, 'quark-fixture', None, self.root / 'invalid',
+                               compatible_clients=clients, quark_share_url=url, quark_extraction_code=code)
+
+    def test_pair_omits_unchanged_model_and_reconstructs_exact_target(self):
+        obsolete = self.source / 'comfyui/obsolete.py'
+        obsolete.write_bytes(b'old file')
+        old = package.create(self.source, '1.0.0', None, self.root / 'old',
+                             node_packs=('vivid_nodes',), models=('exact.safetensors',))
+        obsolete.unlink()
+        (self.source / 'comfyui/main.py').write_bytes(b'new code')
+        result = package.create(self.source, '1.1.0', None, self.root / 'new',
+                                node_packs=('vivid_nodes',), models=('exact.safetensors',),
+                                compatible_clients=['0.6.1'], quark_share_url='https://pan.quark.cn/s/fixture',
+                                base_archive=Path(old['archive']))
+        metadata = json.loads(Path(result['manifest']).read_text())['incremental']
+        delta_file = self.root / 'new' / metadata['filename']
+        self.assertEqual(metadata['archive']['sha256'], package.sha256(delta_file))
+        with zipfile.ZipFile(old['archive']) as before, zipfile.ZipFile(result['archive']) as after, zipfile.ZipFile(delta_file) as patch_zip:
+            delta = json.loads(patch_zip.read('delta.json'))
+            self.assertEqual(delta['files'], ['comfyui/main.py'])
+            self.assertEqual(delta['removed'], ['comfyui/obsolete.py'])
+            self.assertNotIn('models/exact.safetensors', patch_zip.namelist())
+            self.assertEqual(delta['baseManifestSha256'], hashlib.sha256(before.read('runtime.json')).hexdigest())
+            self.assertEqual(patch_zip.read('runtime.json'), after.read('runtime.json'))
+            for item in json.loads(after.read('runtime.json'))['files']:
+                src = patch_zip if item['path'] in delta['files'] else before
+                self.assertEqual(src.read(item['path']), after.read(item['path']))
+            self.assertFalse(any(name.startswith('workflows/') for name in after.namelist() + patch_zip.namelist()))
 
     def test_release_rejects_unsafe_version_url_and_source_output(self):
         for version, url, out in (

@@ -16,14 +16,19 @@
     "runtime-manager.cjs",
     "extract-runtime.ps1",
     "runtime-feed.json",
+    "client-runtime-policy.json",
     "package.json",
+    "assets/app-icon.ico",
     "ui/**/*",
-    "workflows/*.json"
+    "workflow-store.cjs",
+    "engine-data.dat"
   ],
   "asar": true,
+  "asarUnpack": ["extract-runtime.ps1"],
   "win": {
     "target": [{ "target": "nsis", "arch": ["x64"] }],
-    "signAndEditExecutable": false
+    "icon": "assets/app-icon.ico",
+    "signExecutable": false
   },
   "nsis": {
     "oneClick": false,
@@ -33,6 +38,8 @@
     "deleteAppDataOnUninstall": false,
     "include": "../tools/installer/preserve-runtime.nsh",
     "runAfterFinish": false,
+    "installerIcon": "assets/app-icon.ico",
+    "uninstallerIcon": "assets/app-icon.ico",
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true
   },

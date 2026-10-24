@@ -1,13 +1,14 @@
 <template>
   <header class="desktop-toolbar">
-    <div class="brand"><img v-if="uiStore.skin === 'animal-island'" class="island-brand-mark" :src="islandLogo" alt="Vivid4Free 海岛 Logo" /><strong>VividDesktop</strong><span>本地 AI 渲染</span></div>
+    <div class="brand"><img v-if="uiStore.skin === 'animal-island'" class="island-brand-mark" :src="islandLogo" alt="Vivid4Free 海岛 Logo" /><strong>VividDesktop</strong><span>本地 AI 渲染</span><span class="version-pair">客户端 {{ clientVersion || '—' }} · 引擎 {{ runtimeVersion || '未安装' }}</span></div>
     <div class="toolbar-actions">
       <button type="button" class="skin-entry" :aria-pressed="uiStore.skin === 'animal-island'" :title="`当前皮肤：${uiStore.skin === 'animal-island' ? '海岛' : '经典深色'}，点击切换`" aria-label="切换海岛皮肤" @click="uiStore.setSkin(uiStore.skin === 'animal-island' ? 'original' : 'animal-island')">
         <span class="skin-swatch" aria-hidden="true" /><span class="skin-label">{{ uiStore.skin === 'animal-island' ? '海岛皮肤' : '经典深色' }}</span>
       </button>
-      <button type="button" class="runtime-entry" :title="`运行环境：${engineLabel}`" :aria-label="`运行环境：${engineLabel}`" @click="$emit('runtime')">
+      <button type="button" class="runtime-entry" :title="`运行环境：${engineLabel}${!runtimeCompatible ? '，必须更新引擎' : runtimeUpdateAvailable ? '，引擎有新版' : ''}`" :aria-label="`运行环境：${engineLabel}${!runtimeCompatible ? '，必须更新引擎' : runtimeUpdateAvailable ? '，引擎有新版' : ''}`" @click="$emit('runtime')">
         <span class="engine-dot" :class="engineReady ? 'ready' : 'waiting'" aria-hidden="true" />
         <span>{{ engineReady ? '引擎已连接' : engineLabel === '运行包未安装' ? '安装运行包' : '引擎未就绪' }}</span>
+        <span v-if="!runtimeCompatible || runtimeUpdateAvailable" class="update-badge">{{ !runtimeCompatible ? '必须更新引擎' : '引擎有新版' }}</span>
       </button>
       <span class="toolbar-divider" aria-hidden="true" />
       <button type="button" class="account-entry" :title="accountLabel" :aria-expanded="accountOpen" aria-controls="desktop-account-panel" @click="$emit('account')">
@@ -32,6 +33,10 @@ const uiStore = useUIStore()
 
 const props = defineProps({
   engineReady: Boolean,
+  runtimeUpdateAvailable: Boolean,
+  runtimeCompatible: { type: Boolean, default: true },
+  clientVersion: { type: String, default: null },
+  runtimeVersion: { type: String, default: null },
   engineLabel: { type: String, required: true },
   accountLabel: { type: String, required: true },
   accountOpen: Boolean
@@ -51,6 +56,7 @@ onBeforeUnmount(() => unsubscribeWindow?.())
 </script>
 
 <style scoped>
+.update-badge{padding:3px 5px;border-radius:4px;background:#e6bc6622;color:#e6bc66;font-size:10px}
 .desktop-toolbar{height:52px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 18px;border-bottom:1px solid #393640;background:#201e25;-webkit-app-region:drag;user-select:none}
 .brand,.toolbar-actions{display:flex;align-items:center}.brand{gap:14px;white-space:nowrap}.brand span{font-size:12px;color:#aaa5b2}.toolbar-actions{gap:8px;min-width:0}
 .toolbar-actions{-webkit-app-region:no-drag}.toolbar-actions button{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;padding:0 10px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--schemes-on-surface-variant);font-size:12px;line-height:1;cursor:pointer;white-space:nowrap}

@@ -23,6 +23,11 @@ assert.ok(['local-preview', 'preview', 'stable'].includes(info.channel));
 assert.ok(Number.isInteger(info.runtime.protocolVersion) && info.runtime.protocolVersion > 0);
 assert.match(info.runtime.testedVersion, /^\d+\.\d+\.\d+$/);
 assert.equal(typeof info.runtime.automaticDownloadAvailable, 'boolean');
+const policy = read('desktop/client-runtime-policy.json');
+assert.equal(policy.schemaVersion, 1);
+assert.deepEqual(info.runtime.supportedRuntimeVersions, policy.supportedRuntimeVersions);
+assert.ok(policy.supportedRuntimeVersions.length && policy.supportedRuntimeVersions.every(value => /^\d+\.\d+\.\d+$/.test(value)), 'Declare exact supported CF versions');
+assert.ok(read('tools/installer/electron-builder.json').files.includes('client-runtime-policy.json'), 'Ship the compatibility policy');
 for (const value of Object.values(info.features)) assert.equal(typeof value, 'boolean');
 const gitRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: root, encoding: 'utf8' }).trim();
 assert.equal(path.resolve(gitRoot).toLowerCase(), root.toLowerCase(), 'Operate only in the independent project repository');
@@ -32,6 +37,7 @@ const staged = execFileSync('git', ['ls-files', '--stage'], { cwd: root, encodin
 assert.ok(!/^160000 /m.test(staged), 'Embedded repositories must be imported as complete source, not gitlinks');
 const forbidden = /(^|\/)(node_modules|\.runloop|\.archi-coo|\.local-baseline|release|runtime|runtime-dist|VividCFRuntime|VividCFPackages|data)(\/|$)|\.(safetensors|gguf|ckpt|pt|pth|onnx|exe|dll|pyd|bin|whl|tar|gz|zip|7z|rar|pem|key|p12|pfx|sqlite3?|part|tmp|log)$/i;
 for (const file of files) {
+  assert.ok(!/^(workflows\/|desktop\/workflows\/|client\/src\/json\/|desktop\/engine-data\.dat$|tools\/compile_(preview|upscale)\.py$|private-workflows\/)/i.test(file), `Private workflow artifact must not enter Git: ${file}`);
   assert.ok(!forbidden.test(file), `Forbidden release file: ${file}`);
   assert.ok(!/(^|\/)\.env(?:\..*)?$/.test(file) || /(^|\/)\.env\.example$/.test(file), `Credential config: ${file}`);
   assert.ok(fs.statSync(path.join(root, file)).size <= 20 * 1024 * 1024, `Review oversized source file: ${file}`);

@@ -15,11 +15,20 @@ contextBridge.exposeInMainWorld('vividDesktop', Object.freeze({
   accountRegister: () => ipcRenderer.invoke('account:register'),
   importGallery: () => ipcRenderer.invoke('gallery:import'),
   agentInfo: () => ipcRenderer.invoke('agent:info'),
+  onAgentTask: callback => {
+    const listener = (_event, task) => callback(task);
+    ipcRenderer.on('agent:show-task', listener);
+    return () => ipcRenderer.removeListener('agent:show-task', listener);
+  },
   openOutput: () => ipcRenderer.invoke('output:open'),
   runtimeStatus: () => ipcRenderer.invoke('runtime:status'),
   runtimeCheck: () => ipcRenderer.invoke('runtime:check'),
+  runtimeOpenDownload: provider => ipcRenderer.invoke('runtime:open-download', provider),
+  clientOpenUpdate: () => ipcRenderer.invoke('client:open-update'),
   runtimeInstall: () => ipcRenderer.invoke('runtime:install'),
   runtimePause: () => ipcRenderer.invoke('runtime:pause'),
+  runtimeImportArchive: () => ipcRenderer.invoke('runtime:import-archive'),
+  runtimeConnectDirectory: () => ipcRenderer.invoke('runtime:connect-directory'),
   chooseRuntimeDirectory: () => ipcRenderer.invoke('runtime:choose-directory'),
   startEngine: () => ipcRenderer.invoke('runtime:start-engine')
 }));

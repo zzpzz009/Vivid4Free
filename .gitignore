@@ -49,3 +49,10 @@ __pycache__/
 agent-control.json
 runtime-settings.json
 *.log
+
+# Private workflow inputs and generated client resources must never be committed.
+workflows/
+desktop/workflows/
+client/src/json/
+desktop/engine-data.dat
+private-workflows/

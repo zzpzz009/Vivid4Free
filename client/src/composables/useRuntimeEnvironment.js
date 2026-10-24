@@ -8,6 +8,7 @@ export function createRuntimeEnvironmentController(bridge) {
   const busyAction = ref('')
   const pausePending = ref(false)
   const error = ref('')
+  const actionMessage = ref('')
   const bridgeUnavailable = ref(false)
   let pollTimer = null
   let polling = false
@@ -36,9 +37,9 @@ export function createRuntimeEnvironmentController(bridge) {
     }
   }
 
-  async function run(action, methodName) {
+  async function run(action, methodName, ...args) {
     if (activeOperation) return false
-    if (TRANSITION_STATES.has(status.value?.state) && ['runtimeCheck', 'runtimeInstall', 'chooseRuntimeDirectory'].includes(methodName)) return false
+    if (TRANSITION_STATES.has(status.value?.state)) return false
     const method = bridge?.[methodName]
     if (!method) {
       bridgeUnavailable.value = true
@@ -48,18 +49,26 @@ export function createRuntimeEnvironmentController(bridge) {
     activeOperation = true
     busyAction.value = action
     error.value = ''
+    actionMessage.value = ''
     try {
-      const result = await method.call(bridge)
+      const result = await method.call(bridge, ...args)
+      if (result?.cancelled) return false
+      if (typeof result?.opened === 'boolean') {
+        await refresh()
+        if (result.opened) actionMessage.value = result.message || '网盘链接已打开，下载 ZIP 后返回导入。'
+        else error.value = result.message || '网盘链接暂时无法打开，请重试。'
+        return result.opened
+      }
       if (result && typeof result === 'object' && 'state' in result) status.value = result
       await refresh()
-      if (status.value?.state === 'error') error.value = status.value.message || '运行包操作失败，请重试。'
-      return status.value?.state !== 'error'
+      if (status.value?.error || status.value?.state === 'error') error.value = status.value.error || status.value.message || '运行包操作失败，请重试。'
+      return !status.value?.error && status.value?.state !== 'error'
     } catch {
       await refresh()
       if (status.value?.state === 'paused') {
         error.value = ''
       } else {
-        error.value = '运行包操作失败，请检查安装目录后重试。'
+        error.value = status.value?.error || '运行包操作失败，请检查安装目录后重试。'
       }
       return false
     } finally {
@@ -105,7 +114,7 @@ export function createRuntimeEnvironmentController(bridge) {
     stopPolling()
   }
 
-  return { status, busyAction, pausePending, error, bridgeUnavailable, refresh, run, pause, startPolling, stopPolling, dispose }
+  return { status, busyAction, pausePending, error, actionMessage, bridgeUnavailable, refresh, run, pause, startPolling, stopPolling, dispose }
 }
 
 export function useRuntimeEnvironment(bridge) {

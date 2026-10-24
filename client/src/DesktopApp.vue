@@ -1,7 +1,7 @@
 <template>
   <div class="desktop-shell podui-theme" :style="{ '--desktop-utility-top': `${utilityTop}px` }">
     <DesktopToolbar
-      :engine-ready="engineReady" :engine-label="engineLabel" :account-label="accountLabel" :account-open="accountPanelOpen"
+      :engine-ready="engineReady" :engine-label="engineLabel" :account-label="accountLabel" :account-open="accountPanelOpen" :runtime-update-available="Boolean(runtimeCapability?.updateAvailable)" :runtime-compatible="runtimeCapability?.runtimeCompatible !== false" :client-version="runtimeCapability?.clientVersion" :runtime-version="runtimeCapability?.version"
       @runtime="runtimePanelOpen = true" @account="accountPanelOpen = !accountPanelOpen"
     />
 
@@ -84,13 +84,14 @@ const agentEndpoint = ref('')
 const didAutoOpenRuntime = ref(false)
 const runtimeCapability = computed(() => runtimeSnapshot.value || capabilities.value?.runtime || capabilities.value?.capabilities?.runtime)
 const engineReady = computed(() => {
+  if (runtimeCapability.value?.runtimeCompatible === false) return false
   if (runtimeCapability.value?.installed === false) return false
   if (['downloading', 'verifying', 'installing', 'starting'].includes(runtimeCapability.value?.state)) return false
   return Boolean(capabilities.value?.capabilities?.render?.ready) || runtimeCapability.value?.state === 'ready'
 })
 const engineLabel = computed(() => runtimeCapability.value?.installed === false ? '运行包未安装' : engineReady.value ? '引擎已连接' : '引擎依赖未齐')
 const accountLabel = computed(() => ({ signed_in: `账号：${authStore.user?.displayName || authStore.user?.nickname || authStore.user?.username || '已登录'}`, checking: '账号：检查中', signed_out: '账号：未登录', unavailable: '账号：待验证' }[authStore.accountStatus] || '账号：待验证'))
-let capabilitiesTimer
+let capabilitiesTimer, stopAgentTask
 function toggleUtility(kind) {
   const wasOpen = kind === 'account' ? accountPanelOpen.value : kind === 'runtime' ? runtimePanelOpen.value : agentPanelOpen.value
   accountPanelOpen.value = kind === 'account' && !wasOpen
@@ -155,6 +156,12 @@ async function refreshCapabilities() {
 }
 
 onMounted(async () => {
+  stopAgentTask = window.vividDesktop?.onAgentTask?.(task => {
+    activeTab.value = 'workspace'
+    uiStore.setSelectedHistoryId(task.id)
+    uiStore.setSelectedResult({ jobId: task.id, url: task.resultImages[0] })
+    uiStore.setComparisonSliderPosition(0)
+  })
   utilityObserver = new ResizeObserver(positionUtilities)
   document.querySelectorAll('.desktop-toolbar, .workspace-header').forEach(element => utilityObserver.observe(element))
   positionUtilities()
@@ -166,6 +173,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  stopAgentTask?.()
   clearTimeout(noticeTimer)
   utilityObserver?.disconnect()
   window.removeEventListener('resize', onResize)

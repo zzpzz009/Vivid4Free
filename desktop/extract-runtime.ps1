@@ -2,9 +2,11 @@ param(
   [Parameter(Mandatory=$true)][string]$Archive,
   [Parameter(Mandatory=$true)][long]$MaxUnpackedBytes,
   [string]$Destination,
-  [switch]$ValidateOnly
+  [switch]$ValidateOnly,
+  [switch]$Inspect
 )
 $ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [System.IO.Compression.ZipFile]::OpenRead($Archive)
@@ -20,8 +22,8 @@ try {
     $isDirectory = $name.EndsWith('/')
     $clean = if ($isDirectory) { $name.Substring(0, $name.Length - 1) } else { $name }
     $parts = $clean.Split([char]'/')
-    $unsafePart = @($parts | Where-Object { $_ -eq '' -or $_ -eq '.' -or $_ -eq '..' })
-    if ([string]::IsNullOrEmpty($clean) -or $unsafePart.Count -gt 0) {
+    $unsafePart = @($parts | Where-Object { $_ -eq '' -or $_ -eq '.' -or $_ -eq '..' -or $_ -match '[. ]$|[<>"|?*]|^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)' })
+    if ([string]::IsNullOrEmpty($clean) -or $unsafePart.Count -gt 0 -or $name.Length -gt 32767 -or $parts.Length -gt 256) {
       throw "ZIP contains an unsafe path: $name"
     }
     $mode = ([int]$entry.ExternalAttributes -shr 16) -band 0xF000
@@ -42,7 +44,23 @@ try {
       if ($seen.ContainsKey($parent) -and $seen[$parent] -eq 'file') { throw 'ZIP contains a parent/child overwrite conflict' }
     }
   }
-  if (-not $ValidateOnly) {
+  if ($Inspect) {
+    $manifest = $zip.GetEntry('runtime.json')
+    if ($null -eq $manifest -or $manifest.Length -gt 64MB) { throw 'ZIP requires a runtime.json smaller than 64MiB' }
+    $reader = New-Object System.IO.StreamReader($manifest.Open(), [System.Text.Encoding]::UTF8)
+    try { $info = $reader.ReadToEnd() | ConvertFrom-Json }
+    finally { $reader.Dispose() }
+    $deltaInfo = $null
+    $deltaEntry = $zip.GetEntry('delta.json')
+    if ($null -ne $deltaEntry) {
+      if ($deltaEntry.Length -gt 64MB) { throw 'delta.json exceeds 64MiB' }
+      $deltaReader = New-Object System.IO.StreamReader($deltaEntry.Open(), [System.Text.Encoding]::UTF8)
+      try { $deltaInfo = $deltaReader.ReadToEnd() | ConvertFrom-Json }
+      finally { $deltaReader.Dispose() }
+    }
+    @{ info = $info; delta = $deltaInfo; unpackedBytes = $total } | ConvertTo-Json -Depth 20 -Compress
+  }
+  elseif (-not $ValidateOnly) {
     if ([string]::IsNullOrEmpty($Destination)) { throw 'Extraction destination is required' }
     if ((Get-ChildItem -LiteralPath $Destination -Force | Measure-Object).Count -ne 0) { throw 'Extraction destination must be empty' }
     $root = [System.IO.Path]::GetFullPath($Destination).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
