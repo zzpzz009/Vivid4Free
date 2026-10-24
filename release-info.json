@@ -16,9 +16,10 @@
     "automaticDownloadAvailable": false,
     "downloadMethod": "cloud-client-then-import-zip",
     "supportedRuntimeVersions": [
-      "0.3.0"
+      "0.3.0",
+      "0.3.2"
     ],
-    "compatibilityNote": "客户端 0.6.2 本机预览使用已修正的引擎 0.3.0。已发布引擎 0.3.2 目前仅声明兼容客户端 0.6.1，暂不可在此版本导入。",
+    "compatibilityNote": "支持引擎 0.3.0、0.3.2。安装后会检查当前预览和放大所需组件，未通过则保留旧环境。",
     "requiredLocalRevision": "preview-fidelity-v1"
   },
   "features": {

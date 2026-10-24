@@ -414,13 +414,14 @@ result = package.create(source, '1.1.0', None, root / 'release', node_packs=('fi
   assert.equal(fs.existsSync(result.archive), true);
 });
 
-test('front-end upgrade reports required CF update and incompatible imports cannot stop or replace the active engine', async () => {
+test('unknown engine combinations stay unverified and cannot stop or replace the active engine', async () => {
   fs.mkdirSync(tempRoot, { recursive: true }); const old = path.join(tempRoot, 'old'); writeActivatedRuntime(old, '1.0.0');
   const original = new RuntimeManager({ userData: path.join(tempRoot, 'user') }); await original.connectDirectory(old);
   let switches = 0;
   const upgraded = new RuntimeManager({ userData: original.userData, clientVersion: '0.7.0', supportedRuntimeVersions: ['2.0.0'], beforeActivate: async () => { switches++; } });
   assert.equal(upgraded.status().clientVersion, '0.7.0'); assert.equal(upgraded.status().runtimeCompatible, false);
-  assert.match(upgraded.status().compatibilityMessage, /必须更新引擎.*不保证兼容性和出图可靠性/);
+  assert.equal(upgraded.status().runtimeCompatibilityState, 'unverified');
+  assert.match(upgraded.status().compatibilityMessage, /组合待验证/);
   const incompatible = path.join(tempRoot, 'not-compatible'); writeActivatedRuntime(incompatible, '3.0.0');
   await assert.rejects(upgraded.connectDirectory(incompatible), /未声明兼容/);
   assert.equal(switches, 0); assert.equal(upgraded.getRuntimeRoot(), old);
@@ -433,9 +434,53 @@ test('cloud CF requiring a different front-end is shown but rejected before ZIP 
   const host = source(pkg); const origin = await host.start(); live.push(host.server);
   const manager = makeManager(tempRoot, origin, { clientVersion: '0.6.0', supportedRuntimeVersions: ['1.0.0'] });
   await manager.check(); assert.equal(manager.status().availableCompatible, false);
-  assert.match(manager.status().compatibilityMessage, /先更新客户端/);
+  assert.equal(manager.status().availableCompatibilityState, 'unverified');
+  assert.match(manager.status().compatibilityMessage, /组合待验证/);
   const file = path.join(tempRoot, 'new.zip'); fs.writeFileSync(file, pkg.archive);
   await assert.rejects(manager.importArchive(file), /未声明兼容/); assert.equal(manager.status().installed, false);
+});
+
+test('new client policy supports an unchanged engine ZIP whose legacy client list only contains an older patch', async () => {
+  const pkg = cloudBundle({ version: '0.3.2', compatibleClientVersions: ['0.6.1'] });
+  const host = source(pkg), origin = await host.start(); live.push(host.server);
+  let activations = 0;
+  const manager = makeManager(tempRoot, origin, { clientVersion: '0.6.2', supportedRuntimeVersions: ['0.3.2'],
+    afterActivate: async () => { activations++; return { ready: true }; } });
+  const offered = await manager.check();
+  assert.equal(offered.availableCompatible, true);
+  assert.equal(offered.availableCompatibilityState, 'supported');
+  assert.equal(offered.availableCompatibilitySource, 'client-policy');
+  assert.equal(offered.compatibilityMessage, '');
+  const file = path.join(tempRoot, 'official-old-client-list.zip'); fs.writeFileSync(file, pkg.archive);
+  await manager.importArchive(file);
+  assert.equal(manager.status().version, '0.3.2'); assert.equal(manager.status().state, 'ready');
+  assert.equal(manager.status().runtimeCompatible, true); assert.equal(activations, 1);
+  for (const mutation of [{ protocolVersion: 2 }, { platform: 'linux-x64' }, { id: 'another-engine' }]) {
+    const wrong = { ...pkg.manifest, ...mutation };
+    assert.equal(manager.compatibility(wrong).state, 'incompatible');
+    assert.equal(manager.isRuntimeCompatible(wrong), false);
+    assert.throws(() => manager._assertCompatible(wrong), /协议或平台/);
+  }
+  assert.equal(manager.compatibility({ ...pkg.manifest, version: '0.3.3' }).state, 'unverified');
+  pkg.manifest.archive.sha256 = 'f'.repeat(64); await manager.check();
+  await assert.rejects(manager.importArchive(file), /SHA256/);
+  assert.equal(activations, 1); assert.equal(manager.status().version, '0.3.2');
+});
+
+test('client policy approval still rolls back if the activated engine lacks required capabilities', async () => {
+  fs.mkdirSync(tempRoot, { recursive: true });
+  const old = path.join(tempRoot, 'old'); writeActivatedRuntime(old, '0.3.0');
+  const original = new RuntimeManager({ userData: path.join(tempRoot, 'user') }); await original.connectDirectory(old);
+  const pkg = cloudBundle({ version: '0.3.2', compatibleClientVersions: ['0.6.1'] });
+  const host = source(pkg), origin = await host.start(); live.push(host.server);
+  let attempts = 0;
+  const manager = makeManager(tempRoot, origin, { userData: original.userData, clientVersion: '0.6.2', supportedRuntimeVersions: ['0.3.0', '0.3.2'],
+    afterActivate: async () => { attempts++; return { ready: false, error: '缺少 fixture 节点' }; } });
+  await manager.check();
+  const file = path.join(tempRoot, 'missing-capability.zip'); fs.writeFileSync(file, pkg.archive);
+  await assert.rejects(manager.importArchive(file), /缺少 fixture 节点/);
+  assert.equal(attempts, 1); assert.equal(manager.getRuntimeRoot(), old);
+  assert.equal(manager.status().version, '0.3.0'); assert.equal(manager.status().runtimeCompatible, true);
 });
 
 test('cloud links reject lookalike hosts and protocols and clear stale offers', async () => {

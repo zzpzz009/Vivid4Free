@@ -26,18 +26,18 @@
         <p v-else class="client-update-state quiet-message">{{ clientUpdateMessage }}</p>
 
         <div v-if="status?.compatibilityMessage" class="notice notice-warning" role="alert">
-          <strong>{{ status.runtimeCompatible === false ? '必须更新引擎' : '版本暂不兼容' }}</strong>
-          <span>{{ status.runtimeCompatible === false ? `请更新至 引擎 ${supportedVersions}，否则不保证兼容性和出图可靠性。` : `该引擎仅声明支持客户端 ${status.compatibleClientVersions?.join('、') || '指定版本'}，当前客户端未声明兼容，暂不可导入。` }}</span>
+          <strong>{{ compatibilityPending ? '兼容性待验证' : '版本不兼容' }}</strong>
+          <span>{{ status.compatibilityMessage }}</span>
         </div>
         <p v-else-if="!status?.downloadConfigured" class="quiet-message" role="status">正式下载链接待配置，已有 ZIP 可直接导入。</p>
         <p v-if="bridgeUnavailable" class="quiet-message" role="status">请在桌面客户端安装运行包。</p>
 
         <section v-if="needsEnginePackage" class="engine-installation" aria-label="引擎下载与安装">
         <div class="engine-release">
-          <h2>{{ status?.updateAvailable ? `引擎 ${status.availableVersion}${status.availableCompatible === false ? '（暂不兼容）' : ' 可更新'}` : status?.installed ? '引擎安装包' : '安装引擎' }}</h2>
+          <h2>{{ status?.updateAvailable ? `引擎 ${status.availableVersion}${status.availableCompatible === false ? status.availableCompatibilityState === 'unverified' ? '（兼容性待验证）' : '（不兼容）' : ' 可更新'}` : status?.installed ? '引擎安装包' : '安装引擎' }}</h2>
           <ul v-if="status?.updateAvailable && status?.releaseNotes?.length" class="release-notes"><li v-for="note in status.releaseNotes" :key="note">{{ note }}</li></ul>
           <p v-else-if="status?.updateAvailable" class="quiet-message">{{ status?.compatibilityNote || '发布方暂未提供更新说明。' }}</p>
-          <p v-if="status?.available" class="release-compatibility">引擎 {{ status.availableVersion }} 支持客户端 {{ status.compatibleClientVersions?.join('、') || '待确认' }}。</p>
+          <p v-if="status?.available && status.availableCompatible" class="release-compatibility">当前客户端支持引擎 {{ status.availableVersion }}，安装后会检查运行所需组件。</p>
         </div>
 
         <div class="download-sources">
@@ -101,6 +101,7 @@ const isBusy = computed(() => Boolean(busyAction.value))
 const isTransitioning = computed(() => ['checking', 'downloading', 'verifying', 'installing', 'starting'].includes(status.value?.state))
 const locked = computed(() => isBusy.value || isTransitioning.value || bridgeUnavailable.value)
 const supportedVersions = computed(() => status.value?.supportedRuntimeVersions?.join('、') || '待确认')
+const compatibilityPending = computed(() => status.value?.runtimeCompatible === false ? status.value?.runtimeCompatibilityState === 'unverified' : status.value?.availableCompatibilityState === 'unverified')
 const needsEnginePackage = computed(() => !status.value?.installed || status.value?.updateAvailable || status.value?.runtimeCompatible === false || !status.value?.available)
 const clientUpdateMessage = computed(() => {
   if (status.value?.updateCheckState === 'checking') return '正在检查客户端和引擎更新…'

@@ -201,7 +201,11 @@ class RuntimeManager extends EventEmitter {
       throw new Error('运行包必须保存在客户端安装目录和用户数据目录之外的独立位置');
     }
   }
-  status() { return { ...this.data, storageDir: this.storageDir, activePath: this.activeRoot,
+  status() {
+    const active = this.activeInfo ? this.compatibility(this.activeInfo) : null;
+    const available = this.available ? this.compatibility(this.available) : null;
+    const issue = active && !active.compatible ? active : available && !available.compatible ? available : null;
+    return { ...this.data, storageDir: this.storageDir, activePath: this.activeRoot,
     updateCheckState: this.updateCheckState,
     clientRelease: this.available?.clientRelease || null,
     clientUpdateAvailable: Boolean(this.clientVersion && this.available?.clientRelease && olderVersion(this.clientVersion, this.available.clientRelease.version)),
@@ -209,31 +213,42 @@ class RuntimeManager extends EventEmitter {
     updateAvailable: Boolean(this.available && this.available.version !== this.data.version && !olderVersion(this.available.version, this.data.version)),
     downloadSources: downloadSources(this.available).map(source => ({ ...source, enabled: source.provider === 'quark' })),
     clientVersion: this.clientVersion, supportedRuntimeVersions: this._supportedVersions(), compatibilityNote: this.compatibilityNote,
-    runtimeCompatible: this.activeInfo ? this.isRuntimeCompatible(this.activeInfo) : null,
-    availableCompatible: this.available ? this.isRuntimeCompatible(this.available) : null,
+    runtimeCompatible: active?.compatible ?? null,
+    runtimeCompatibilityState: active?.state ?? null,
+    availableCompatible: available?.compatible ?? null,
+    availableCompatibilityState: available?.state ?? null,
+    availableCompatibilitySource: available?.source ?? null,
     compatibleClientVersions: this.available?.compatibleClientVersions || [],
     recommendedPackage: this.available?.incremental?.baseVersion === this.data.version ? 'incremental' : 'full',
     incrementalBaseVersion: this.available?.incremental?.baseVersion || null,
     fullPackageBytes: this.available?.archive?.bytes || null,
     incrementalPackageBytes: this.available?.incremental?.archive?.bytes || null,
-    compatibilityMessage: this.activeInfo && !this.isRuntimeCompatible(this.activeInfo)
-      ? `必须更新引擎：客户端 ${this.clientVersion} 支持引擎 ${this._supportedVersions().join('、') || '发布信息指定版本'}，当前 引擎 ${this.data.version} 不保证兼容性和出图可靠性`
-      : this.available && !this.isRuntimeCompatible(this.available)
-        ? `引擎 ${this.available.version} 支持客户端 ${(this.available.compatibleClientVersions || []).join('、') || '发布信息指定版本'}；请先更新客户端 ${this.clientVersion}，再导入 引擎 ZIP`
-        : '',
+    compatibilityMessage: issue?.message || '',
     downloadConfigured: Boolean(this.env.VIVID_RUNTIME_MANIFEST_URL || this._feedUrl()) }; }
+  compatibility(info) {
+    if (info?.id !== ID || info.protocolVersion !== PROTOCOL || info.platform !== 'win32-x64') {
+      return { compatible: false, state: 'incompatible', source: 'protocol', message: `引擎 ${info?.version || ''} 的协议或平台与当前客户端不兼容，请使用匹配的引擎版本` };
+    }
+    // A newer client can explicitly support an existing engine without rewriting its ZIP.
+    if (!this.clientVersion || this.supportedRuntimeVersions.includes(info.version)) {
+      return { compatible: true, state: 'supported', source: 'client-policy', message: '' };
+    }
+    if (clientVersions(info.compatibleClientVersions)?.includes(this.clientVersion)) {
+      return { compatible: true, state: 'supported', source: 'engine-manifest', message: '' };
+    }
+    return { compatible: false, state: 'unverified', source: null,
+      message: `引擎 ${info.version} 与客户端 ${this.clientVersion} 的组合待验证，尚未声明兼容；请使用当前客户端已支持的引擎，不能保证未验证组合的兼容性和出图可靠性` };
+  }
   isRuntimeCompatible(info) {
-    if (!this.clientVersion) return true;
-    return info?.compatibleClientVersions
-      ? clientVersions(info.compatibleClientVersions).includes(this.clientVersion)
-      : this.supportedRuntimeVersions.includes(info?.version);
+    return this.compatibility(info).compatible;
   }
   _supportedVersions() {
     const candidates = [this.activeInfo, this.available].filter(info => info && this.isRuntimeCompatible(info)).map(info => info.version);
     return [...new Set([...this.supportedRuntimeVersions, ...candidates])];
   }
   _assertCompatible(info) {
-    if (!this.isRuntimeCompatible(info)) throw new Error(`引擎 ${info.version} 与客户端 ${this.clientVersion} 未声明兼容，请先更新客户端或选择匹配的 引擎；否则不保证兼容性和出图可靠性`);
+    const result = this.compatibility(info);
+    if (!result.compatible) throw new Error(result.message);
   }
   downloadSource(provider) {
     if (this.installPromise || this.checkPromise) throw new Error('请等待当前运行包操作完成');

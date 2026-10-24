@@ -39,6 +39,8 @@ const props = defineProps({
   runtimeUpdateAvailable: Boolean,
   runtimeCompatible: { type: Boolean, default: true },
   availableCompatible: { type: Boolean, default: true },
+  runtimeCompatibilityState: { type: String, default: null },
+  availableCompatibilityState: { type: String, default: null },
   clientUpdateAvailable: Boolean,
   engineInstalled: { type: Boolean, default: true },
   updateCheckState: { type: String, default: 'not_checked' },
@@ -51,9 +53,9 @@ defineEmits(['runtime', 'account'])
 const updateLabel = computed(() => {
   if (props.clientUpdateAvailable && (props.runtimeUpdateAvailable || !props.runtimeCompatible)) return '客户端和引擎可更新'
   if (props.clientUpdateAvailable) return '客户端可更新'
-  if (!props.runtimeCompatible) return '需更新引擎'
+  if (!props.runtimeCompatible) return props.runtimeCompatibilityState === 'unverified' ? '引擎兼容待验证' : '需更新引擎'
   if (!props.engineInstalled) return '安装引擎'
-  if (props.runtimeUpdateAvailable && !props.availableCompatible) return '引擎更新待匹配'
+  if (props.runtimeUpdateAvailable && !props.availableCompatible) return props.availableCompatibilityState === 'unverified' ? '引擎兼容待验证' : '引擎更新待匹配'
   if (props.runtimeUpdateAvailable) return '引擎可更新'
   return ({ checking: '正在检查更新…', checked: '暂无更新', failed: '更新检查失败' })[props.updateCheckState] || '检查更新'
 })
