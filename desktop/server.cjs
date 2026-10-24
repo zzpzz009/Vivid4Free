@@ -21,12 +21,15 @@ function file(res, base, name) {
   fs.createReadStream(resolved).pipe(res);
 }
 
-async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus, port = 17860, agentPort = 17861, agentToken, comfyUrl, clientControl }) {
+async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus, accountStatus, port = 17860, agentPort = 17861, agentToken, comfyUrl, clientControl }) {
   if (!agentToken || agentToken.length < 32) throw new Error('Agent token must be at least 32 characters');
-  const service = createTaskService(root, comfyUrl, { workflows, runtimeRoot, runtimeStatus });
+  const service = createTaskService(root, comfyUrl, { workflows, runtimeRoot, runtimeStatus, accountStatus: () => accountStatus?.() });
   let actualPort = port, actualAgentPort = agentPort;
   let origin = `http://127.0.0.1:${actualPort}`;
   let clientShuttingDown = false, activeSubmissions = 0;
+  const requireAccount = () => {
+    if (accountStatus?.().status !== 'signed_in') throw fail(401, '请先登录客户端');
+  };
   const galleryDir = path.join(root, 'data/gallery');
   fs.mkdirSync(galleryDir, { recursive: true });
   const galleryPath = path.join(root, 'data/gallery.json');
@@ -36,6 +39,7 @@ async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus,
     fs.renameSync(`${galleryPath}.tmp`, galleryPath);
   };
   const importGallery = (files) => {
+    requireAccount();
     let added = 0;
     for (const source of files) {
       if (!['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'].includes(path.extname(source).toLowerCase()) || !fs.statSync(source).isFile()) continue;
@@ -50,6 +54,7 @@ async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus,
     saveGallery(); return { added, total: gallery.length };
   };
   const taskRoutes = async (req, res, url, prefix) => {
+    requireAccount();
     if (!url.pathname.startsWith(`${prefix}/`)) throw fail(404, '接口版本不存在');
     const endpoint = url.pathname.slice(prefix.length);
     if (req.method === 'GET' && endpoint === '/capabilities') return json(res, 200, await service.capabilities());
@@ -70,6 +75,9 @@ async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus,
       if (req.headers.host !== `127.0.0.1:${actualPort}`) throw fail(403, '仅允许本机固定来源');
       if (!['GET', 'HEAD'].includes(req.method) && req.headers.origin !== origin) throw fail(403, '请求来源不允许');
       const url = new URL(req.url, origin);
+      const uiAsset = ['GET', 'HEAD'].includes(req.method) &&
+        (['/', '/index.html', '/THIRD-PARTY-NOTICES.txt'].includes(url.pathname) || url.pathname.startsWith('/assets/'));
+      if (!uiAsset) requireAccount();
       if (url.pathname.startsWith('/api/desktop/')) return await taskRoutes(req, res, url, '/api/desktop');
       if (url.pathname === '/health' || url.pathname === '/api/system/status') return json(res, 200, await service.capabilities());
       if (req.method === 'GET' && ['/api/jobs', '/api/history', '/api/history/recent'].includes(url.pathname)) {
@@ -132,6 +140,7 @@ async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus,
           res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' }); return res.end(png);
         }
         if (req.method === 'POST' && url.pathname === '/v1/client/show-task') {
+          requireAccount();
           const input = await body(req);
           if (!input || Object.keys(input).length !== 1 || typeof input.taskId !== 'string' || !/^[a-zA-Z0-9-]+$/.test(input.taskId)) throw fail(400, '只接受 taskId');
           const task = await service.get(input.taskId);

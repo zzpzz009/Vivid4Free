@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('vividDesktop', Object.freeze({
   accountLogout: () => ipcRenderer.invoke('account:logout'),
   accountResetPassword: () => ipcRenderer.invoke('account:reset-password'),
   accountRegister: () => ipcRenderer.invoke('account:register'),
+  enterWorkspace: () => ipcRenderer.invoke('app:enter'),
   importGallery: () => ipcRenderer.invoke('gallery:import'),
   agentInfo: () => ipcRenderer.invoke('agent:info'),
   onAgentTask: callback => {

@@ -331,6 +331,7 @@ function createTaskService(root, comfyUrl = 'http://127.0.0.1:18295', options = 
   const progressUrl = new URL('/ws', comfyUrl.replace('http', 'ws'));
   progressUrl.searchParams.set('clientId', clientId);
   const ensureProgressSocket = () => {
+    if (options.accountStatus && options.accountStatus()?.status !== 'signed_in') return;
     if (closed || typeof WebSocketImpl !== 'function') return;
     const closedState = WebSocketImpl.CLOSED ?? 3;
     if (socket && socket.readyState !== closedState) return;

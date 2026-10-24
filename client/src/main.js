@@ -5,9 +5,6 @@ import './assets/styles/main.css'
 import 'animal-island-vue/style'
 import './styles/animal-island.css'
 import './styles/animal-island-workbench.css'
-import { mountStartupIntro } from './utils/startupOverlay'
-
-mountStartupIntro(document.getElementById('app'))
 
 
 // 创建应用实例

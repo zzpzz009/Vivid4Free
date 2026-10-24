@@ -175,10 +175,44 @@ test('render progress spans both sampler stages and waits for the saved result',
   assert.equal((await service.get(task.id)).progress, 100);
 });
 
+test('signed-out, unverified and logged-out sessions cannot reach workspace APIs even with an Agent token', async () => {
+  const root = freshRoot(); fs.writeFileSync(path.join(root, 'index.html'), '<html>login shell</html>');
+  const comfy = fakeComfy(); running.push({ close: () => new Promise(resolve => comfy.server.close(resolve)) });
+  let status = 'signed_out';
+  const token = 'f'.repeat(64), server = await startServer({ root, uiDir: root, port: 0, agentPort: 0, agentToken: token,
+    comfyUrl: await comfy.start(), accountStatus: () => ({ status }),
+    clientControl: { status: () => ({ version: '0.7.0' }), screenshot: () => Buffer.from('login screenshot') } }); running.push(server);
+  const auth = { authorization: `Bearer ${token}` };
+  const paths = ['/health', '/api/desktop/capabilities', '/api/desktop/tasks', '/api/jobs', '/api/history', '/img/images', '/gallery/private.png', '/view?filename=result.png', '/comfy/queue', '/comfy/object_info'];
+  for (status of ['signed_out', 'checking', 'unavailable']) {
+    assert.equal((await fetch(server.origin)).status, 200);
+    for (const route of paths) assert.equal((await fetch(server.origin + route)).status, 401, `${status}: ${route}`);
+    assert.equal((await fetch(server.agentOrigin + '/v1/tasks', { headers: auth })).status, 401);
+    assert.equal((await fetch(server.agentOrigin + '/v1/tasks', { method: 'POST', headers: { ...auth, 'content-type': 'application/json' }, body: JSON.stringify({ kind: 'render', mainImage: 'main.png', referenceImage: 'ref.png' }) })).status, 401);
+    assert.equal((await fetch(server.origin + '/api/desktop/tasks', { method: 'POST', headers: { origin: server.origin, 'content-type': 'application/json' }, body: '{}' })).status, 401);
+    assert.equal((await fetch(server.origin + '/upload/image', { method: 'POST', headers: { origin: server.origin } })).status, 401);
+    assert.throws(() => server.importGallery([]), /请先登录/);
+  }
+  assert.equal(comfy.calls.length, 0, 'Locked routes must not contact the engine');
+  status = 'signed_in';
+  assert.equal((await fetch(server.origin + '/api/desktop/capabilities')).status, 200);
+  assert.equal((await fetch(server.agentOrigin + '/v1/tasks', { headers: auth })).status, 200);
+  status = 'signed_out';
+  assert.equal((await fetch(server.origin + '/api/jobs')).status, 401);
+  assert.equal((await fetch(server.agentOrigin + '/v1/client/show-task', { method: 'POST', headers: { ...auth, 'content-type': 'application/json' }, body: '{"taskId":"mine"}' })).status, 401);
+  assert.equal((await fetch(server.agentOrigin + '/v1/client', { headers: auth })).status, 200);
+});
+
+test('server defaults to a locked account when no account verifier is supplied', async () => {
+  const root = freshRoot(); const server = await startServer({ root, uiDir: root, port: 0, agentPort: 0, agentToken: 'e'.repeat(64) }); running.push(server);
+  assert.equal((await fetch(server.origin + '/api/desktop/tasks')).status, 401);
+  assert.equal((await fetch(server.agentOrigin + '/v1/capabilities', { headers: { authorization: `Bearer ${'e'.repeat(64)}` } })).status, 401);
+});
+
 test('Agent auth, origin rejection, unknown version, and strict task image validation', async () => {
   const root = freshRoot(); const comfy = fakeComfy(); const comfyUrl = await comfy.start(); running.push({ close: () => new Promise(resolve => comfy.server.close(resolve)) });
   const token = 'a'.repeat(64);
-  const server = await startServer({ root, uiDir: root, port: 0, agentPort: 0, agentToken: token, comfyUrl }); running.push(server);
+  const server = await startServer({ accountStatus: () => ({ status: 'signed_in' }), root, uiDir: root, port: 0, agentPort: 0, agentToken: token, comfyUrl }); running.push(server);
   assert.equal((await jsonFetch(`${server.agentOrigin}/v1/capabilities`)).status, 401);
   assert.equal((await jsonFetch(`${server.agentOrigin}/v1/capabilities`, { headers: { authorization: 'Bearer wrong' } })).status, 401);
   const auth = { authorization: `Bearer ${token}` };
@@ -196,7 +230,7 @@ test('Agent client controls require auth, expose only fixed operations, and refu
     outputs: { '622': { images: [{ filename: 'result.jpg', subfolder: '', type: 'output' }] } } } } });
   running.push({ close: () => new Promise(resolve => comfy.server.close(resolve)) });
   const actions = [], png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-  const server = await startServer({ root, uiDir: root, port: 0, agentPort: 0, agentToken: 'c'.repeat(64), comfyUrl: await comfy.start(),
+  const server = await startServer({ accountStatus: () => ({ status: 'signed_in' }), root, uiDir: root, port: 0, agentPort: 0, agentToken: 'c'.repeat(64), comfyUrl: await comfy.start(),
     clientControl: { status: () => ({ version: '0.6.0' }), screenshot: () => png,
       showTask: task => actions.push(task.id), shutdown: () => actions.push('shutdown') } }); running.push(server);
   const base = `${server.agentOrigin}/v1/client`, auth = { authorization: `Bearer ${'c'.repeat(64)}` };
@@ -227,7 +261,7 @@ test('Agent client controls require auth, expose only fixed operations, and refu
 test('Agent shutdown refuses an unverifiable engine queue', async () => {
   const root = freshRoot(); const comfy = fakeComfy({ queue: null }); let exited = false;
   running.push({ close: () => new Promise(resolve => comfy.server.close(resolve)) });
-  const server = await startServer({ root, uiDir: root, port: 0, agentPort: 0, agentToken: 'd'.repeat(64), comfyUrl: await comfy.start(),
+  const server = await startServer({ accountStatus: () => ({ status: 'signed_in' }), root, uiDir: root, port: 0, agentPort: 0, agentToken: 'd'.repeat(64), comfyUrl: await comfy.start(),
     clientControl: { shutdown: () => { exited = true; } } }); running.push(server);
   const result = await jsonFetch(`${server.agentOrigin}/v1/client/shutdown`, { method: 'POST',
     headers: { authorization: `Bearer ${'d'.repeat(64)}`, 'content-type': 'application/json' }, body: '{}' });
@@ -236,7 +270,7 @@ test('Agent shutdown refuses an unverifiable engine queue', async () => {
 
 test('UI mutations require exact same-origin and fixed loopback Host', async () => {
   const root = freshRoot(); const comfy = fakeComfy(); const comfyUrl = await comfy.start(); running.push({ close: () => new Promise(resolve => comfy.server.close(resolve)) });
-  const server = await startServer({ root, uiDir: root, port: 0, agentPort: 0, agentToken: 'b'.repeat(64), comfyUrl }); running.push(server);
+  const server = await startServer({ accountStatus: () => ({ status: 'signed_in' }), root, uiDir: root, port: 0, agentPort: 0, agentToken: 'b'.repeat(64), comfyUrl }); running.push(server);
   const url = `${server.origin}/api/desktop/tasks`;
   const payload = JSON.stringify({ kind: 'render', mainImage: 'main.png', referenceImage: 'ref.png' });
   const noOrigin = await jsonFetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: payload });

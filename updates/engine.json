@@ -9,7 +9,8 @@
     "launcher": "tools/start_comfy.py"
   },
   "compatibleClientVersions": [
-    "0.6.1"
+    "0.6.1",
+    "0.7.0"
   ],
   "archive": {
     "url": null,
@@ -60,12 +61,12 @@
     "导入 ZIP 后自动校验、安装并切换新版，失败时保留旧环境。"
   ],
   "clientRelease": {
-    "version": "0.6.1",
-    "downloadUrl": "https://github.com/zzpzz009/Vivid4Free/releases/tag/v0.6.1",
+    "version": "0.7.0",
+    "downloadUrl": "https://github.com/zzpzz009/Vivid4Free/releases/tag/v0.7.0",
     "notes": [
-      "支持首次安装引擎和接入已有环境。",
-      "客户端与引擎独立更新，并提示版本兼容关系。",
-      "支持全量和增量 ZIP 导入，下载后返回客户端完成安装。"
+      "新增经典深色与海岛全屏登录页，登录后播放开屏动画进入工作区。",
+      "统一查看客户端与引擎更新、更新内容及兼容关系。",
+      "引擎更新保留原图与历史结果，重启后图片自动恢复显示。"
     ],
     "supportedRuntimeVersions": [
       "0.3.0",

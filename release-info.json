@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "clientVersion": "0.6.2",
-  "tag": "v0.6.2",
-  "releaseDate": "2026-10-24",
-  "channel": "local-preview",
-  "delivery": "local-installer",
+  "clientVersion": "0.7.0",
+  "tag": "v0.7.0",
+  "releaseDate": "2026-10-25",
+  "channel": "preview",
+  "delivery": "github-release",
   "platform": "win32-x64",
   "notes": "CHANGELOG.md",
   "runtime": {
     "id": "vivid-comfy",
     "protocolVersion": 1,
-    "testedVersion": "0.3.0",
+    "testedVersion": "0.3.2",
     "distribution": "separate-download",
     "includedInRepository": false,
     "automaticDownloadAvailable": false,
@@ -40,13 +40,14 @@
     "existingRuntimeConnection": true,
     "cloudRuntimeDownloadEntries": true,
     "runtimeCompatibilityGate": true,
-    "independentClientUpdateEntry": true
+    "independentClientUpdateEntry": true,
+    "loginRequired": true,
+    "postLoginStartupIntro": true
   },
   "validation": {
     "nativeDragAndEdgeResizeManuallyConfirmed": false,
     "multiComputerAccountAcceptanceComplete": false,
-    "newInstallerPublished": false,
     "cfFreshMachineAcceptanceComplete": false,
-    "offlineFullArchiveInstallationComplete": false
+    "offlineFullArchiveInstallationComplete": true
   }
 }

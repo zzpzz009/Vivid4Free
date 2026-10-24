@@ -10,7 +10,7 @@ const { RuntimeManager } = require('./runtime-manager.cjs');
 const { createAccountService } = require('./account-service.cjs');
 const clientPolicy = require('./client-runtime-policy.json');
 
-let window, server, root, manager, ownedEngineRoot = null, engineReady = false, engineStartPromise = null, engineStartRoot = null, closing = false;
+let window, server, root, manager, account, ownedEngineRoot = null, engineReady = false, engineStartPromise = null, engineStartRoot = null, closing = false;
 function listenPort(variable, fallback) {
   if (process.env.VIVID_RUNTIME_ALLOW_LOCAL_TEST !== '1' || process.env[variable] === undefined) return fallback;
   const value = Number(process.env[variable]);
@@ -65,6 +65,7 @@ function startEngine(options = {}) {
   return engineStartPromise;
 }
 async function startEngineOnce({ background = false, runtimePath } = {}) {
+  if (account?.status().status !== 'signed_in') return { ready: false, message: '请先登录客户端' };
   if (manager.status().runtimeCompatible === false) {
     engineReady = false;
     const error = manager.status().compatibilityMessage;
@@ -130,12 +131,19 @@ async function beforeRuntimeActivate({ previousRoot }) {
 }
 
 if (process.platform === 'win32') app.setAppUserModelId('cn.vividai.desktop');
+if (process.env.VIVID_RUNTIME_ALLOW_LOCAL_TEST === '1' && process.env.VIVID_TEST_USER_DATA) {
+  const testUserData = path.resolve(process.env.VIVID_TEST_USER_DATA);
+  fs.mkdirSync(testUserData, { recursive: true });
+  app.setPath('userData', testUserData);
+}
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => { window?.show(); window?.focus(); });
   app.whenReady().then(async () => {
     root = app.getPath('userData');
     fs.mkdirSync(root, { recursive: true });
+    account = createAccountService({ userData: root, secureStorage: safeStorage,
+      fetchImpl: (url, options) => electronNet.fetch(url, options) });
     manager = new RuntimeManager({ userData: root, feedPath: path.join(__dirname, 'runtime-feed.json'),
       fetchImpl: (url, options) => electronNet.fetch(url, options),
       clientVersion: app.getVersion(), supportedRuntimeVersions: clientPolicy.supportedRuntimeVersions, compatibilityNote: clientPolicy.note,
@@ -145,7 +153,7 @@ else {
     const tokenPath = path.join(root, 'agent-control.json');
     const workflows = openWorkflows();
     server = await startServer({ root, uiDir: path.join(__dirname, 'ui'), workflows,
-      runtimeRoot, runtimeStatus: () => ({ ...manager.status(), engineReady }), agentToken: token,
+      runtimeRoot, runtimeStatus: () => ({ ...manager.status(), engineReady }), accountStatus: () => account.status(), agentToken: token,
       port: listenPort('VIVID_TEST_UI_PORT', 17860), agentPort: listenPort('VIVID_TEST_AGENT_PORT', 17861),
       clientControl: {
         status: () => ({ version: app.getVersion(), window: { available: Boolean(window && !window.isDestroyed()),
@@ -170,6 +178,10 @@ else {
       const frame = event.senderFrame;
       if (event.sender !== window.webContents || frame !== window.webContents.mainFrame || !frame.url.startsWith(`${server.origin}/`)) throw new Error('不允许的调用来源');
     };
+    const signedInSender = event => {
+      sender(event);
+      if (account.status().status !== 'signed_in') throw new Error('请先登录客户端');
+    };
     window.removeMenu();
     const windowState = () => ({ maximized: window.isMaximized(), fullscreen: window.isFullScreen() });
     const publishWindowState = () => { if (!window.isDestroyed()) window.webContents.send('window:state-changed', windowState()); };
@@ -185,8 +197,6 @@ else {
       } else if (action === 'close') window.close();
       else throw new Error('不支持的窗口操作');
     });
-    const account = createAccountService({ userData: root, secureStorage: safeStorage,
-      fetchImpl: (url, options) => electronNet.fetch(url, options) });
     const accountAction = operation => async (event, input) => {
       sender(event);
       try { return await operation(input); }
@@ -196,6 +206,11 @@ else {
     ipcMain.handle('account:login', accountAction(input => account.login(input)));
     ipcMain.handle('account:refresh', accountAction(() => account.refresh()));
     ipcMain.handle('account:logout', accountAction(() => account.logout()));
+    ipcMain.handle('app:enter', event => {
+      signedInSender(event);
+      if (runtimeRoot()) void startEngine({ background: true }).catch(() => {});
+      return { entered: true };
+    });
     ipcMain.handle('account:reset-password', async event => {
       sender(event);
       try { await shell.openExternal(await account.passwordResetUrl()); return { opened: true }; }
@@ -212,17 +227,17 @@ else {
       try { return await registrationOpening; } finally { registrationOpening = null; }
     });
     ipcMain.handle('gallery:import', async event => {
-      sender(event);
+      signedInSender(event);
       const result = await dialog.showOpenDialog(window, { title: '导入本地图库文件夹', properties: ['openDirectory'] });
       if (result.canceled) return { added: 0, cancelled: true };
       const files = fs.readdirSync(result.filePaths[0], { withFileTypes: true }).filter(item => item.isFile()).map(item => path.join(result.filePaths[0], item.name));
       return server.importGallery(files);
     });
-    ipcMain.handle('agent:info', event => { sender(event); return { endpoint: `${server.agentOrigin}/v1`, tokenFile: tokenPath, version: '1.0' }; });
-    ipcMain.handle('output:open', event => { sender(event); return shell.openPath(path.join(runtimeRoot() || root, 'output')); });
-    ipcMain.handle('runtime:status', event => { sender(event); return { ...manager.status(), engineReady, clientUpdateConfigured: Boolean(clientPolicy.clientDownloadUrl) }; });
+    ipcMain.handle('agent:info', event => { signedInSender(event); return { endpoint: `${server.agentOrigin}/v1`, tokenFile: tokenPath, version: '1.0' }; });
+    ipcMain.handle('output:open', event => { signedInSender(event); return shell.openPath(path.join(runtimeRoot() || root, 'output')); });
+    ipcMain.handle('runtime:status', event => { signedInSender(event); return { ...manager.status(), engineReady, clientUpdateConfigured: Boolean(clientPolicy.clientDownloadUrl) }; });
     ipcMain.handle('client:open-update', async event => {
-      sender(event);
+      signedInSender(event);
       try {
         const downloadUrl = manager.status().clientRelease?.downloadUrl || clientPolicy.clientDownloadUrl;
         if (!downloadUrl) throw new Error('客户端更新入口尚未配置');
@@ -232,9 +247,9 @@ else {
         return { opened: true, message: '客户端更新页面已打开，安装新版客户端后请按兼容提示更新 引擎 ZIP' };
       } catch (error) { return { opened: false, message: error.message || '客户端更新入口暂时无法打开' }; }
     });
-    ipcMain.handle('runtime:check', async event => { sender(event); return manager.check(); });
+    ipcMain.handle('runtime:check', async event => { signedInSender(event); return manager.check(); });
     ipcMain.handle('runtime:open-download', async (event, provider) => {
-      sender(event);
+      signedInSender(event);
       try {
         const source = manager.downloadSource(provider);
         await shell.openExternal(source.url);
@@ -242,25 +257,25 @@ else {
       } catch (error) { return { opened: false, message: error.message || '网盘链接暂时无法打开，请重试' }; }
     });
     ipcMain.handle('runtime:install', async event => {
-      sender(event);
+      signedInSender(event);
       const runtime = await manager.install();
       return { runtime, engine: { ready: engineReady, error: runtime.error || null } };
     });
-    ipcMain.handle('runtime:pause', event => { sender(event); return manager.pause(); });
+    ipcMain.handle('runtime:pause', event => { signedInSender(event); return manager.pause(); });
     ipcMain.handle('runtime:import-archive', async event => {
-      sender(event);
+      signedInSender(event);
       const result = await dialog.showOpenDialog(window, { title: '导入通过网盘下载的官方 引擎 ZIP（无需解压）', properties: ['openFile'], filters: [{ name: '引擎 运行包', extensions: ['zip'] }] });
       if (result.canceled) return { cancelled: true };
       return manager.importArchive(result.filePaths[0]);
     });
     ipcMain.handle('runtime:connect-directory', async event => {
-      sender(event);
+      signedInSender(event);
       const result = await dialog.showOpenDialog(window, { title: '选择含 runtime.json 的官方 引擎 版本目录', properties: ['openDirectory'] });
       if (result.canceled) return { cancelled: true };
       return manager.connectDirectory(result.filePaths[0]);
     });
     ipcMain.handle('runtime:choose-directory', async event => {
-      sender(event);
+      signedInSender(event);
       for (;;) {
         const result = await dialog.showOpenDialog(window, { title: '选择引擎运行包存储目录', properties: ['openDirectory', 'createDirectory'] });
         if (result.canceled) return { cancelled: true, status: manager.status() };
@@ -268,11 +283,10 @@ else {
         catch (error) { await dialog.showMessageBox(window, { type: 'warning', title: '请选择独立存储位置', message: error.message }); }
       }
     });
-    ipcMain.handle('runtime:start-engine', async event => { sender(event); return startEngine(); });
+    ipcMain.handle('runtime:start-engine', async event => { signedInSender(event); return startEngine(); });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', (event, url) => { if (!url.startsWith(`${server.origin}/`)) event.preventDefault(); });
     await window.loadURL(server.origin);
-    setImmediate(() => { if (runtimeRoot()) startEngine({ background: true }).catch(() => {}); });
   }).catch(async error => {
     await dialog.showMessageBox({ type: 'error', title: '客户端启动失败', message: error.message });
     app.quit();

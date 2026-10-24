@@ -1,11 +1,11 @@
 import { rememberStartupIntro, shouldShowStartupIntro } from './startupIntro'
 
-export function mountStartupIntro(root) {
+export function mountStartupIntro(root, { force = false, onComplete } = {}) {
   if (!root || document.querySelector('[data-startup-intro]')) return
   let island = false
   try { island = JSON.parse(localStorage.getItem('ui:rightPanel'))?.skin === 'animal-island' } catch { /* Use the classic intro if preferences cannot be read. */ }
   const skin = island ? 'animal-island' : 'original'
-  if (!shouldShowStartupIntro(undefined, skin)) return
+  if (!force && !shouldShowStartupIntro(undefined, skin)) return
   const wasInert = root.inert
   const previousHidden = root.getAttribute('aria-hidden')
   root.inert = true
@@ -41,7 +41,8 @@ export function mountStartupIntro(root) {
       else root.setAttribute('aria-hidden', previousHidden)
       if (reason === 'complete' || reason === 'skip') rememberStartupIntro(undefined, skin)
       window.dispatchEvent(new CustomEvent('vivid:startup-ready', { detail: { reason } }))
-    }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450)
+      onComplete?.(reason)
+    }, reason === 'cancelled' || matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450)
   }
 
   function onKeyDown(event) {
@@ -80,4 +81,5 @@ export function mountStartupIntro(root) {
     disposeAnimation = animation.runIntroAnimation(scope, finish)
     shadow.getElementById('skip')?.focus({ preventScroll: true })
   }).catch(() => finish('unavailable'))
+  return () => finish('cancelled')
 }
