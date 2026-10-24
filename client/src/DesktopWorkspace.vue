@@ -3,6 +3,7 @@
     <DesktopToolbar
       :engine-ready="engineReady" :engine-label="engineLabel" :account-label="accountLabel" :account-open="accountPanelOpen" :runtime-update-available="Boolean(runtimeCapability?.updateAvailable)" :runtime-compatible="runtimeCapability?.runtimeCompatible !== false"
       :client-update-available="Boolean(runtimeCapability?.clientUpdateAvailable)" :engine-installed="runtimeCapability?.installed !== false" :update-check-state="runtimeCapability?.updateCheckState || 'not_checked'" :update-open="runtimePanelOpen"
+      :client-version="runtimeCapability?.clientVersion || ''"
       :available-compatible="runtimeCapability?.availableCompatible !== false"
       :runtime-compatibility-state="runtimeCapability?.runtimeCompatibilityState" :available-compatibility-state="runtimeCapability?.availableCompatibilityState"
       @runtime="runtimePanelOpen = true" @account="accountPanelOpen = !accountPanelOpen"

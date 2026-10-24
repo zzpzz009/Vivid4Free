@@ -3,7 +3,7 @@
     <div class="brand">
       <img v-if="uiStore.skin === 'animal-island'" class="island-brand-mark" :src="islandLogo" alt="Vivid4Free 海岛 Logo" />
       <strong>VividDesktop</strong>
-      <button class="update-entry" :class="{ 'has-update': runtimeUpdateAvailable || clientUpdateAvailable || !runtimeCompatible }" type="button" :aria-expanded="updateOpen" aria-controls="runtime-title" @click="$emit('runtime')">{{ updateLabel }}<span aria-hidden="true">›</span></button>
+      <button class="update-entry" :class="{ 'has-update': runtimeUpdateAvailable || clientUpdateAvailable || !runtimeCompatible, 'version-only': updateLabel === currentVersionLabel }" type="button" title="查看更新与安装" :aria-expanded="updateOpen" aria-controls="runtime-title" @click="$emit('runtime')">{{ updateLabel }}<span v-if="updateLabel !== currentVersionLabel" aria-hidden="true">›</span></button>
     </div>
     <div class="toolbar-actions">
       <button type="button" class="skin-entry" :aria-pressed="uiStore.skin === 'animal-island'" :title="`当前皮肤：${uiStore.skin === 'animal-island' ? '海岛' : '经典深色'}，点击切换`" aria-label="切换海岛皮肤" @click="uiStore.setSkin(uiStore.skin === 'animal-island' ? 'original' : 'animal-island')">
@@ -42,6 +42,7 @@ const props = defineProps({
   runtimeCompatibilityState: { type: String, default: null },
   availableCompatibilityState: { type: String, default: null },
   clientUpdateAvailable: Boolean,
+  clientVersion: { type: String, default: '' },
   engineInstalled: { type: Boolean, default: true },
   updateCheckState: { type: String, default: 'not_checked' },
   updateOpen: Boolean,
@@ -50,6 +51,7 @@ const props = defineProps({
   accountOpen: Boolean
 })
 defineEmits(['runtime', 'account'])
+const currentVersionLabel = computed(() => props.clientVersion ? `v${props.clientVersion}` : '—')
 const updateLabel = computed(() => {
   if (props.clientUpdateAvailable && (props.runtimeUpdateAvailable || !props.runtimeCompatible)) return '客户端和引擎可更新'
   if (props.clientUpdateAvailable) return '客户端可更新'
@@ -57,7 +59,7 @@ const updateLabel = computed(() => {
   if (!props.engineInstalled) return '安装引擎'
   if (props.runtimeUpdateAvailable && !props.availableCompatible) return props.availableCompatibilityState === 'unverified' ? '引擎兼容待验证' : '引擎更新待匹配'
   if (props.runtimeUpdateAvailable) return '引擎可更新'
-  return ({ checking: '正在检查更新…', checked: '暂无更新', failed: '更新检查失败' })[props.updateCheckState] || '检查更新'
+  return ({ checking: '正在检查更新…', failed: '更新检查失败' })[props.updateCheckState] || currentVersionLabel.value
 })
 const accountText = computed(() => props.accountLabel === '账号：未登录' ? '登录 / 注册' : props.accountLabel.replace(/^账号：/, ''))
 const desktopWindow = Boolean(window.vividDesktop?.windowAction)
@@ -82,6 +84,7 @@ onBeforeUnmount(() => unsubscribeWindow?.())
 .engine-dot{width:6px;height:6px;flex:none;border-radius:50%}.engine-dot.ready{background:#74d29a}.engine-dot.waiting{background:#e6bc66}.toolbar-divider{height:16px;width:1px;background:#393640;flex:none}
 .account-name{max-width:140px;overflow:hidden;text-overflow:ellipsis}.window-controls{display:flex;gap:2px;margin-left:8px;padding-left:8px;border-left:1px solid #393640}.toolbar-actions .window-control{width:36px;padding:0}.toolbar-actions .window-control svg{width:14px;height:14px}.toolbar-actions .window-close:hover{background:var(--schemes-error-container);color:var(--schemes-on-error-container)}
 .skin-swatch{width:14px;height:14px;flex:none;border:1px solid currentColor;border-radius:50%;background:linear-gradient(135deg,var(--schemes-surface-container) 50%,var(--schemes-primary) 50%)}
+.brand .update-entry.version-only{opacity:.5;font-size:11px;padding:0 4px;margin-left:0}.brand .update-entry.version-only:hover,.brand .update-entry.version-only:focus-visible,.brand .update-entry.version-only[aria-expanded=true]{opacity:1}
 .island-brand-mark{width:32px;height:28px;object-fit:contain;flex:none}
 .skin-entry[aria-pressed=true] .skin-swatch{background:linear-gradient(135deg,var(--animal-primary-color) 50%,var(--island-paper) 50%)}
 @media(max-width:767px){.skin-label{display:none}}
