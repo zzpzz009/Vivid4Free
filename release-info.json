@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "clientVersion": "0.6.1",
-  "tag": "v0.6.1",
+  "clientVersion": "0.6.2",
+  "tag": "v0.6.2",
   "releaseDate": "2026-10-24",
-  "channel": "preview",
-  "delivery": "github-release-installer",
+  "channel": "local-preview",
+  "delivery": "local-installer",
   "platform": "win32-x64",
   "notes": "CHANGELOG.md",
   "runtime": {
@@ -19,7 +19,7 @@
       "0.3.0",
       "0.3.2"
     ],
-    "compatibilityNote": "引擎 0.3.2 移除产品明文工作流，支持全量及官方 0.3.1 基线增量包；0.3.0 仅认可本机已修正环境，现存旧 ZIP 不属于已验收组合",
+    "compatibilityNote": "支持引擎 0.3.2 全量安装及从官方 0.3.1 增量升级。0.3.0 仅认可本机已修正环境，旧 ZIP 不属于已验收组合。",
     "requiredLocalRevision": "preview-fidelity-v1"
   },
   "features": {

@@ -1,6 +1,6 @@
 {
   "name": "vivid-desktop",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "VividAI local rendering desktop client",
   "main": "main.cjs",
   "author": "VividAI",

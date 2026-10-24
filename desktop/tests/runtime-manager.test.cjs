@@ -5,7 +5,7 @@ const path = require('node:path');
 const http = require('node:http');
 const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
-const { RuntimeManager, validateZip } = require('../runtime-manager.cjs');
+const { RuntimeManager, validateZip, validateManifest } = require('../runtime-manager.cjs');
 const { createTaskService } = require('../task-service.cjs');
 
 const tempRoot = path.join(__dirname, '.tmp', 'runtime-manager');
@@ -117,6 +117,45 @@ test('runtime manifest and archive requests both use the supplied client network
 afterEach(async () => {
   await Promise.all(live.splice(0).map(item => new Promise(resolve => item.close(resolve))));
   fs.rmSync(tempRoot, { recursive: true, force: true });
+});
+
+test('one update check reports client and engine releases with notes and numeric version ordering', async () => {
+  const pkg = bundle();
+  pkg.manifest.releaseNotes = ['Engine fixture changes'];
+  pkg.manifest.clientRelease = { version: '0.6.10', downloadUrl: 'https://github.com/zzpzz009/Vivid4Free/releases/latest', notes: ['Client fixture changes'], supportedRuntimeVersions: ['1.0.0'] };
+  const host = source(pkg), origin = await host.start(); live.push(host.server);
+  const manager = makeManager(tempRoot, origin, { clientVersion: '0.6.9' });
+  assert.equal(manager.status().updateCheckState, 'not_checked');
+  let result = await manager.check();
+  assert.equal(result.clientUpdateAvailable, true); assert.equal(result.updateAvailable, true);
+  assert.equal(result.updateCheckState, 'checked');
+  assert.deepEqual(result.releaseNotes, ['Engine fixture changes']);
+  assert.deepEqual(result.clientRelease.notes, ['Client fixture changes']);
+  pkg.manifest.clientRelease.version = '0.6.9';
+  assert.equal((await manager.check()).clientUpdateAvailable, false);
+  pkg.manifest.clientRelease.version = '0.6.8';
+  assert.equal((await manager.check()).clientUpdateAvailable, false);
+  delete pkg.manifest.clientRelease; delete pkg.manifest.releaseNotes;
+  result = await manager.check();
+  assert.equal(result.clientRelease, null); assert.equal(result.clientUpdateAvailable, false);
+  assert.deepEqual(result.releaseNotes, []);
+  manager.fetch = async () => { throw Error('fixture network failure'); };
+  await assert.rejects(manager.check(), /fixture network failure/);
+  assert.equal(manager.status().updateCheckState, 'failed');
+  assert.equal(manager.status().clientRelease, null);
+});
+
+test('release metadata rejects unsafe client links, invalid versions and unbounded notes', () => {
+  const pkg = bundle();
+  const valid = { version: '0.6.2', downloadUrl: 'https://github.com/zzpzz009/Vivid4Free/releases/latest', notes: ['Fixture note'] };
+  for (const downloadUrl of ['javascript:alert(1)', 'https://github.com/another/repo/releases/latest', 'https://user:pass@pan.quark.cn/s/abc', 'https://example.com/setup.exe']) {
+    assert.throws(() => validateManifest({ ...pkg.manifest, clientRelease: { ...valid, downloadUrl } }));
+  }
+  assert.throws(() => validateManifest({ ...pkg.manifest, clientRelease: { ...valid, version: 'next' } }));
+  assert.throws(() => validateManifest({ ...pkg.manifest, releaseNotes: ['x'.repeat(501)] }));
+  assert.throws(() => validateManifest({ ...pkg.manifest, clientRelease: { ...valid, notes: [123] } }));
+  assert.throws(() => validateManifest({ ...pkg.manifest, clientRelease: { ...valid, supportedRuntimeVersions: ['next'] } }));
+  assert.doesNotThrow(() => validateManifest({ ...pkg.manifest, clientRelease: { ...valid, downloadUrl: 'https://pan.quark.cn/s/abc' } }));
 });
 
 test('uninstalled client remains usable and reports rendering unavailable', async () => {

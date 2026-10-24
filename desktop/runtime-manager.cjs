@@ -17,6 +17,21 @@ function clientVersions(value) {
   if (!Array.isArray(value) || !value.length || value.length > 128 || value.some(version => typeof version !== 'string' || !/^\d+\.\d+\.\d+$/.test(version)) || new Set(value).size !== value.length) throw new Error('运行包须声明准确的兼容客户端版本');
   return value;
 }
+function releaseNotes(value) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > 12 || value.some(note => typeof note !== 'string' || !note.trim() || note.length > 500)) throw new Error('更新说明格式无效');
+  return value;
+}
+function validateClientRelease(release) {
+  if (release === undefined) return;
+  if (!release || typeof release.version !== 'string' || !/^\d+\.\d+\.\d+$/.test(release.version)) throw new Error('客户端发布版本无效');
+  const url = new URL(release.downloadUrl);
+  const official = url.hostname === 'github.com' && url.pathname.startsWith('/zzpzz009/Vivid4Free/releases/') ||
+    url.hostname === 'pan.quark.cn' && /^\/s\/[A-Za-z0-9_-]+\/?$/.test(url.pathname);
+  if (url.protocol !== 'https:' || url.username || url.password || url.port || !official) throw new Error('客户端更新入口无效');
+  releaseNotes(release.notes);
+  clientVersions(release.supportedRuntimeVersions);
+}
 function downloadSources(manifest) {
   const sources = manifest?.downloads || [];
   if (!Array.isArray(sources) || sources.length > 2) throw new Error('运行包网盘下载配置无效');
@@ -62,6 +77,8 @@ function validateManifest(m) {
     throw new Error('运行包清单中的归档信息无效');
   }
   const sources = downloadSources(m);
+  releaseNotes(m.releaseNotes);
+  validateClientRelease(m.clientRelease);
   if (!a.url && !sources.length) throw new Error('运行包清单缺少下载入口');
   const clients = clientVersions(m.compatibleClientVersions);
   if (sources.length && !clients) throw new Error('网盘发布信息缺少兼容客户端版本');
@@ -156,6 +173,7 @@ class RuntimeManager extends EventEmitter {
     this.clientVersion = clientVersion; this.supportedRuntimeVersions = supportedRuntimeVersions; this.compatibilityNote = compatibilityNote;
     this.settingsPath = path.join(this.userData, 'runtime-settings.json');
     this.settings = this._readSettings(); this.available = null; this.installPromise = null; this.checkPromise = null; this.controller = null;
+    this.updateCheckState = 'not_checked';
     this.activeRoot = null; this.activeInfo = null;
     this.data = { state: 'not_installed', installed: false, available: false, version: null, availableVersion: null,
       storageDir: this.storageDir, downloadedBytes: 0, totalBytes: 0, progress: 0, message: '运行包尚未安装', error: null };
@@ -184,6 +202,10 @@ class RuntimeManager extends EventEmitter {
     }
   }
   status() { return { ...this.data, storageDir: this.storageDir, activePath: this.activeRoot,
+    updateCheckState: this.updateCheckState,
+    clientRelease: this.available?.clientRelease || null,
+    clientUpdateAvailable: Boolean(this.clientVersion && this.available?.clientRelease && olderVersion(this.clientVersion, this.available.clientRelease.version)),
+    releaseNotes: releaseNotes(this.available?.releaseNotes),
     updateAvailable: Boolean(this.available && this.available.version !== this.data.version && !olderVersion(this.available.version, this.data.version)),
     downloadSources: downloadSources(this.available).map(source => ({ ...source, enabled: source.provider === 'quark' })),
     clientVersion: this.clientVersion, supportedRuntimeVersions: this._supportedVersions(), compatibilityNote: this.compatibilityNote,
@@ -280,6 +302,7 @@ class RuntimeManager extends EventEmitter {
     return this.checkPromise;
   }
   async _check() {
+    this.updateCheckState = 'checking';
     this._set({ state: 'checking', error: null, message: '正在检查运行包版本' });
     try {
       const url = await this._manifestUrl(); const response = await this.fetch(url, { redirect: 'error', signal: AbortSignal.timeout(15000) });
@@ -296,10 +319,11 @@ class RuntimeManager extends EventEmitter {
         archiveUrl = archive.href;
       }
       this.available = { ...m, archive: { ...m.archive, url: archiveUrl } };
+      this.updateCheckState = 'checked';
       this._set({ available: true, availableVersion: m.version, state: this.data.installed ? 'installed' : 'not_installed',
         message: m.version === this.data.version ? '当前运行包已是此下载源提供的版本' : olderVersion(m.version, this.data.version) ? '下载源版本早于当前版本，已保留现用环境' : `可安装运行包 ${m.version}`, error: null });
       return this.status();
-    } catch (error) { this.available = null; this._set({ available: false, availableVersion: null, state: this.data.installed ? 'installed' : 'error', error: error.message, message: error.message }); throw error; }
+    } catch (error) { this.updateCheckState = 'failed'; this.available = null; this._set({ available: false, availableVersion: null, state: this.data.installed ? 'installed' : 'error', error: error.message, message: error.message }); throw error; }
   }
   install() {
     if (this.installPromise) return this.installPromise;

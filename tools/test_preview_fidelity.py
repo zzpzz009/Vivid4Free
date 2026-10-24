@@ -25,10 +25,11 @@ class PreviewFidelityTests(unittest.TestCase):
                 return nodes[key]['widgets_values'][0]
             return value
 
-        added = {'9100', '9101', '9102', '9103', '9104', '9105', '9106'}
+        added = {'9100', '9101', '9102', '9103', '9104', '9105', '9106',
+                 '9200', '9201', '9202', '9203', '9205', '9206', '9207', '9210'}
         self.assertEqual(set(graph) - set(nodes), added)
         exceptions = {('536', 'image'), ('605', 'image'), ('622', 'show_previews'),
-                      ('1294', 'sigmas'), ('1298', 'samples')}
+                      ('1294', 'sigmas'), ('1298', 'samples'), ('1330', 'text_a')}
         for key, compiled in graph.items():
             if key in added:
                 continue
@@ -66,6 +67,25 @@ class PreviewFidelityTests(unittest.TestCase):
         self.assertEqual(graph['622']['inputs']['extension'], 'jpg')
         self.assertEqual(graph['622']['inputs']['quality'], 100)
         self.assertEqual(graph['622']['inputs']['dpi'], 72)
+
+    def test_main_analysis_and_scene_switch_use_current_image(self):
+        graph = compile_graph()
+        self.assertNotIn('1329', graph)
+        for key in ('9200', '9201'):
+            self.assertEqual(graph[key]['class_type'], 'VividLocalCaption')
+            self.assertEqual(graph[key]['inputs']['image'], ['1293', 0])
+            self.assertTrue(graph[key]['inputs']['prompt'])
+        self.assertEqual(graph['1293']['inputs']['image'], ['1279', 0])
+        self.assertEqual(graph['1279']['inputs']['image'], ['536', 0])
+        self.assertEqual(graph['760']['inputs']['image'], ['735', 0])
+        self.assertEqual(graph['9205']['inputs']['on_true'], ['9203', 3])
+        self.assertEqual(graph['9205']['inputs']['on_false'], ['9206', 0])
+        self.assertEqual(graph['9203']['inputs']['text1'], ['9201', 0])
+        self.assertEqual(graph['9203']['inputs']['text2'], ['9207', 0])
+        self.assertEqual(graph['9210']['inputs']['text1'], ['9202', 0])
+        self.assertEqual(graph['9210']['inputs']['text2'], ['9205', 0])
+        self.assertEqual(graph['1330']['inputs']['text_a'], ['9210', 3])
+        self.assertEqual(graph['1330']['inputs']['text_b'], ['762', 0])
 
     def test_first_step_only_continues_the_same_four_step_schedule(self):
         graph = compile_graph()

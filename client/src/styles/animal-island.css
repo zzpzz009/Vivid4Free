@@ -114,6 +114,12 @@ html[data-vivid-skin="animal-island"] :is(input, textarea)::placeholder { color:
 html[data-vivid-skin="animal-island"] .desktop-toolbar { background: var(--animal-bg-color); color: var(--animal-text-color); border-color: var(--island-line); }
 html[data-vivid-skin="animal-island"] .brand strong { font-weight: 700; }
 html[data-vivid-skin="animal-island"] .brand span { color: var(--island-muted); }
+html[data-vivid-skin="animal-island"] .brand .update-entry { color: var(--island-muted); }
+html[data-vivid-skin="animal-island"] .brand .update-entry.has-update { color: var(--animal-primary-color-active); }
+html[data-vivid-skin="animal-island"] .brand .update-entry:hover,
+html[data-vivid-skin="animal-island"] .brand .update-entry[aria-expanded="true"] { background: var(--island-mint); }
+html[data-vivid-skin="animal-island"] .brand .update-entry span { color: inherit; }
+html[data-vivid-skin="animal-island"] .engine-status { color: var(--animal-text-color); }
 html[data-vivid-skin="animal-island"] .toolbar-actions button { color: var(--animal-text-color); }
 html[data-vivid-skin="animal-island"] .toolbar-actions button:hover,
 html[data-vivid-skin="animal-island"] .toolbar-actions button[aria-expanded="true"] { background: var(--island-mint); }

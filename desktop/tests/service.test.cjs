@@ -63,7 +63,7 @@ async function jsonFetch(url, options = {}) {
 test('render submits source strengths and original nodes, with explicit controls applied only to their inputs', async () => {
   const root = freshRoot(); const service = createTaskService(root, 'http://127.0.0.1:1');
   running.push({ close: service.close });
-  const input = { kind: 'render', mainImage: 'main.png', referenceImage: 'reference.png', seed: 123 };
+  const input = { kind: 'render', mainImage: 'main.png', referenceImage: 'reference.png', prompt: 'first user edit', seed: 123 };
   const graph = service.build(input);
   assert.equal(graph['1322'].inputs.value, 1);
   assert.equal(graph['1323'].inputs.value, 0.285403);
@@ -76,15 +76,47 @@ test('render submits source strengths and original nodes, with explicit controls
   assert.equal(graph['9101'].inputs.lora_1, undefined);
   assert.equal(graph['622'].class_type, 'Image Save');
   assert.equal(graph['622'].inputs.extension, 'jpg');
-  assert.deepEqual(graph['1330'].inputs.text_a, ['1329', 0]);
+  assert.deepEqual(graph['1330'].inputs.text_a, ['9210', 3]);
+  assert.equal(graph['1329'], undefined);
+  assert.equal(graph['9205'].class_type, 'Switch any [Crystools]');
+  assert.equal(graph['9205'].inputs.boolean, true);
+  assert.equal(graph['536'].inputs.image, input.mainImage);
+  assert.equal(graph['605'].inputs.image, input.referenceImage);
+  assert.equal(graph['762'].inputs.positive, input.prompt);
   assert.equal(graph['1321'].inputs.noise_seed, 123);
-  const changed = service.build({ ...input, referenceStrength: 0.5, colorMatchStrength: 0.4, addScene: false, mirror: true });
+  const changed = service.build({ ...input, mainImage: 'other-main.png', referenceImage: 'other-reference.png', prompt: 'second user edit', referenceStrength: 0.5, colorMatchStrength: 0.4, addScene: false, mirror: true });
   assert.equal(changed['1322'].inputs.value, 0.5);
   assert.equal(changed['1323'].inputs.value, 0.4);
   assert.equal(changed['735'].inputs.boolean, true);
-  assert.match(changed['1329'].inputs.positive, /不要增加任何配景/);
-  assert.notEqual(graph['1329'].inputs.positive, changed['1329'].inputs.positive);
+  assert.equal(changed['9205'].inputs.boolean, false);
+  assert.equal(changed['536'].inputs.image, 'other-main.png');
+  assert.equal(changed['605'].inputs.image, 'other-reference.png');
+  assert.equal(changed['762'].inputs.positive, 'second user edit');
+  const enabled = service.build({ ...input, addScene: true });
+  assert.equal(enabled['9205'].inputs.boolean, true);
+  assert.equal(service.build(input)['9205'].inputs.boolean, true);
+  assert.equal(changed['9205'].inputs.boolean, false);
+  assert.equal(graph['9205'].inputs.boolean, true);
+  for (const fresh of [graph, enabled]) {
+    assert.equal(fresh['536'].inputs.image, input.mainImage);
+    assert.equal(fresh['605'].inputs.image, input.referenceImage);
+    assert.equal(fresh['762'].inputs.positive, input.prompt);
+    for (const id of ['760', '9200', '9201']) assert.equal(fresh[id].class_type, 'VividLocalCaption');
+    assert.deepEqual(fresh['9200'].inputs.image, ['1293', 0]);
+    assert.deepEqual(fresh['9201'].inputs.image, ['1293', 0]);
+  }
   assert.deepEqual(changed['1294'], graph['1294']);
+});
+test('render rejects a missing or invalid scene switch anchor with a service error', () => {
+  const root = freshRoot();
+  for (const corrupt of [graph => { delete graph['9205']; }, graph => { graph['9205'].class_type = 'easy positive'; }, graph => { delete graph['9205'].inputs.boolean; }]) {
+    const service = createTaskService(root, 'http://127.0.0.1:1', { workflows: {
+      load(kind) { const graph = workflows.load(kind); corrupt(graph); return graph; }
+    } });
+    running.push({ close: service.close });
+    assert.throws(() => service.build({ kind: 'render', mainImage: 'main.png', referenceImage: 'reference.png', addScene: false }),
+      error => error.status === 503 && error.message === '渲染工作流配景开关映射无效');
+  }
 });
 afterEach(async () => {
   await Promise.all(running.splice(0).map(async item => { try { await item.close(); } catch {} }));

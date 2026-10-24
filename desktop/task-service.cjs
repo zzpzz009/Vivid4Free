@@ -155,6 +155,9 @@ function createTaskService(root, comfyUrl = 'http://127.0.0.1:18295', options = 
     try { graph = workflows.load(p.kind); }
     catch { throw fail(503, '客户端内置资源缺失或损坏，请重新安装客户端'); }
     if (p.kind === 'render') {
+      if (graph['9205']?.class_type !== 'Switch any [Crystools]' || typeof graph['9205']?.inputs?.boolean !== 'boolean') {
+        throw fail(503, '渲染工作流配景开关映射无效');
+      }
       graph['536'].inputs.image = p.mainImage;
       graph['605'].inputs.image = p.referenceImage;
       graph['762'].inputs.positive = p.prompt || '';
@@ -162,7 +165,7 @@ function createTaskService(root, comfyUrl = 'http://127.0.0.1:18295', options = 
       graph['735'].inputs.boolean = p.mirror ?? false;
       graph['1322'].inputs.value = p.referenceStrength ?? 1;
       graph['1323'].inputs.value = p.colorMatchStrength ?? .285403;
-      if (p.addScene === false) graph['1329'].inputs.positive = '不增加任何场景，不要增加任何配景，如人、车、植物';
+      graph['9205'].inputs.boolean = p.addScene ?? true;
     } else {
       const anchors = [['48','LoadImage'], ['127','KSampler (Efficient)'], ['130','InjectLatentNoise+'],
         ['271','SeedVR2VideoUpscaler'], ['277','If ANY execute A else B'], ['278','ImpactCompare'],

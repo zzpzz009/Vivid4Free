@@ -1,15 +1,18 @@
 <template>
   <header class="desktop-toolbar">
-    <div class="brand"><img v-if="uiStore.skin === 'animal-island'" class="island-brand-mark" :src="islandLogo" alt="Vivid4Free 海岛 Logo" /><strong>VividDesktop</strong><span>本地 AI 渲染</span><span class="version-pair">客户端 {{ clientVersion || '—' }} · 引擎 {{ runtimeVersion || '未安装' }}</span></div>
+    <div class="brand">
+      <img v-if="uiStore.skin === 'animal-island'" class="island-brand-mark" :src="islandLogo" alt="Vivid4Free 海岛 Logo" />
+      <strong>VividDesktop</strong>
+      <button class="update-entry" :class="{ 'has-update': runtimeUpdateAvailable || clientUpdateAvailable || !runtimeCompatible }" type="button" :aria-expanded="updateOpen" aria-controls="runtime-title" @click="$emit('runtime')">{{ updateLabel }}<span aria-hidden="true">›</span></button>
+    </div>
     <div class="toolbar-actions">
       <button type="button" class="skin-entry" :aria-pressed="uiStore.skin === 'animal-island'" :title="`当前皮肤：${uiStore.skin === 'animal-island' ? '海岛' : '经典深色'}，点击切换`" aria-label="切换海岛皮肤" @click="uiStore.setSkin(uiStore.skin === 'animal-island' ? 'original' : 'animal-island')">
         <span class="skin-swatch" aria-hidden="true" /><span class="skin-label">{{ uiStore.skin === 'animal-island' ? '海岛皮肤' : '经典深色' }}</span>
       </button>
-      <button type="button" class="runtime-entry" :title="`运行环境：${engineLabel}${!runtimeCompatible ? '，必须更新引擎' : runtimeUpdateAvailable ? '，引擎有新版' : ''}`" :aria-label="`运行环境：${engineLabel}${!runtimeCompatible ? '，必须更新引擎' : runtimeUpdateAvailable ? '，引擎有新版' : ''}`" @click="$emit('runtime')">
+      <div class="engine-status" role="status" :title="engineLabel">
         <span class="engine-dot" :class="engineReady ? 'ready' : 'waiting'" aria-hidden="true" />
         <span>{{ engineReady ? '引擎已连接' : engineLabel === '运行包未安装' ? '安装运行包' : '引擎未就绪' }}</span>
-        <span v-if="!runtimeCompatible || runtimeUpdateAvailable" class="update-badge">{{ !runtimeCompatible ? '必须更新引擎' : '引擎有新版' }}</span>
-      </button>
+      </div>
       <span class="toolbar-divider" aria-hidden="true" />
       <button type="button" class="account-entry" :title="accountLabel" :aria-expanded="accountOpen" aria-controls="desktop-account-panel" @click="$emit('account')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg>
@@ -35,13 +38,25 @@ const props = defineProps({
   engineReady: Boolean,
   runtimeUpdateAvailable: Boolean,
   runtimeCompatible: { type: Boolean, default: true },
-  clientVersion: { type: String, default: null },
-  runtimeVersion: { type: String, default: null },
+  availableCompatible: { type: Boolean, default: true },
+  clientUpdateAvailable: Boolean,
+  engineInstalled: { type: Boolean, default: true },
+  updateCheckState: { type: String, default: 'not_checked' },
+  updateOpen: Boolean,
   engineLabel: { type: String, required: true },
   accountLabel: { type: String, required: true },
   accountOpen: Boolean
 })
 defineEmits(['runtime', 'account'])
+const updateLabel = computed(() => {
+  if (props.clientUpdateAvailable && (props.runtimeUpdateAvailable || !props.runtimeCompatible)) return '客户端和引擎可更新'
+  if (props.clientUpdateAvailable) return '客户端可更新'
+  if (!props.runtimeCompatible) return '需更新引擎'
+  if (!props.engineInstalled) return '安装引擎'
+  if (props.runtimeUpdateAvailable && !props.availableCompatible) return '引擎更新待匹配'
+  if (props.runtimeUpdateAvailable) return '引擎可更新'
+  return ({ checking: '正在检查更新…', checked: '暂无更新', failed: '更新检查失败' })[props.updateCheckState] || '检查更新'
+})
 const accountText = computed(() => props.accountLabel === '账号：未登录' ? '登录 / 注册' : props.accountLabel.replace(/^账号：/, ''))
 const desktopWindow = Boolean(window.vividDesktop?.windowAction)
 const maximized = ref(false)
@@ -58,7 +73,8 @@ onBeforeUnmount(() => unsubscribeWindow?.())
 <style scoped>
 .update-badge{padding:3px 5px;border-radius:4px;background:#e6bc6622;color:#e6bc66;font-size:10px}
 .desktop-toolbar{height:52px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 18px;border-bottom:1px solid #393640;background:#201e25;-webkit-app-region:drag;user-select:none}
-.brand,.toolbar-actions{display:flex;align-items:center}.brand{gap:14px;white-space:nowrap}.brand span{font-size:12px;color:#aaa5b2}.toolbar-actions{gap:8px;min-width:0}
+.brand,.toolbar-actions{display:flex;align-items:center}.brand{gap:10px;white-space:nowrap;min-width:0}.brand strong{font-size:16px;line-height:1;margin:0}.toolbar-actions{gap:8px;min-width:0}
+.brand .update-entry{-webkit-app-region:no-drag;display:inline-flex;align-items:center;gap:7px;min-height:30px;padding:0 8px;margin-left:4px;border:0;border-radius:6px;background:transparent;color:var(--schemes-on-surface-variant,#aaa5b2);font:inherit;font-size:12px;line-height:1;cursor:pointer}.brand .update-entry.has-update{color:var(--schemes-primary,#b7a5ff)}.brand .update-entry:hover,.brand .update-entry[aria-expanded=true]{background:var(--schemes-surface-container-high,#2d2a33)}.brand .update-entry:focus-visible{outline:2px solid var(--schemes-primary);outline-offset:2px}.brand .update-entry span{color:inherit;font-size:16px;line-height:1}.engine-status{display:inline-flex;align-items:center;gap:8px;padding:0 10px;font-size:12px;line-height:1;white-space:nowrap;color:var(--schemes-on-surface-variant)}
 .toolbar-actions{-webkit-app-region:no-drag}.toolbar-actions button{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;padding:0 10px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--schemes-on-surface-variant);font-size:12px;line-height:1;cursor:pointer;white-space:nowrap}
 .toolbar-actions button:hover,.toolbar-actions button[aria-expanded=true]{background:#2d2a33}.toolbar-actions button:focus-visible{outline:2px solid var(--schemes-primary);outline-offset:2px}.toolbar-actions svg{width:16px;height:16px;flex:none}
 .engine-dot{width:6px;height:6px;flex:none;border-radius:50%}.engine-dot.ready{background:#74d29a}.engine-dot.waiting{background:#e6bc66}.toolbar-divider{height:16px;width:1px;background:#393640;flex:none}
@@ -67,5 +83,5 @@ onBeforeUnmount(() => unsubscribeWindow?.())
 .island-brand-mark{width:32px;height:28px;object-fit:contain;flex:none}
 .skin-entry[aria-pressed=true] .skin-swatch{background:linear-gradient(135deg,var(--animal-primary-color) 50%,var(--island-paper) 50%)}
 @media(max-width:767px){.skin-label{display:none}}
-@media(max-width:767px){.desktop-toolbar{padding:0 12px;gap:8px}.brand span{display:none}.brand{font-size:14px}.toolbar-actions{gap:4px}.toolbar-actions button{padding:0 8px}.account-name{max-width:88px}}
+@media(max-width:767px){.desktop-toolbar{padding:0 12px;gap:8px}.brand{gap:5px}.brand strong{font-size:14px}.brand .update-entry{padding:0 4px;margin-left:0;font-size:11px}.toolbar-actions{gap:4px}.toolbar-actions button{padding:0 8px}.engine-status{padding:0 4px}.account-name{max-width:88px}}
 </style>

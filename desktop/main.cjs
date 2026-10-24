@@ -224,8 +224,9 @@ else {
     ipcMain.handle('client:open-update', async event => {
       sender(event);
       try {
-        if (!clientPolicy.clientDownloadUrl) throw new Error('客户端更新入口尚未配置');
-        const url = new URL(clientPolicy.clientDownloadUrl);
+        const downloadUrl = manager.status().clientRelease?.downloadUrl || clientPolicy.clientDownloadUrl;
+        if (!downloadUrl) throw new Error('客户端更新入口尚未配置');
+        const url = new URL(downloadUrl);
         if (url.protocol !== 'https:' || url.username || url.password) throw new Error('客户端更新入口必须使用 HTTPS');
         await shell.openExternal(url.href);
         return { opened: true, message: '客户端更新页面已打开，安装新版客户端后请按兼容提示更新 引擎 ZIP' };
