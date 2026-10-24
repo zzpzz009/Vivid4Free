@@ -24,6 +24,7 @@
     />
 
     <WorkspaceCanvasPanel
+      :key="engineReady"
       ref="canvasPanel"
       :original-image="previewOriginalImage"
       :result-image="previewimgurl"
