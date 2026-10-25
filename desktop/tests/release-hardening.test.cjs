@@ -45,13 +45,25 @@ test('unsafe fallback configuration is rejected before making requests', async (
   } finally { fs.rmSync(base, { recursive: true, force: true }); }
 });
 
-test('generated compatibility files are current and missing signing credentials cannot replace an installer', () => {
+test('generated metadata is current and builds without credentials select unsigned mode', () => {
   require('../../tools/generate-release-metadata.cjs').generate(true);
   const env = { ...process.env };
   for (const name of ['CSC_LINK', 'WIN_CSC_LINK', 'VIVID_SIGNING_CERT_SHA1']) delete env[name];
-  const result = spawnSync(process.execPath, [path.join(__dirname, '../../tools/build-installer.cjs')], { env, encoding: 'utf8' });
-  assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /公开发行构建需要正式代码签名证书/);
+  const result = spawnSync(process.execPath, [path.join(__dirname, '../../tools/build-installer.cjs'), '--check'], { env, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).signing, 'unsigned');
+  env.VIVID_SIGNING_CERT_SHA1 = 'test-certificate-selector';
+  const signing = spawnSync(process.execPath, [path.join(__dirname, '../../tools/build-installer.cjs'), '--check'], { env, encoding: 'utf8' });
+  assert.equal(signing.status, 0, signing.stderr);
+  assert.equal(JSON.parse(signing.stdout).signing, 'authenticode');
+});
+
+test('signature hooks skip unsigned builds but keep the standalone verifier strict', async () => {
+  const hook = require('../build/verify-signature.cjs');
+  const packager = { config: { win: { signExecutable: false } } };
+  await hook({ packager, appOutDir: 'no-signed-app' });
+  await hook({ packager, file: 'no-signed-installer.exe' });
+  assert.equal(require('../../tools/installer/electron-builder.json').win.forceCodeSigning, false);
 });
 
 test('installed electron-builder resolves both signature hooks within its desktop workspace', async () => {

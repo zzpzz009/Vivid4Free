@@ -29,8 +29,8 @@
   "win": {
     "target": [{ "target": "nsis", "arch": ["x64"] }],
     "icon": "assets/app-icon.ico",
-    "signExecutable": true,
-    "forceCodeSigning": true,
+    "signExecutable": false,
+    "forceCodeSigning": false,
     "signtoolOptions": {
       "signingHashAlgorithms": ["sha256"],
       "rfc3161TimeStampServer": "http://timestamp.digicert.com"

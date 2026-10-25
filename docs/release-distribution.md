@@ -24,9 +24,9 @@
 
 ## Windows 发行签名
 
-`npm --prefix desktop run pack` 要求正式签名凭据，并启用 electron-builder 26 的 `signExecutable` 与 `forceCodeSigning`。使用私有环境中的 `WIN_CSC_LINK` / `CSC_LINK` 和对应密码变量，或 Windows 证书库的 `VIVID_SIGNING_CERT_SHA1`；不得将证书、私钥或密码写入仓库。
+`npm --prefix desktop run pack` 在未配置证书时按未签名方式打包，固定 `latest.json` 记录 `signed: false`，发布说明须明确未签名状态。配置私有环境中的 `WIN_CSC_LINK` / `CSC_LINK` 和对应密码变量，或 Windows 证书库的 `VIVID_SIGNING_CERT_SHA1` 时，构建入口启用 electron-builder 的 `signExecutable` 与 `forceCodeSigning`；不得将证书、私钥或密码写入仓库。
 
-使用标准 NSIS 脚本时，electron-builder 会签署主程序、卸载程序和最终安装包。不要把现有 include 换成绕过卸载程序签名的自定义 NSIS script。SHA256 配合 RFC3161 时间戳；打包后的 EXE 和最终安装包还须通过 Windows Authenticode 信任及时间戳验证后才更新固定 latest 入口。没有证书时构建提前失败，保留已有安装包；真实受信任签名和 SmartScreen 表现尚需正式证书与实际安装验收，不能以配置变更冒充完成。
+配置证书时，标准 NSIS 构建会签署主程序、卸载程序和最终安装包，采用 SHA256 与 RFC3161 时间戳，并在更新固定 latest 入口前验证 Windows Authenticode 信任及时间戳；签名或验证失败仍中止构建。未签名构建跳过签名钩子，继续执行原安装目标保护、构建和哈希核验；不能据此宣称通过发布者信任或 SmartScreen 验证。两种方式均保留标准 NSIS include，不改用自定义卸载脚本。
 
 根 LICENSE 延续现有自有代码 UNLICENSED 状态，不替版权方选择新的开源授权。引擎声明及尚未完成的来源/授权核查见根 `ENGINE-NOTICES.md`。
 

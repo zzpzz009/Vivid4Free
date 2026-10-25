@@ -7,6 +7,7 @@ function verify(file) {
     { stdio: 'inherit', windowsHide: true, timeout: 60000 });
 }
 module.exports = async context => {
+  if (context.packager?.config?.win?.signExecutable === false) return;
   if (context.file) {
     if (context.file.toLowerCase().endsWith('.exe')) verify(context.file);
   } else {

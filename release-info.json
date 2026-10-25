@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "clientVersion": "0.7.2",
-  "tag": "v0.7.2",
-  "releaseDate": "2026-10-25",
+  "clientVersion": "0.7.3",
+  "tag": "v0.7.3",
+  "releaseDate": "2026-10-26",
   "channel": "preview",
   "delivery": "github-release",
   "platform": "win32-x64",
