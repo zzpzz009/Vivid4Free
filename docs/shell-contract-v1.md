@@ -47,11 +47,11 @@
 | `openOutput` / `output:open` | () | signed-in | **string**：空串表示打开成功，非空为宿主打开失败说明；打开当前运行包（否则用户目录）的 output。底层异常可 R。 |
 | `runtimeStatus` / `runtime:status` | () | signed-in | `RuntimeStatus` 加 `engineReady:boolean,clientUpdateConfigured:boolean`。 |
 | `runtimeCheck` / `runtime:check` | () | signed-in | `RuntimeStatus`（不保证带上述两个扩展字段）；失败先更新状态再 R。并发 check 合并；安装中拒绝。不是安装动作。 |
-| `runtimeOpenDownload` / `runtime:open-download` | `provider: 'quark' \| 'baidu'` | signed-in | `{opened:boolean,message:string}`。当前 baidu 明确未开放；quark 需已检查且有配置，操作忙时失败；未知 provider 作为未配置失败。打开页面不代表 ZIP 已下载。 |
+| `runtimeOpenDownload` / `runtime:open-download` | `provider: 'quark' \| 'baidu', noticeAccepted: true` | signed-in | `{opened:boolean,message:string}`。每次跳转前界面展示根 NOTICE 全文，用户主动勾选同意；主进程严格要求 `noticeAccepted === true`，未同意不打开页面。当前 baidu 明确未开放；quark 需已检查且有配置，操作忙时失败；未知 provider 作为未配置失败。打开页面后由用户手动下载 ZIP，不自动下载或安装。 |
 | `clientOpenUpdate` / `client:open-update` | () | signed-in | `{opened:boolean,message:string}`。选择已检查发布链接或内置策略链接，要求 HTTPS 且无用户名密码；仅打开页面。 |
 | `runtimeInstall` / `runtime:install` | () | signed-in | `{runtime:RuntimeStatus,engine:{ready:boolean,error:string\|null}}`；安装/校验/启动失败 R。已有 install 合并，check 中拒绝。未检查则先 check；只有网盘入口时提示手动下载后导入。暂停导致原安装调用拒绝，之后读状态。 |
 | `runtimePause` / `runtime:pause` | () | signed-in | **boolean**：存在下载 controller 时发 abort 并返回 true，否则 false。true 表示请求暂停，**不代表所有安装/校验/激活均已停止**；不是任务取消。 |
-| `runtimeImportArchive` / `runtime:import-archive` | () | signed-in | ZIP 文件选择；取消 `{cancelled:true}`；成功 `RuntimeStatus`。需独立存储目录、有效官方包结构与兼容性；校验/激活失败 R。不能从 UI 传任意路径绕过选择器。 |
+| `runtimeImportArchive` / `runtime:import-archive` | `file: absoluteZipPath` | signed-in | 用户手动填写或粘贴已下载 ZIP 的完整路径；不弹出文件选择器、不自动搜索或下载。主进程拒绝缺失、非字符串、NUL、相对路径和非 `.zip` 后缀。成功 `RuntimeStatus`。复用 `manager.importArchive(file)` 的实体文件、官方包结构、发布哈希、独立存储目录、兼容性、激活与回退校验；失败 R。 |
 | `runtimeConnectDirectory` / `runtime:connect-directory` | () | signed-in | 目录选择；取消 `{cancelled:true}`；成功 `RuntimeStatus`。须有效官方 runtime.json，普通 ComfyUI 目录不能接入；校验/激活失败 R。 |
 | `chooseRuntimeDirectory` / `runtime:choose-directory` | () | signed-in | `{cancelled:boolean,status:RuntimeStatus}`。取消也带当前状态；目录非法时宿主显示警告并重开选择器，直到有效或取消。 |
 | `startEngine` / `runtime:start-engine` | () | signed-in | `{ready:true,message:string}` 或 `{ready:false,message?:string,error?:string}`；实际启动/能力检查失败通常 R。未安装、兼容不成立等可 resolve ready:false。同一根目录启动合并，不同根目录并发启动拒绝。 |

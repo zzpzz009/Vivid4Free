@@ -36,15 +36,17 @@ describe('desktop host boundary', () => {
     const credentials = { username: 'test-user', password: 'test-only-value' }
     const result = { status: 'signed_in' }
     const bridge = { accountLogin: vi.fn(function (input) { expect(this).toBe(bridge); expect(input).toBe(credentials); return result }),
-      windowAction: vi.fn(), runtimeOpenDownload: vi.fn(), runtimeCheck: vi.fn() }
+      windowAction: vi.fn(), runtimeOpenDownload: vi.fn(), runtimeImportArchive: vi.fn(), runtimeCheck: vi.fn() }
     const adapter = createElectronHost(() => bridge)
     expect(await adapter.accountLogin(credentials)).toBe(result)
     expect(bridge.accountLogin).toHaveBeenCalledWith(credentials)
     await adapter.windowAction('maximize')
-    await adapter.runtimeOpenDownload('quark')
+    await adapter.runtimeOpenDownload('quark', true)
+    await adapter.runtimeImportArchive('D:\\下载\\引擎.zip')
     await adapter.runtimeCheck()
     expect(bridge.windowAction).toHaveBeenCalledWith('maximize')
-    expect(bridge.runtimeOpenDownload).toHaveBeenCalledWith('quark')
+    expect(bridge.runtimeOpenDownload).toHaveBeenCalledWith('quark', true)
+    expect(bridge.runtimeImportArchive).toHaveBeenCalledWith('D:\\下载\\引擎.zip')
     expect(bridge.runtimeCheck).toHaveBeenCalledWith()
   })
 

@@ -22,11 +22,11 @@
     { "name": "openOutput", "channel": "output:open", "access": "signed-in", "args": [], "returns": "string" },
     { "name": "runtimeStatus", "channel": "runtime:status", "access": "signed-in", "args": [], "returns": "RuntimeStatus & {engineReady:boolean,clientUpdateConfigured:boolean}" },
     { "name": "runtimeCheck", "channel": "runtime:check", "access": "signed-in", "args": [], "returns": "RuntimeStatus" },
-    { "name": "runtimeOpenDownload", "channel": "runtime:open-download", "access": "signed-in", "args": ["quark|baidu"], "returns": "{opened:boolean,message:string}" },
+    { "name": "runtimeOpenDownload", "channel": "runtime:open-download", "access": "signed-in", "args": ["quark|baidu", "noticeAccepted:true"], "returns": "{opened:boolean,message:string}" },
     { "name": "clientOpenUpdate", "channel": "client:open-update", "access": "signed-in", "args": [], "returns": "{opened:boolean,message:string}" },
     { "name": "runtimeInstall", "channel": "runtime:install", "access": "signed-in", "args": [], "returns": "{runtime:RuntimeStatus,engine:{ready:boolean,error:string|null}}" },
     { "name": "runtimePause", "channel": "runtime:pause", "access": "signed-in", "args": [], "returns": "boolean" },
-    { "name": "runtimeImportArchive", "channel": "runtime:import-archive", "access": "signed-in", "args": [], "returns": "RuntimeStatus|{cancelled:true}" },
+    { "name": "runtimeImportArchive", "channel": "runtime:import-archive", "access": "signed-in", "args": ["file:absoluteZipPath"], "returns": "RuntimeStatus" },
     { "name": "runtimeConnectDirectory", "channel": "runtime:connect-directory", "access": "signed-in", "args": [], "returns": "RuntimeStatus|{cancelled:true}" },
     { "name": "chooseRuntimeDirectory", "channel": "runtime:choose-directory", "access": "signed-in", "args": [], "returns": "{cancelled:boolean,status:RuntimeStatus}" },
     { "name": "startEngine", "channel": "runtime:start-engine", "access": "signed-in", "args": [], "returns": "{ready:boolean,message?:string,error?:string}" }

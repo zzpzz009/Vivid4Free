@@ -2,13 +2,23 @@
   <section v-if="open" ref="surface" class="runtime-backdrop" role="presentation" @click.self="closePanel()">
     <article class="runtime-panel" role="dialog" aria-modal="true" aria-labelledby="runtime-title">
       <header class="panel-header">
-        <h1 id="runtime-title">更新与安装</h1>
+        <h1 id="runtime-title">{{ pendingProvider ? '第三方组件与模型声明' : '更新与安装' }}</h1>
         <div class="panel-header-actions">
-          <button class="version-action" type="button" :disabled="locked" @click="checkRuntime">{{ busyAction === 'checking' ? '检查中…' : '检查更新' }}</button>
+          <button v-if="!pendingProvider" class="version-action" type="button" :disabled="locked" @click="checkRuntime">{{ busyAction === 'checking' ? '检查中…' : '检查更新' }}</button>
           <button class="icon-button" type="button" aria-label="关闭更新与安装面板" data-runtime-close @click="closePanel()">×</button>
         </div>
       </header>
-      <div class="panel-body">
+      <div v-if="pendingProvider" class="panel-body">
+        <p class="consent-intro">请阅读以下声明。确认同意后才会打开网盘页面。</p>
+        <pre class="license-notice" tabindex="0" aria-label="第三方组件与模型声明全文">{{ thirdPartyNotice }}</pre>
+        <p class="helper-text">ZIP 需由你在网盘手动下载；完成后返回此处，手动填写文件完整路径，再校验并安装，无需解压。</p>
+        <label class="consent-check"><input ref="consentCheckbox" v-model="noticeAccepted" type="checkbox">我已阅读并同意《第三方组件与模型声明》</label>
+        <div class="consent-actions">
+          <button type="button" class="button button-secondary" @click="cancelDownload">返回</button>
+          <button type="button" class="button import-button" :disabled="!noticeAccepted || locked" @click="confirmDownload">同意并前往网盘 ↗</button>
+        </div>
+      </div>
+      <div v-else class="panel-body">
         <div class="version-row">
           <div><span class="version-label">客户端</span><strong>{{ status?.clientVersion || '—' }}</strong></div>
           <div><span class="version-label">引擎</span><strong>{{ status?.version || '未安装' }}</strong></div>
@@ -47,11 +57,17 @@
             <span v-if="source.configured && source.extractionCode">提取码：{{ source.extractionCode }}</span>
           </div>
         </div>
-        <button type="button" class="button import-button" :disabled="locked || status?.availableCompatible === false" @click="importArchive">{{ busyAction === 'importing' ? '正在校验 / 安装…' : '导入 ZIP 并安装' }}</button>
-        <p class="helper-text">用网盘官方客户端下载后导入，无需解压。</p>
+        <p class="helper-text">阅读并同意声明后前往网盘，手动下载官方引擎 ZIP。</p>
         <p v-if="status?.compatibilityNote" class="helper-text">{{ status.compatibilityNote }}</p>
         <p v-if="status?.available" class="helper-text">{{ packageHint }}</p>
         </section>
+
+        <form v-if="needsEnginePackage || manualImport" class="archive-import" @submit.prevent="importArchive">
+          <label for="runtime-archive-path">已下载的引擎 ZIP 完整路径</label>
+          <input id="runtime-archive-path" ref="archiveInput" v-model="archivePath" type="text" placeholder="例如：D:\Downloads\vivid-comfy.zip" :disabled="locked" autocomplete="off" spellcheck="false" aria-describedby="runtime-archive-help">
+          <p id="runtime-archive-help" class="helper-text">下载完成后手动填写或粘贴 ZIP 文件路径，无需解压。客户端不会自动下载。</p>
+          <button type="submit" class="button import-button" :disabled="locked || !validArchivePath || status?.availableCompatible === false">{{ busyAction === 'importing' ? '正在校验 / 安装…' : '校验 ZIP 并安装' }}</button>
+        </form>
 
         <div v-if="showProgress" class="download-block">
           <div class="download-labels"><span>{{ progressLabel }}</span><span>{{ progress }}%</span></div>
@@ -70,7 +86,7 @@
           <p v-if="status?.available" class="quiet-message">导入后校验并切换，失败保留旧环境。</p>
           <p v-else class="quiet-message">未获取发布信息时，仅校验 ZIP 内部清单与文件。</p>
           <div class="secondary-actions">
-            <button v-if="!needsEnginePackage" type="button" class="text-button" :disabled="locked" @click="importArchive">导入引擎 ZIP</button>
+            <button v-if="!needsEnginePackage" type="button" class="text-button" :disabled="locked" @click="showArchiveInput">导入引擎 ZIP</button>
             <button type="button" class="text-button" :disabled="locked" @click="connectDirectory">接入已有环境</button>
             <button v-if="status?.installed" type="button" class="text-button" :disabled="locked || status?.runtimeCompatible === false" @click="startEngine">启动 / 重试引擎</button>
           </div>
@@ -86,16 +102,26 @@ import { Progress as IslandProgress } from 'animal-island-vue'
 import { useUIStore } from '@/stores/useUIStore.js'
 import { useRuntimeEnvironment } from '@/composables/useRuntimeEnvironment.js'
 import { runtimePackageHint } from '@/utils/runtimeGuidance.js'
+import thirdPartyNotice from '../../../NOTICE?raw'
 
 const props = defineProps({ open: { type: Boolean, default: false } })
 const emit = defineEmits(['close', 'status'])
 const uiStore = useUIStore()
 const surface = ref(null)
+const pendingProvider = ref('')
+const noticeAccepted = ref(false)
+const consentCheckbox = ref(null)
+const archiveInput = ref(null)
+const archivePath = ref('')
+const manualImport = ref(false)
+const normalizedArchivePath = computed(() => archivePath.value.trim().replace(/^"(.*)"$/, '$1'))
+const validArchivePath = computed(() => /^(?:[a-z]:[\\/]|\\\\[^\\]+\\[^\\]+[\\/]).+\.zip$/i.test(normalizedArchivePath.value) && !normalizedArchivePath.value.includes('\0'))
+let downloadOpener
 let opener
 function closePanel(restore = true) { emit('close'); if (restore && opener?.isConnected) opener.focus() }
-function onEscape(event) { if (props.open && event.key === 'Escape') { event.preventDefault(); closePanel() } }
+function onEscape(event) { if (props.open && event.key === 'Escape') { event.preventDefault(); if (pendingProvider.value) cancelDownload(); else closePanel() } }
 function onOutside(event) { if (props.open && !surface.value?.querySelector('.runtime-panel')?.contains(event.target) && !event.target.closest?.('.update-entry')) closePanel(false) }
-watch(() => props.open, async open => { if (open) { opener = document.activeElement; await nextTick(); surface.value?.querySelector('[data-runtime-close]')?.focus() } })
+watch(() => props.open, async open => { if (open) { opener = document.activeElement; await nextTick(); surface.value?.querySelector('[data-runtime-close]')?.focus() } else { pendingProvider.value = ''; noticeAccepted.value = false } })
 onMounted(() => { document.addEventListener('keydown', onEscape); document.addEventListener('pointerdown', onOutside, true) })
 onBeforeUnmount(() => { document.removeEventListener('keydown', onEscape); document.removeEventListener('pointerdown', onOutside, true) })
 const runtime = useRuntimeEnvironment()
@@ -132,16 +158,41 @@ async function operate(action, method, ...args) {
   return result
 }
 function checkRuntime() { return operate('checking', 'runtimeCheck') }
-function openDownload(provider) { return operate(`opening-${provider}`, 'runtimeOpenDownload', provider) }
+async function openDownload(provider) {
+  if (locked.value) return
+  downloadOpener = document.activeElement
+  noticeAccepted.value = false
+  pendingProvider.value = provider
+  await nextTick()
+  consentCheckbox.value?.focus()
+}
+async function cancelDownload() {
+  pendingProvider.value = ''
+  noticeAccepted.value = false
+  await nextTick()
+  if (downloadOpener?.isConnected) downloadOpener.focus()
+}
+async function confirmDownload() {
+  if (!noticeAccepted.value || !pendingProvider.value || locked.value) return
+  const provider = pendingProvider.value
+  pendingProvider.value = ''
+  noticeAccepted.value = false
+  await operate(`opening-${provider}`, 'runtimeOpenDownload', provider, true)
+  await nextTick()
+  archiveInput.value?.focus()
+}
 function updateClient() { return operate('opening-client-update', 'clientOpenUpdate') }
 function chooseDirectory() { return operate('choosing-directory', 'chooseRuntimeDirectory') }
 async function importArchive() {
+  if (locked.value || !validArchivePath.value || status.value?.availableCompatible === false) return
+  const file = normalizedArchivePath.value
   if (!status.value?.storageDir) {
     await chooseDirectory()
     if (!status.value?.storageDir) return
   }
-  return operate('importing', 'runtimeImportArchive')
+  return operate('importing', 'runtimeImportArchive', file)
 }
+async function showArchiveInput() { manualImport.value = true; await nextTick(); archiveInput.value?.focus() }
 function connectDirectory() { return operate('connecting', 'runtimeConnectDirectory') }
 function startEngine() { return operate('starting', 'startEngine') }
 watch(() => props.open, open => { if (open) { runtime.startPolling(); void refresh() } else runtime.stopPolling() }, { immediate: true })
@@ -150,6 +201,7 @@ onMounted(async () => { await refresh(); if (status.value?.downloadConfigured) a
 
 <style scoped>
 .runtime-backdrop{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;padding:24px;background:#100e14aa;backdrop-filter:blur(5px)}
+.consent-intro,.consent-check,.archive-import label{font-size:13px;line-height:1.7}.license-notice{max-height:40vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit;font-size:12px;line-height:1.8;padding:14px;border:1px solid var(--schemes-outline-variant,#48434f);border-radius:9px;background:var(--schemes-surface,#17151d)}.consent-check{display:flex;align-items:flex-start;gap:8px;margin:18px 0}.consent-check input{margin-top:5px;accent-color:var(--schemes-primary,#8068e2)}.consent-actions{display:flex;gap:10px}.consent-actions .import-button{width:auto;flex:1}.archive-import{display:grid;gap:10px;margin-top:18px}.archive-import input{width:100%;box-sizing:border-box;padding:11px;border:1px solid var(--schemes-outline-variant,#48434f);border-radius:8px;background:var(--schemes-surface,#17151d);color:inherit;font:inherit;font-size:13px}.archive-import .helper-text{margin:0;text-align:left}
 .runtime-panel{width:min(460px,100%);max-height:calc(100vh - 48px);overflow:auto;border:1px solid var(--schemes-outline-variant,#48434f);border-radius:18px;background:var(--schemes-surface-container,#211f27);color:var(--schemes-on-surface,#f5f1f8);box-shadow:0 24px 80px #0005}
 .panel-header-actions{display:flex;align-items:center;gap:16px}.panel-header-actions .version-action{font-size:12px}.client-update-card{padding:0 0 20px;margin-bottom:20px;border-bottom:1px solid var(--schemes-outline-variant,#393640)}.client-update-card h2,.engine-release h2{margin:0 0 10px;font-size:14px;font-weight:650;line-height:1.5}.release-notes{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.7;color:var(--schemes-on-surface-variant,#aaa5b1)}.release-notes li+li{margin-top:4px}.release-compatibility{margin:0 0 14px;font-size:12px;line-height:1.7;color:var(--schemes-on-surface-variant,#aaa5b1)}.client-download{width:100%}.client-update-state{padding-bottom:16px;margin-bottom:18px;border-bottom:1px solid var(--schemes-outline-variant,#393640)}
 .panel-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0}.panel-header h1{margin:0;font-size:20px;font-weight:650}.icon-button{width:30px;height:30px;border:0;border-radius:50%;background:transparent;color:inherit;font-size:24px;cursor:pointer}

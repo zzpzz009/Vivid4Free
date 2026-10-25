@@ -24,11 +24,11 @@ contextBridge.exposeInMainWorld('vividDesktop', Object.freeze({
   openOutput: () => ipcRenderer.invoke('output:open'),
   runtimeStatus: () => ipcRenderer.invoke('runtime:status'),
   runtimeCheck: () => ipcRenderer.invoke('runtime:check'),
-  runtimeOpenDownload: provider => ipcRenderer.invoke('runtime:open-download', provider),
+  runtimeOpenDownload: (provider, noticeAccepted) => ipcRenderer.invoke('runtime:open-download', provider, noticeAccepted),
   clientOpenUpdate: () => ipcRenderer.invoke('client:open-update'),
   runtimeInstall: () => ipcRenderer.invoke('runtime:install'),
   runtimePause: () => ipcRenderer.invoke('runtime:pause'),
-  runtimeImportArchive: () => ipcRenderer.invoke('runtime:import-archive'),
+  runtimeImportArchive: file => ipcRenderer.invoke('runtime:import-archive', file),
   runtimeConnectDirectory: () => ipcRenderer.invoke('runtime:connect-directory'),
   chooseRuntimeDirectory: () => ipcRenderer.invoke('runtime:choose-directory'),
   startEngine: () => ipcRenderer.invoke('runtime:start-engine')

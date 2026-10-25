@@ -22,7 +22,8 @@
     "compatibleClientVersions": [
       "0.6.1",
       "0.7.0",
-      "0.7.1"
+      "0.7.1",
+      "0.7.2"
     ],
     "archive": {
       "url": null,
@@ -73,9 +74,12 @@
       "导入 ZIP 后自动校验、安装并切换新版，失败时保留旧环境。"
     ],
     "clientRelease": {
-      "version": "0.7.1",
-      "downloadUrl": "https://github.com/zzpzz009/Vivid4Free/releases/tag/v0.7.1",
+      "version": "0.7.2",
+      "downloadUrl": "https://github.com/zzpzz009/Vivid4Free/releases/tag/v0.7.2",
       "notes": [
+        "下载引擎前先阅读并同意第三方组件与模型声明，再跳转网盘手动下载。",
+        "下载完成后手动填写 ZIP 完整路径，校验通过后安装；失败保留旧环境。",
+        "完善更新分发、任务恢复和客户端验收接口。",
         "顶部没有更新时淡显当前客户端版本号，点击可查看更新与安装；有更新时明确提示。",
         "新增经典深色与海岛全屏登录页，登录后播放开屏动画进入工作区。",
         "统一查看客户端与引擎更新、更新内容及兼容关系。",

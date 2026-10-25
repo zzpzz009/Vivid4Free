@@ -74,6 +74,10 @@ test('preload is a closed 22-operation and 2-event boundary matching the publish
   for (const operation of contract.operations) {
     await bridge[operation.name]('input'); assert.equal(calls.at(-1)[0], operation.channel);
   }
+  await bridge.runtimeOpenDownload('quark', true);
+  assert.deepEqual(calls.at(-1), ['runtime:open-download', 'quark', true]);
+  await bridge.runtimeImportArchive('D:\\下载\\引擎.zip');
+  assert.deepEqual(calls.at(-1), ['runtime:import-archive', 'D:\\下载\\引擎.zip']);
   for (const event of contract.events) {
     const payloads = []; const off = bridge[event.name](value => payloads.push(value));
     const payload = { value: 'public' }; renderer.emit(event.channel, { sender: 'private-native-object' }, payload);
@@ -123,11 +127,42 @@ test('window controls preserve fullscreen restoration, payload and void results'
 test('native picker cancellation remains distinct from success and failure', async () => {
   const f = fixture(); await f.open(); f.setSignedIn(true);
   assert.deepEqual(await f.invoke('gallery:import'), { added: 0, cancelled: true });
-  for (const channel of ['runtime:import-archive', 'runtime:connect-directory']) assert.deepEqual(await f.invoke(channel), { cancelled: true });
+  assert.deepEqual(await f.invoke('runtime:connect-directory'), { cancelled: true });
   assert.deepEqual(await f.invoke('runtime:choose-directory'), { cancelled: true, status: f.runtime });
   f.dialog.showOpenDialog = async () => ({ canceled: false, filePaths: ['/selected/file.zip'] });
-  assert.deepEqual(await f.invoke('runtime:import-archive'), { ...f.runtime, file: '/selected/file.zip' });
   assert.deepEqual(await f.invoke('runtime:connect-directory'), { ...f.runtime, directory: '/selected/file.zip' });
+});
+
+test('engine download requires explicit notice consent on every native call', async () => {
+  const f = fixture(); await f.open(); f.setSignedIn(true);
+  let sourceCalls = 0;
+  f.manager.downloadSource = provider => { assert.equal(provider, 'quark'); sourceCalls++; return { label: '夸克', url: 'https://pan.quark.cn/s/fixture' }; };
+  for (const accepted of [undefined, false, 'true', 1, {}]) {
+    const result = await f.invoke('runtime:open-download', 'quark', accepted);
+    assert.equal(result.opened, false); assert.match(result.message, /阅读并同意/);
+  }
+  assert.equal(sourceCalls, 0); assert.deepEqual(f.opened, []);
+  assert.equal((await f.invoke('runtime:open-download', 'quark', true)).opened, true);
+  assert.deepEqual(f.opened, ['https://pan.quark.cn/s/fixture']);
+  assert.equal((await f.invoke('runtime:open-download', 'quark')).opened, false);
+  assert.equal(f.opened.length, 1);
+});
+
+test('ZIP import requires an explicit absolute ZIP path and reuses manager validation without a picker', async () => {
+  const f = fixture(); await f.open(); f.setSignedIn(true);
+  f.dialog.showOpenDialog = () => { throw new Error('must not open file picker'); };
+  const files = [];
+  f.manager.importArchive = async file => { files.push(file); return f.runtime; };
+  for (const file of [undefined, '', {}, 'relative.zip', path.join(os.tmpdir(), 'folder'), path.join(os.tmpdir(), 'a.zip.part'), `${os.tmpdir()}\0bad.zip`]) {
+    await assert.rejects(f.invoke('runtime:import-archive', file), /ZIP 完整路径/);
+  }
+  assert.deepEqual(files, []);
+  const file = path.join(os.tmpdir(), '下载 引擎.ZIP');
+  assert.strictEqual(await f.invoke('runtime:import-archive', file), f.runtime);
+  assert.deepEqual(files, [file]);
+  const failure = new Error('checksum failed');
+  f.manager.importArchive = async () => { throw failure; };
+  await assert.rejects(f.invoke('runtime:import-archive', file), error => error === failure);
 });
 
 test('runtime snapshots observe live readiness and preserve operation-specific results', async () => {

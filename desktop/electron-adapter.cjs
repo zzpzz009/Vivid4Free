@@ -133,12 +133,13 @@ function createElectronAdapter(electron = require('electron')) {
         } catch (error) { return { opened: false, message: error.message || '客户端更新入口暂时无法打开' }; }
       });
       ipcMain.handle('runtime:check', async event => { signedInSender(event); return manager.check(); });
-      ipcMain.handle('runtime:open-download', async (event, provider) => {
+      ipcMain.handle('runtime:open-download', async (event, provider, noticeAccepted) => {
         signedInSender(event);
         try {
+          if (noticeAccepted !== true) throw new Error('请先阅读并同意《第三方组件与模型声明》');
           const source = manager.downloadSource(provider);
           await shell.openExternal(source.url);
-          return { opened: true, message: `已打开${source.label}，请用官方客户端下载 ZIP，完成后返回客户端导入` };
+          return { opened: true, message: `已打开${source.label}，请手动下载 ZIP，完成后返回客户端填写文件完整路径，再校验并安装` };
         } catch (error) { return { opened: false, message: error.message || '网盘链接暂时无法打开，请重试' }; }
       });
       ipcMain.handle('runtime:install', async event => {
@@ -147,11 +148,10 @@ function createElectronAdapter(electron = require('electron')) {
         return { runtime, engine: { ready: getEngineReady(), error: runtime.error || null } };
       });
       ipcMain.handle('runtime:pause', event => { signedInSender(event); return manager.pause(); });
-      ipcMain.handle('runtime:import-archive', async event => {
+      ipcMain.handle('runtime:import-archive', async (event, file) => {
         signedInSender(event);
-        const result = await dialog.showOpenDialog(window, { title: '导入通过网盘下载的官方 引擎 ZIP（无需解压）', properties: ['openFile'], filters: [{ name: '引擎 运行包', extensions: ['zip'] }] });
-        if (result.canceled) return { cancelled: true };
-        return manager.importArchive(result.filePaths[0]);
+        if (typeof file !== 'string' || file.includes('\0') || !path.isAbsolute(file) || path.extname(file).toLowerCase() !== '.zip') throw new Error('请手动填写已下载的官方引擎 ZIP 完整路径');
+        return manager.importArchive(file);
       });
       ipcMain.handle('runtime:connect-directory', async event => {
         signedInSender(event);
