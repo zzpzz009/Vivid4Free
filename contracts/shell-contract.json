@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": "1.0",
+  "semanticAuthority": "../docs/shell-contract-v1.md",
+  "baselineCommit": "30888a98217e7051c977ee5a30a3525f152e7516",
+  "accessDefinitions": {
+    "trusted-sender": "Current host window main frame at the actual UI origin",
+    "signed-in": "trusted-sender plus account.status === signed_in"
+  },
+  "operations": [
+    { "name": "windowState", "channel": "window:state", "access": "trusted-sender", "args": [], "returns": "WindowState" },
+    { "name": "windowAction", "channel": "window:action", "access": "trusted-sender", "args": ["minimize|toggle-maximize|close"], "returns": "void" },
+    { "name": "accountStatus", "channel": "account:status", "access": "trusted-sender", "args": [], "returns": "AccountSnapshot" },
+    { "name": "accountLogin", "channel": "account:login", "access": "trusted-sender", "args": ["{username:string,password:string}"], "returns": "AccountSnapshot" },
+    { "name": "accountRefresh", "channel": "account:refresh", "access": "trusted-sender", "args": [], "returns": "AccountSnapshot" },
+    { "name": "accountLogout", "channel": "account:logout", "access": "trusted-sender", "args": [], "returns": "AccountSnapshot" },
+    { "name": "accountResetPassword", "channel": "account:reset-password", "access": "trusted-sender", "args": [], "returns": "{opened:true}|{opened:false,message:string}" },
+    { "name": "accountRegister", "channel": "account:register", "access": "trusted-sender", "args": [], "returns": "{opened:boolean,message:string}" },
+    { "name": "enterWorkspace", "channel": "app:enter", "access": "signed-in", "args": [], "returns": "{entered:true}" },
+    { "name": "importGallery", "channel": "gallery:import", "access": "signed-in", "args": [], "returns": "{added:number,total:number}|{added:0,cancelled:true}" },
+    { "name": "agentInfo", "channel": "agent:info", "access": "signed-in", "args": [], "returns": "{endpoint:string,tokenFile:string,version:'1.0'}" },
+    { "name": "openOutput", "channel": "output:open", "access": "signed-in", "args": [], "returns": "string" },
+    { "name": "runtimeStatus", "channel": "runtime:status", "access": "signed-in", "args": [], "returns": "RuntimeStatus & {engineReady:boolean,clientUpdateConfigured:boolean}" },
+    { "name": "runtimeCheck", "channel": "runtime:check", "access": "signed-in", "args": [], "returns": "RuntimeStatus" },
+    { "name": "runtimeOpenDownload", "channel": "runtime:open-download", "access": "signed-in", "args": ["quark|baidu"], "returns": "{opened:boolean,message:string}" },
+    { "name": "clientOpenUpdate", "channel": "client:open-update", "access": "signed-in", "args": [], "returns": "{opened:boolean,message:string}" },
+    { "name": "runtimeInstall", "channel": "runtime:install", "access": "signed-in", "args": [], "returns": "{runtime:RuntimeStatus,engine:{ready:boolean,error:string|null}}" },
+    { "name": "runtimePause", "channel": "runtime:pause", "access": "signed-in", "args": [], "returns": "boolean" },
+    { "name": "runtimeImportArchive", "channel": "runtime:import-archive", "access": "signed-in", "args": [], "returns": "RuntimeStatus|{cancelled:true}" },
+    { "name": "runtimeConnectDirectory", "channel": "runtime:connect-directory", "access": "signed-in", "args": [], "returns": "RuntimeStatus|{cancelled:true}" },
+    { "name": "chooseRuntimeDirectory", "channel": "runtime:choose-directory", "access": "signed-in", "args": [], "returns": "{cancelled:boolean,status:RuntimeStatus}" },
+    { "name": "startEngine", "channel": "runtime:start-engine", "access": "signed-in", "args": [], "returns": "{ready:boolean,message?:string,error?:string}" }
+  ],
+  "events": [
+    { "name": "onWindowState", "channel": "window:state-changed", "payload": "WindowState", "returns": "unsubscribe():void", "replay": false },
+    { "name": "onAgentTask", "channel": "agent:show-task", "payload": "Task", "returns": "unsubscribe():void", "replay": false }
+  ],
+  "http": {
+    "json": { "contentType": "application/json; charset=utf-8", "cacheControl": "no-store", "requestLimitBytes": 1048576, "errorBody": "{error:string}" },
+    "pathParameters": { "id": "^[a-zA-Z0-9-]+$" },
+    "ui": {
+      "defaultPort": 17860,
+      "bindAddress": "127.0.0.1",
+      "host": "127.0.0.1:{actualPort}",
+      "origin": { "GET": "not-checked", "HEAD": "not-checked", "other": "exact-http://127.0.0.1:{actualPort}" },
+      "bearer": "not-required",
+      "routes": [
+        { "method": "GET", "path": "/api/desktop/capabilities", "account": "signed_in", "status": 200, "response": "Capabilities" },
+        { "method": "GET", "path": "/api/desktop/tasks", "account": "signed_in", "status": 200, "response": "{tasks:Task[]}" },
+        { "method": "POST", "path": "/api/desktop/tasks", "account": "signed_in", "body": "TaskInput", "status": 202, "response": "{task:Task}" },
+        { "method": "GET", "path": "/api/desktop/tasks/{id}", "account": "signed_in", "status": 200, "response": "{task:Task}" },
+        { "method": "POST", "path": "/api/desktop/tasks/{id}/cancel", "account": "signed_in", "body": "ignored", "status": 200, "response": "{task:Task}" },
+        { "method": "ANY", "path": "/health", "aliases": ["/api/system/status"], "account": "signed_in", "body": "ignored", "status": 200, "response": "Capabilities", "compatibilityNote": "Existing handler has no method restriction; non-GET/HEAD still requires exact Origin" },
+        { "method": "GET", "path": "/api/jobs", "aliases": ["/api/history", "/api/history/recent"], "account": "signed_in", "query": "status?:TaskStatus|processing; page and limit ignored", "status": 200, "response": "{success:true,data:{jobs:Task[],total:number}}" },
+        { "method": "GET", "path": "/api/jobs/{id}", "aliases": ["/api/jobs/{id}/results", "/api/jobs/{id}/cancel"], "account": "signed_in", "status": 200, "response": "{success:true,data:Task}", "compatibilityNote": "GET cancel is read-only" },
+        { "method": "GET", "path": "/api/jobs/{id}/logs", "account": "signed_in", "status": 200, "response": "{success:true,data:[]}" },
+        { "method": "POST", "path": "/api/jobs/{id}/cancel", "account": "signed_in", "body": "ignored", "status": 200, "response": "{success:true,data:Task}" },
+        { "method": "GET", "path": "/img/images", "account": "signed_in", "query": "page?:number=1,limit?:number=1000", "status": 200, "response": "{success:true,images:GalleryImage[],pagination:{page:number,limit:number,total:number}}" },
+        { "method": "POST", "path": "/img/meta", "account": "signed_in", "body": "Array<{url:string,...}>", "status": 200, "response": "GalleryImage[]" },
+        { "method": "POST", "path": "/img/filter-by-urls", "account": "signed_in", "body": "Array<{url:string,...}>", "status": 200, "response": "{success:true,images:object[]}" },
+        { "method": "GET", "path": "/gallery/{filename}", "account": "signed_in", "status": 200, "response": "binary-file", "responseType": "binary" },
+        { "method": "GET", "path": "/view", "aliases": ["/comfy/view"], "matchesSubpaths": true, "account": "signed_in", "status": "upstream", "response": "upstream-stream", "timeoutMs": 15000 },
+        { "method": "GET", "path": "/system_stats", "aliases": ["/comfy/system_stats"], "matchesSubpaths": true, "account": "signed_in", "status": "upstream", "response": "upstream-stream", "timeoutMs": 15000 },
+        { "method": "GET", "path": "/queue", "aliases": ["/comfy/queue"], "matchesSubpaths": true, "account": "signed_in", "status": "upstream", "response": "upstream-stream", "timeoutMs": 15000 },
+        { "method": "GET", "path": "/object_info", "aliases": ["/comfy/object_info"], "matchesSubpaths": true, "account": "signed_in", "status": "upstream", "response": "upstream-stream", "timeoutMs": 15000 },
+        { "method": "GET", "path": "/history", "aliases": ["/comfy/history"], "matchesSubpaths": true, "account": "signed_in", "status": "upstream", "response": "upstream-stream", "timeoutMs": 15000 },
+        { "method": "POST", "path": "/upload/image", "aliases": ["/comfy/upload/image"], "account": "signed_in", "body": "multipart/form-data-stream", "status": "upstream", "response": "upstream-stream", "timeoutMs": 60000 },
+        { "method": "GET", "path": "/", "aliases": ["/index.html", "/THIRD-PARTY-NOTICES.txt", "/assets/*"], "account": "not-required", "status": 200, "response": "static-file" },
+        { "method": "GET", "path": "/*", "account": "signed_in", "status": 200, "response": "static-file", "fallback": true, "excludesPrefixes": ["/api/", "/comfy/"], "compatibilityNote": "Only after preceding routes; existing files only, not SPA history fallback" }
+      ],
+      "headCompatibility": "Public shell assets pass the account gate but return 405; /health and /api/system/status reach ANY handler; other HEAD requests require signed_in",
+      "unopenedApiStatus": 404,
+      "unknownNonGetStaticStatus": 405
+    },
+    "agent": {
+      "defaultPort": 17861,
+      "bindAddress": "127.0.0.1",
+      "host": "127.0.0.1:{actualPort}",
+      "origin": "must-be-absent-or-empty",
+      "bearer": "exact-Bearer-control-token",
+      "routes": [
+        { "method": "GET", "path": "/v1/capabilities", "account": "signed_in", "status": 200, "response": "Capabilities" },
+        { "method": "GET", "path": "/v1/tasks", "account": "signed_in", "status": 200, "response": "{tasks:Task[]}" },
+        { "method": "POST", "path": "/v1/tasks", "account": "signed_in", "body": "TaskInput", "status": 202, "response": "{task:Task}" },
+        { "method": "GET", "path": "/v1/tasks/{id}", "account": "signed_in", "status": 200, "response": "{task:Task}" },
+        { "method": "POST", "path": "/v1/tasks/{id}/cancel", "account": "signed_in", "body": "ignored", "status": 200, "response": "{task:Task}" },
+        { "method": "GET", "path": "/v1/client", "account": "not-required", "status": 200, "response": "{version:string,window:{available:boolean,visible:boolean},workflowSha256:string,operations:string[]}" },
+        { "method": "GET", "path": "/v1/client/screenshot", "account": "not-required", "status": 200, "response": "PNG-bytes", "responseType": "binary", "contentType": "image/png" },
+        { "method": "POST", "path": "/v1/client/show-task", "account": "signed_in", "body": "{taskId:string}; exactly one key", "status": 200, "response": "{selectedTaskId:string}" },
+        { "method": "POST", "path": "/v1/client/shutdown", "account": "not-required", "body": "{} recommended; current guard also accepts true and nonzero JSON numbers", "bodyGuard": "!input || Array.isArray(input) || Object.keys(input).length => reject", "status": 202, "response": "{exiting:true}" }
+      ]
+    },
+    "upstream": {
+      "defaultOrigin": "http://127.0.0.1:18295",
+      "runtimeProtocolVersion": 1,
+      "requiresProjectRuntime": true,
+      "internalOnlyWrites": ["POST /prompt", "POST /api/jobs/{promptId}/cancel"],
+      "internalProgress": "/ws?clientId={clientId}",
+      "publicWriteProxyAllowlist": ["POST /upload/image", "POST /comfy/upload/image"],
+      "forbiddenPublicWrites": ["/prompt", "/interrupt", "/queue", "/free"],
+      "runtimeSwitchQueueCompatibility": "Existing switch gate checks only (queue.queue_running || []).length || (queue.queue_pending || []).length; no array-shape validation; {} and null queue fields pass. Agent shutdown separately requires both fields to be arrays."
+    }
+  },
+  "enums": {
+    "accountStatus": ["signed_out", "checking", "signed_in", "unavailable"],
+    "runtimeState": ["not_installed", "installed", "checking", "downloading", "verifying", "installing", "paused", "starting", "ready", "error"],
+    "updateCheckState": ["not_checked", "checking", "checked", "failed"],
+    "compatibilityState": ["supported", "incompatible", "unverified", null],
+    "taskStatus": ["submitting", "queued", "running", "submission_unknown", "completed", "failed", "cancelled"],
+    "terminalTaskStatus": ["completed", "failed", "cancelled"]
+  }
+}

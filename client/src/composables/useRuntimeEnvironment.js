@@ -1,10 +1,12 @@
 import { onBeforeUnmount, ref } from 'vue'
 import { runtimePackageHint } from '@/utils/runtimeGuidance.js'
+import { host } from '@/platform/host.js'
 
 const POLL_INTERVAL_MS = 1800
 const TRANSITION_STATES = new Set(['checking', 'downloading', 'verifying', 'installing', 'starting'])
 
-export function createRuntimeEnvironmentController(bridge) {
+export function createRuntimeEnvironmentController(bridge = host) {
+  const supports = method => typeof bridge?.supports === 'function' ? bridge.supports(method) : typeof bridge?.[method] === 'function'
   const status = ref(null)
   const busyAction = ref('')
   const pausePending = ref(false)
@@ -17,7 +19,7 @@ export function createRuntimeEnvironmentController(bridge) {
   let activeOperation = false
 
   async function refresh() {
-    if (!bridge?.runtimeStatus) {
+    if (!supports('runtimeStatus')) {
       bridgeUnavailable.value = true
       status.value = null
       return null
@@ -42,7 +44,7 @@ export function createRuntimeEnvironmentController(bridge) {
     if (activeOperation) return false
     if (TRANSITION_STATES.has(status.value?.state)) return false
     const method = bridge?.[methodName]
-    if (!method) {
+    if (!supports(methodName)) {
       bridgeUnavailable.value = true
       error.value = '当前桌面版本尚未提供运行包管理功能。'
       return false
@@ -83,7 +85,7 @@ export function createRuntimeEnvironmentController(bridge) {
   async function pause() {
     if (pausePending.value || !activeOperation || busyAction.value !== 'installing' || status.value?.state !== 'downloading') return false
     const method = bridge?.runtimePause
-    if (!method) {
+    if (!supports('runtimePause')) {
       error.value = '当前桌面版本尚未提供暂停下载功能。'
       return false
     }
@@ -120,7 +122,7 @@ export function createRuntimeEnvironmentController(bridge) {
   return { status, busyAction, pausePending, error, actionMessage, bridgeUnavailable, refresh, run, pause, startPolling, stopPolling, dispose }
 }
 
-export function useRuntimeEnvironment(bridge) {
+export function useRuntimeEnvironment(bridge = host) {
   const controller = createRuntimeEnvironmentController(bridge)
   onBeforeUnmount(controller.dispose)
   return controller

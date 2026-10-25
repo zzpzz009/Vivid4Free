@@ -1,5 +1,5 @@
 import { computed, ref, getCurrentScope, onScopeDispose } from 'vue'
-import { apiRequest } from '@/api/apiUtils.js'
+import { desktopAPI } from '@/api/desktopAPI.js'
 import { storeToRefs } from 'pinia'
 import { useJobStore } from '@/stores/useJobStore.js'
 import { useUIStore } from '@/stores/useUIStore.js'
@@ -31,7 +31,7 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
   let stopped = false
   const controller = new AbortController()
   if (getCurrentScope()) onScopeDispose(() => { stopped = true; controller.abort() })
-  const request = (url, options = {}) => apiRequest(url, { ...options, signal: controller.signal })
+  const requestOptions = { signal: controller.signal }
 
   const notify = (message, type = 'info') => jobStore.setStatusMessage(message, type)
   const imageName = (fileRef, legacyName) => fileRef?.value?.comfyImageInfo?.filename
@@ -46,7 +46,7 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
       await pause(1000)
       if (stopped || activeTaskId !== taskId) return
       try {
-        const payload = await request(`/api/desktop/tasks/${encodeURIComponent(taskId)}`, { cache: 'no-store' })
+        const payload = await desktopAPI.getTask(taskId, requestOptions)
         if (stopped) return
         const task = payload.task
         const progress = Number(task.progress || 0)
@@ -136,12 +136,10 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
       progress: 0, stage, errorMessage, isPreview,
       parameters: { prompt: xm.tsc || '', ...parameters },
       inputImages: [mainImage, ...(referenceImage ? [referenceImage] : [])],
-      input: { floorplanPath: `/view?filename=${encodeURIComponent(mainImage)}&type=input`, prompt: xm.tsc || '' }
+      input: { floorplanPath: desktopAPI.inputImageUrl(mainImage), prompt: xm.tsc || '' }
     })
     try {
-      const payload = await request('/api/desktop/tasks', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parameters)
-      })
+      const payload = await desktopAPI.submitTask(parameters, requestOptions)
       if (stopped) return
       const task = payload.task
       if (!task || typeof task.id !== 'string') throw new Error('本地任务响应缺少 task id')
@@ -194,7 +192,7 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
       // requestId; never submit it again automatically.
       let found = null
       try {
-        const payload = await request('/api/desktop/tasks', { cache: 'no-store' })
+        const payload = await desktopAPI.listTasks(requestOptions)
         found = (payload.tasks || []).find((task) => task.requestId === requestId) || null
       } catch {}
       if (stopped) return
@@ -228,7 +226,7 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
     }
     jobStore.setPreviewUpscaleRunState('cancelling')
     try {
-      await request(`/api/desktop/tasks/${encodeURIComponent(activeTaskId)}/cancel`, { method: 'POST' })
+      await desktopAPI.cancelTask(activeTaskId, requestOptions)
       notify('正在取消当前任务')
     } catch (error) {
       notify(`取消失败：${error.message}`, 'error')

@@ -54,12 +54,13 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useAuthStore, useUIStore } from '@/stores'
 import islandLogo from '@/assets/brand/island-logo.svg'
+import { host } from '@/platform/host.js'
 
 const props = defineProps({ checking: Boolean })
 const store = useAuthStore()
 const ui = useUIStore()
 const island = computed(() => ui.skin === 'animal-island')
-const desktopWindow = Boolean(window.vividDesktop?.windowAction)
+const desktopWindow = host.supports('windowAction')
 const username = ref(''), password = ref(''), localMessage = ref('')
 const registrationBusy = ref(false), retrySeconds = ref(0)
 const locked = computed(() => props.checking || store.busy)
@@ -80,7 +81,7 @@ async function openRegistration() {
   try { const result = await store.openRegistration(); localMessage.value = result?.message || (result?.opened ? '注册页已打开，完成注册后请返回登录。' : '暂时无法打开注册页，请稍后重试。') } finally { registrationBusy.value = false }
 }
 async function openReset() { const result = await store.resetPassword(); localMessage.value = result?.opened ? '找回密码页面已打开，完成后请返回登录。' : result?.message || '暂时无法打开找回密码页面。' }
-function controlWindow(action) { void window.vividDesktop?.windowAction(action) }
+function controlWindow(action) { if (host.supports('windowAction')) void host.windowAction(action) }
 </script>
 
 <style scoped>

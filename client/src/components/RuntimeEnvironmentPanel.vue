@@ -98,7 +98,7 @@ function onOutside(event) { if (props.open && !surface.value?.querySelector('.ru
 watch(() => props.open, async open => { if (open) { opener = document.activeElement; await nextTick(); surface.value?.querySelector('[data-runtime-close]')?.focus() } })
 onMounted(() => { document.addEventListener('keydown', onEscape); document.addEventListener('pointerdown', onOutside, true) })
 onBeforeUnmount(() => { document.removeEventListener('keydown', onEscape); document.removeEventListener('pointerdown', onOutside, true) })
-const runtime = useRuntimeEnvironment(typeof window === 'undefined' ? null : window.vividDesktop)
+const runtime = useRuntimeEnvironment()
 const { status, busyAction, error, actionMessage, bridgeUnavailable } = runtime
 const isBusy = computed(() => Boolean(busyAction.value))
 const isTransitioning = computed(() => ['checking', 'downloading', 'verifying', 'installing', 'starting'].includes(status.value?.state))

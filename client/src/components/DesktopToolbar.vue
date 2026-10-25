@@ -28,6 +28,7 @@
 </template>
 
 <script setup>
+import { host } from '@/platform/host.js'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useUIStore } from '@/stores/useUIStore.js'
 import islandLogo from '@/assets/brand/island-logo.svg'
@@ -62,14 +63,14 @@ const updateLabel = computed(() => {
   return ({ checking: '正在检查更新…', failed: '更新检查失败' })[props.updateCheckState] || currentVersionLabel.value
 })
 const accountText = computed(() => props.accountLabel === '账号：未登录' ? '登录 / 注册' : props.accountLabel.replace(/^账号：/, ''))
-const desktopWindow = Boolean(window.vividDesktop?.windowAction)
+const desktopWindow = host.supports('windowAction')
 const maximized = ref(false)
 let unsubscribeWindow
 function updateWindowState(state) { maximized.value = Boolean(state?.maximized || state?.fullscreen) }
-async function controlWindow(action) { await window.vividDesktop?.windowAction(action) }
+async function controlWindow(action) { if (host.supports('windowAction')) await host.windowAction(action) }
 onMounted(async () => {
-  unsubscribeWindow = window.vividDesktop?.onWindowState(updateWindowState)
-  if (window.vividDesktop?.windowState) updateWindowState(await window.vividDesktop.windowState())
+  unsubscribeWindow = host.onWindowState(updateWindowState)
+  if (host.supports('windowState')) updateWindowState(await host.windowState())
 })
 onBeforeUnmount(() => unsubscribeWindow?.())
 </script>

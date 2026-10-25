@@ -1,3 +1,5 @@
+import { host } from '@/platform/host.js'
+
 const STATUSES = new Set(['signed_out', 'checking', 'signed_in', 'unavailable'])
 const PROFILE_FIELDS = ['userId', 'id', 'username', 'displayName', 'nickname', 'avatarUrl', 'emailMasked', 'role', 'companyName']
 
@@ -21,13 +23,12 @@ function safeSnapshot(value) {
 }
 
 async function invoke(method, ...args) {
-  const bridge = typeof window !== 'undefined' ? window.vividDesktop : null
-  if (typeof bridge?.[method] !== 'function') {
+  if (!host.supports(method)) {
     return method === 'accountRegister' ? { opened: false, message: '桌面账号服务暂不可用，请稍后重试。' }
       : safeSnapshot({ status: 'unavailable', message: '桌面账号服务暂不可用，请稍后重试。' })
   }
   try {
-    const result = await bridge[method](...args)
+    const result = await host[method](...args)
     if (method === 'accountResetPassword' || method === 'accountRegister') {
       return result?.opened === true
         ? { opened: true, ...(typeof result.message === 'string' ? { message: result.message } : {}) }

@@ -13,6 +13,7 @@ import LoginScreen from '@/components/LoginScreen.vue'
 import DesktopWorkspace from './DesktopWorkspace.vue'
 import { useAuthStore, useUIStore } from '@/stores'
 import { mountStartupIntro } from '@/utils/startupOverlay'
+import { host } from '@/platform/host.js'
 
 const auth = useAuthStore()
 const ui = useUIStore()
@@ -31,7 +32,7 @@ async function beginEntry() {
     cancelIntro = null
     if (reason === 'cancelled' || attempt !== generation || !auth.isAuthenticated) return
     try {
-      const result = await window.vividDesktop?.enterWorkspace?.()
+      const result = await host.enterWorkspace()
       if (result?.entered !== true) throw new Error('Entry not confirmed')
       if (attempt === generation && auth.isAuthenticated) entered.value = true
     } catch {

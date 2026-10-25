@@ -9,6 +9,7 @@
   },
   "files": [
     "main.cjs",
+    "electron-adapter.cjs",
     "account-service.cjs",
     "preload.cjs",
     "server.cjs",

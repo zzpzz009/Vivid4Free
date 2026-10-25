@@ -62,7 +62,8 @@ import { useUIStore, useGalleryStore, useAuthStore } from '@/stores'
 import AccountPanel from '@/components/AccountPanel.vue'
 import Button from '@/ui/Button.vue'
 import ToastContainer from '@/components/ui/ToastContainer.vue'
-import { apiRequest } from '@/api/apiUtils.js'
+import { desktopAPI } from '@/api/desktopAPI.js'
+import { host } from '@/platform/host.js'
 
 const uiStore = useUIStore()
 watchEffect(() => { document.documentElement.dataset.vividSkin = uiStore.skin })
@@ -119,9 +120,9 @@ function selectImage(payload) {
 }
 
 async function importGallery() {
-  if (!window.vividDesktop?.importGallery) return announce('图库导入需要桌面应用')
+  if (!host.supports('importGallery')) return announce('图库导入需要桌面应用')
   try {
-    const result = await window.vividDesktop.importGallery()
+    const result = await host.importGallery()
     if (result?.cancelled) return
     await galleryStore.loadCategories()
     announce(`已导入 ${result?.added || 0} 张图片，图库共 ${result?.total || 0} 张`)
@@ -131,15 +132,15 @@ async function importGallery() {
 }
 
 async function showAgentInfo() {
-  if (!window.vividDesktop?.agentInfo) return announce('Agent 接口需要桌面应用')
+  if (!host.supports('agentInfo')) return announce('Agent 接口需要桌面应用')
   try {
-    const info = await window.vividDesktop.agentInfo()
+    const info = await host.agentInfo()
     announce(`Agent 接口：${info.endpoint}（令牌保存在本机配置文件）`)
   } catch { announce('暂时无法读取 Agent 接口') }
 }
 
 async function openOutput() {
-  await window.vividDesktop?.openOutput?.()
+  if (host.supports('openOutput')) await host.openOutput()
 }
 
 function onRuntimeStatus(status) {
@@ -153,13 +154,13 @@ function onRuntimeStatus(status) {
 
 async function refreshCapabilities() {
   try {
-    capabilities.value = await apiRequest('/api/desktop/capabilities', { cache: 'no-store', signal: capabilitiesController.signal })
+    capabilities.value = await desktopAPI.capabilities({ signal: capabilitiesController.signal })
     if (capabilities.value.runtime) runtimeSnapshot.value = capabilities.value.runtime
   } catch { /* runtimeStatus in the panel supplies actionable local state */ }
 }
 
 onMounted(async () => {
-  stopAgentTask = window.vividDesktop?.onAgentTask?.(task => {
+  stopAgentTask = host.onAgentTask(task => {
     activeTab.value = 'workspace'
     uiStore.setSelectedHistoryId(task.id)
     uiStore.setSelectedResult({ jobId: task.id, url: task.resultImages[0] })

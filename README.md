@@ -76,6 +76,10 @@ npm --prefix desktop run pack
 
 ## Agent
 
+外壳与 UI 的协议入口见 [契约 v1](docs/shell-contract-v1.md) 和 [机器传输清单](contracts/shell-contract.json)，覆盖 22 个宿主请求、2 个事件及 UI/Agent 双端口接口。Electron 能力由宿主适配器提供，UI 经统一接口调用；契约记录当前行为与已知校验缺口，不扩展旧 API，也不修改 CF 或私有工作流。
+
+修改边界后运行 `node tools/check_shell_contract.cjs`，检查调用边界、通道映射与安装包收录；再运行 `npm --prefix desktop test`、`npm --prefix client test`、`npm --prefix client run typecheck` 和 `npm --prefix client run build`。真实窗口、目录选择和出图仍需在 Electron 中验收。
+
 默认 127.0.0.1:17861/v1，随机 Bearer 令牌存于用户数据目录。agentInfo 仅向网页返回端点与令牌文件路径，不暴露令牌值。接口提供能力、渲染和放大任务、状态与指定任务取消；没有任意工作流、命令执行或远程安装功能。真实验证覆盖无令牌 401、正确令牌 200、网页跨域 403，以及 UI 共用任务生命周期。内部 UI 默认 17860，CF 默认 18295。
 
 客户端控制同样需要令牌且拒绝网页来源：`GET /v1/client` 查询版本、窗口状态及预览图 SHA256；`GET /v1/client/screenshot` 返回客户端自身 PNG 截图；`POST /v1/client/show-task` 只接受 `{taskId}`，将已完成结果显示到工作区；`POST /v1/client/shutdown` 接受 `{}`，仅在客户端和 CF 队列都空闲时正常退出，队列无法核实时拒绝退出。无任意代码、命令执行、桌面截图或远程安装入口。

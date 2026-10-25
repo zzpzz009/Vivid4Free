@@ -9,7 +9,20 @@ function deferred() {
 }
 
 describe('runtime environment controller', () => {
-  afterEach(() => vi.useRealTimers())
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
+
+  it('uses host capabilities for missing operations and resolves later bridge injection', async () => {
+    vi.stubGlobal('window', undefined)
+    const controller = createRuntimeEnvironmentController()
+    expect(await controller.refresh()).toBe(null)
+    expect(controller.bridgeUnavailable.value).toBe(true)
+    expect(await controller.run('checking', 'runtimeCheck')).toBe(false)
+    expect(controller.error.value).toBe('当前桌面版本尚未提供运行包管理功能。')
+    vi.stubGlobal('window', { vividDesktop: { runtimeStatus: async () => ({ state: 'ready' }) } })
+    expect(await controller.refresh()).toEqual({ state: 'ready' })
+    expect(controller.bridgeUnavailable.value).toBe(false)
+    controller.dispose()
+  })
 
   it('shows the compatibility reason and recommended delta after a rejected operation', async () => {
     const status = { state: 'installed', installed: true, available: true, availableCompatible: true,
