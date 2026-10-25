@@ -204,7 +204,7 @@ class RuntimeManager extends EventEmitter {
   status() {
     const active = this.activeInfo ? this.compatibility(this.activeInfo) : null;
     const available = this.available ? this.compatibility(this.available) : null;
-    const issue = active && !active.compatible ? active : available && !available.compatible ? available : null;
+    const issue = this.compatibilityFailure || (active && !active.compatible ? active : available && !available.compatible ? available : null);
     return { ...this.data, storageDir: this.storageDir, activePath: this.activeRoot,
     updateCheckState: this.updateCheckState,
     clientRelease: this.available?.clientRelease || null,
@@ -224,7 +224,8 @@ class RuntimeManager extends EventEmitter {
     fullPackageBytes: this.available?.archive?.bytes || null,
     incrementalPackageBytes: this.available?.incremental?.archive?.bytes || null,
     compatibilityMessage: issue?.message || '',
-    downloadConfigured: Boolean(this.env.VIVID_RUNTIME_MANIFEST_URL || this._feedUrl()) }; }
+    failedCompatibilityState: this.compatibilityFailure?.state || null,
+    downloadConfigured: Boolean(this.env.VIVID_RUNTIME_MANIFEST_URLS || this.env.VIVID_RUNTIME_MANIFEST_URL || this._feedUrl()) }; }
   compatibility(info) {
     if (info?.id !== ID || info.protocolVersion !== PROTOCOL || info.platform !== 'win32-x64') {
       return { compatible: false, state: 'incompatible', source: 'protocol', message: `引擎 ${info?.version || ''} 的协议或平台与当前客户端不兼容，请使用匹配的引擎版本` };
@@ -248,7 +249,7 @@ class RuntimeManager extends EventEmitter {
   }
   _assertCompatible(info) {
     const result = this.compatibility(info);
-    if (!result.compatible) throw new Error(result.message);
+    if (!result.compatible) { this.compatibilityFailure = result; throw new Error(result.message); }
   }
   downloadSource(provider) {
     if (this.installPromise || this.checkPromise) throw new Error('请等待当前运行包操作完成');
@@ -257,7 +258,7 @@ class RuntimeManager extends EventEmitter {
     if (!source) throw new Error('该网盘下载入口尚未配置，请先检查引擎新版');
     return source;
   }
-  _feedUrl() { try { return JSON.parse(fs.readFileSync(this.feedPath, 'utf8')).manifestUrl || null; } catch { return null; } }
+  _feedUrl() { try { const feed = JSON.parse(fs.readFileSync(this.feedPath, 'utf8')); return feed.manifestUrls?.[0] || feed.manifestUrl || null; } catch { return null; } }
   _set(patch) { Object.assign(this.data, patch); this.data.storageDir = this.storageDir; this.emit('change', this.status()); }
   getRuntimeRoot() {
     if (!this.activeRoot || !this.activeInfo || this.activeInfo.version !== this.settings.activeVersion || !this.settings.activeVersion || !VERSION.test(this.settings.activeVersion) || this.settings.activeVersion.endsWith('.')) return null;
@@ -295,20 +296,25 @@ class RuntimeManager extends EventEmitter {
     this._set({ installed: Boolean(root && version), version, state: root && version ? (this.data.state === 'ready' ? 'ready' : 'installed') : 'not_installed', message: root ? '运行包已安装' : '运行包尚未安装' });
     return this.status();
   }
-  async _manifestUrl() {
-    let url = this.env.VIVID_RUNTIME_MANIFEST_URL;
-    if (!url) {
+  async _manifestUrls() {
+    let urls = this.env.VIVID_RUNTIME_MANIFEST_URLS?.split(',').map(value => value.trim());
+    if (!urls && this.env.VIVID_RUNTIME_MANIFEST_URL) urls = [this.env.VIVID_RUNTIME_MANIFEST_URL];
+    if (!urls) {
       try {
         const feed = JSON.parse(fs.readFileSync(this.feedPath, 'utf8'));
         if (feed.schemaVersion !== 1) throw new Error('运行包下载配置版本不兼容');
-        url = feed.manifestUrl;
+        urls = feed.manifestUrls || (feed.manifestUrl ? [feed.manifestUrl] : []);
       } catch (error) { if (error.message.includes('不兼容')) throw error; }
     }
-    if (!url) throw new Error('运行包下载地址尚未配置');
-    const parsed = new URL(url);
-    const testAllowed = this.env.VIVID_RUNTIME_ALLOW_LOCAL_TEST === '1' && parsed.protocol === 'http:' && parsed.hostname === '127.0.0.1';
-    if (parsed.protocol !== 'https:' && !testAllowed) throw new Error('运行包清单必须使用HTTPS');
-    return parsed;
+    if (!urls?.length) throw new Error('运行包下载地址尚未配置');
+    if (!Array.isArray(urls) || urls.length > 4 || urls.some(url => typeof url !== 'string' || !url)) throw new Error('运行包清单来源配置无效');
+    return [...new Set(urls)].map(url => {
+      const parsed = new URL(url);
+      const testAllowed = this.env.VIVID_RUNTIME_ALLOW_LOCAL_TEST === '1' && parsed.protocol === 'http:' && parsed.hostname === '127.0.0.1';
+      if (parsed.protocol !== 'https:' && !testAllowed) throw new Error('运行包清单必须使用HTTPS');
+      if (parsed.username || parsed.password || parsed.hash) throw new Error('运行包清单地址不能包含凭据或片段');
+      return parsed;
+    });
   }
   check() {
     if (this.installPromise) return Promise.reject(new Error('运行包安装期间不能重新检查版本'));
@@ -317,10 +323,15 @@ class RuntimeManager extends EventEmitter {
     return this.checkPromise;
   }
   async _check() {
+    this.compatibilityFailure = null;
     this.updateCheckState = 'checking';
     this._set({ state: 'checking', error: null, message: '正在检查运行包版本' });
     try {
-      const url = await this._manifestUrl(); const response = await this.fetch(url, { redirect: 'error', signal: AbortSignal.timeout(15000) });
+      const urls = await this._manifestUrls();
+      let lastError;
+      for (const url of urls) {
+      try {
+      const response = await this.fetch(url, { redirect: 'error', signal: AbortSignal.timeout(15000) });
       if (!response.ok) throw new Error(`获取运行包清单失败 (${response.status})`);
       const chunks = []; let manifestBytes = 0;
       if (Number(response.headers.get('content-length') || 0) > 1024 * 1024) throw new Error('运行包清单超过1MiB限制');
@@ -338,6 +349,9 @@ class RuntimeManager extends EventEmitter {
       this._set({ available: true, availableVersion: m.version, state: this.data.installed ? 'installed' : 'not_installed',
         message: m.version === this.data.version ? '当前运行包已是此下载源提供的版本' : olderVersion(m.version, this.data.version) ? '下载源版本早于当前版本，已保留现用环境' : `可安装运行包 ${m.version}`, error: null });
       return this.status();
+      } catch (error) { lastError = error; }
+      }
+      throw new Error(`所有更新清单来源均不可用：${lastError?.message || '请稍后重试'}`);
     } catch (error) { this.updateCheckState = 'failed'; this.available = null; this._set({ available: false, availableVersion: null, state: this.data.installed ? 'installed' : 'error', error: error.message, message: error.message }); throw error; }
   }
   install() {
@@ -356,6 +370,7 @@ class RuntimeManager extends EventEmitter {
   async pause() { if (this.controller) { this.controller.abort(new Error('用户暂停下载')); return true; } return false; }
   _localOperation(operation) {
     if (this.installPromise || this.checkPromise) return Promise.reject(new Error('请等待当前运行包操作完成'));
+    this.compatibilityFailure = null;
     this.installPromise = Promise.resolve().then(operation).catch(error => {
       this.refreshInstalled(); this._set({ state: this.data.installed ? 'installed' : 'error', error: error.message, message: error.message }); throw error;
     }).finally(() => { this.installPromise = null; this.controller = null; });

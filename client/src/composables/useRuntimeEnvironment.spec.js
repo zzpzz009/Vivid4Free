@@ -11,6 +11,19 @@ function deferred() {
 describe('runtime environment controller', () => {
   afterEach(() => vi.useRealTimers())
 
+  it('shows the compatibility reason and recommended delta after a rejected operation', async () => {
+    const status = { state: 'installed', installed: true, available: true, availableCompatible: true,
+      compatibilityMessage: '引擎 0.3.1 尚未声明兼容', recommendedPackage: 'incremental',
+      incrementalBaseVersion: '0.3.1', availableVersion: '0.3.2', incrementalPackageBytes: 8994536 }
+    const controller = createRuntimeEnvironmentController({ runtimeStatus: async () => status,
+      runtimeImportArchive: async () => { throw new Error('rejected'); } })
+    await controller.refresh()
+    expect(await controller.run('importing', 'runtimeImportArchive')).toBe(false)
+    expect(controller.error.value).toContain('尚未声明兼容')
+    expect(controller.error.value).toContain('0.3.1 → 0.3.2 增量包')
+    controller.dispose()
+  })
+
   it('opens the selected cloud provider and reports external failures without changing the runtime', async () => {
     const status = { state: 'installed', installed: true, version: '0.3.0', updateAvailable: true }
     const bridge = { runtimeStatus: vi.fn(async () => status), runtimeOpenDownload: vi.fn()

@@ -1,0 +1,28 @@
+VividDesktop／Vivid4Free 第三方组件与模型声明（NOTICE）
+
+Copyright (c) 2026 张鹏之（zzpzz009）。保留所有权利。All rights reserved.
+
+本文件说明本仓库及配套分发所涉及的第三方组件及其许可归属，不构成对任何第三方组件的转授权。就第三方组件而言，其自身许可优先于本仓库 LICENSE 适用；本仓库 LICENSE 仅约束由著作权人创作的第一方代码与资源。
+
+零、本仓库不包含的内容
+本仓库仅包含客户端源码、构建工具与版本信息，不含任何图像生成模型权重，也不含渲染引擎二进制或第三方运行时。以下内容由独立的引擎包另行提供：图像生成模型权重（FLUX.2 [klein] 9B、FLUX.1 [dev] 衍生权重、文本编码器、VAE、Qwen3.5 文本模型、放大模型与各类 LoRA），以及渲染引擎与运行时（ComfyUI、自定义节点、便携 Python 与 PyTorch 等依赖）。版本、下载入口与兼容关系见 updates/engine.json 与 README。
+
+一、引擎与模型组件清单
+引擎与模型组件的逐项声明（组件与版本、引擎包内文件、许可、著作权人、来源、仓库内许可全文文件名、修改说明）见：
+docs/licenses/ENGINE-THIRD-PARTY-NOTICES.txt
+
+二、随本仓库提供的许可全文与署名文件（docs/licenses/）
+1. COPYING-GPL-3.0.txt —— 取自 https://www.gnu.org/licenses/gpl-3.0.txt，原样保存。
+2. LICENSE-APACHE-2.0.txt —— 取自 https://www.apache.org/licenses/LICENSE-2.0.txt，原样保存。
+3. LICENSE-FLUX-NONCOMMERCIAL.txt —— FLUX [dev] Non-Commercial License v2.0 全文，取自 Black Forest Labs 官方页面 https://bfl.ai/legal/non-commercial-license-terms，仅去除页面导航与页脚，条款文字未改动；FLUX.2 [klein] 9B 的许可原文仍待补。
+4. ATTRIBUTION-BFL.txt —— Black Forest Labs 署名通知与随包义务的原文摘录，及 FLUX.2 [klein] 9B 许可原文的待补说明。
+
+三、前端依赖与 client/ 目录的来源
+前端依赖的许可原文与署名（如 animal-island-vue 的 MIT、@fontsource/nunito 的 SIL OFL 1.1）见 client/THIRD-PARTY-NOTICES.txt。
+client/ 目录中的部分代码源自此前的 web 项目，非全部由著作权人本人编写；该部分的许可归属与可授权范围需按来源逐一确认，因此本仓库根 LICENSE 不覆盖来源未明的代码。client/package.json 中的 MIT 字段保持原样，不改为 UNLICENSED，也不改为指向根 LICENSE；作者字段同样保持原样。
+
+四、待核与限制
+部分权重（qwen_3_8b_fp8mixed 文本编码器、flux2-vae、2xNomosUni_span 放大模型、Klein 一致性增强 LoRA 等）的来源与许可尚未核实，已在 docs/licenses/ENGINE-THIRD-PARTY-NOTICES.txt 中标为「待核」。自定义 ComfyUI 节点须逐个核对许可（含是否存在 AGPL），核对完成前不得对外声明整包许可状态。
+
+五、分发义务
+通过网盘链接、镜像或安装包分发引擎与模型时，仍须逐项履行对应许可义务：保留署名与许可证全文；GPL 对应源码随包提供或给出载明地址与有效期的书面要约；FLUX 系权重须附许可副本、展示权利人署名通知并声明修改；FLUX 系与非商用权重不得用于商业或生产用途。分发动作不因本仓库公开源码而转移。

@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 const source = path.resolve(__dirname, '../client/dist');
 const destination = path.join(__dirname, 'ui');
 const { privateSource, packWorkflows } = require('../tools/build-workflows.cjs');
-const archiveRoot = path.join(__dirname, 'tests/.tmp');
+const archiveRoot = path.resolve(__dirname, '../../VividPrivate/artifacts/desktop-ui');
 
 function tree(directory) {
   const result = [];

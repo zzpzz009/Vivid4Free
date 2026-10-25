@@ -1,4 +1,8 @@
 {
   "schemaVersion": 1,
-  "manifestUrl": "https://raw.githubusercontent.com/zzpzz009/Vivid4Free/main/updates/engine.json"
+  "manifestUrls": [
+    "https://app.archai.vip/vivid-updates/engine.json",
+    "https://raw.githubusercontent.com/zzpzz009/Vivid4Free/main/updates/engine.json",
+    "https://cdn.jsdelivr.net/gh/zzpzz009/Vivid4Free@main/updates/engine.json"
+  ]
 }

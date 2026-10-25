@@ -20,6 +20,8 @@ export const createQueueLogic = (ctx) => {
   let queuePollTimer = null
   let recentPollTimer = null
   let recentPollIntervalMs = 0
+  let queueSyncPending = false
+  let recentSyncPending = false
 
   const stopQueuePolling = () => {
     if (queuePollTimer) {
@@ -73,12 +75,14 @@ export const createQueueLogic = (ctx) => {
   }
 
   const runQueueSyncTick = async () => {
-    if (!liveSyncEnabled.value) return
+    if (!liveSyncEnabled.value || queueSyncPending) return
+    queueSyncPending = true
     try {
       const [queuedRes, runningRes] = await Promise.all([
         api.jobs.getQueuedJobs({ limit: 50 }),
         api.jobs.getProcessingJobs({ limit: 50 })
       ])
+      if (!liveSyncEnabled.value) return
 
       const queuedJobs = extractJobsArray(queuedRes)
       const runningJobs = extractJobsArray(runningRes)
@@ -114,6 +118,8 @@ export const createQueueLogic = (ctx) => {
       }
     } catch (error) {
       console.error('JobsAPI queue polling failed:', error)
+    } finally {
+      queueSyncPending = false
     }
   }
 
@@ -150,8 +156,10 @@ export const createQueueLogic = (ctx) => {
       recentPollTimer = null
     }
     recentPollIntervalMs = nextInterval
-    recentPollTimer = setInterval(() => {
-      pullRecentHistory(3)
+    recentPollTimer = setInterval(async () => {
+      if (recentSyncPending) return
+      recentSyncPending = true
+      try { await pullRecentHistory(3) } finally { recentSyncPending = false }
     }, nextInterval)
   }
 

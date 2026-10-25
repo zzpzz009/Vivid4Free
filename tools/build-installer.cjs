@@ -17,6 +17,7 @@ const config = path.join(sourceRoot, 'tools', 'installer', 'electron-builder.jso
 const builder = path.join(projectRoot, 'tools', 'installer', 'node_modules', 'electron-builder', 'cli.js');
 const vite = path.join(sourceRoot, 'client', 'node_modules', 'vite', 'bin', 'vite.js');
 const version = JSON.parse(fs.readFileSync(path.join(desktop, 'package.json'), 'utf8')).version;
+require('./generate-release-metadata.cjs').generate(true);
 if (process.argv.length > 3 || (process.argv[2] && process.argv[2] !== '--check')) throw new Error('只支持无参数构建或 --check；安装包输出目录不可临时覆盖');
 for (const file of [builder, vite, config]) if (!fs.existsSync(file)) throw new Error(`缺少构建依赖：${file}`);
 if (process.argv[2] === '--check') {
@@ -26,6 +27,9 @@ if (process.argv[2] === '--check') {
 
 const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
+if (!env.CSC_LINK && !env.WIN_CSC_LINK && !env.VIVID_SIGNING_CERT_SHA1) {
+  throw new Error('公开发行构建需要正式代码签名证书；在私有构建环境配置 CSC_LINK / WIN_CSC_LINK，或 VIVID_SIGNING_CERT_SHA1。尚未签名的产物不会替换 latest 安装包。');
+}
 function run(script, args, cwd) {
   const result = spawnSync(process.execPath, [script, ...args], { cwd, env, stdio: 'inherit', windowsHide: true });
   if (result.error) throw result.error;
@@ -33,10 +37,12 @@ function run(script, args, cwd) {
 }
 run(vite, ['build'], path.join(sourceRoot, 'client'));
 run(path.join(desktop, 'prepare-ui.cjs'), [], sourceRoot);
-run(builder, ['--projectDir', desktop, '--config', config, `--config.directories.output=${output}`, '--win', 'nsis', '--x64', '--publish', 'never'], sourceRoot);
+const signingArgs = env.VIVID_SIGNING_CERT_SHA1 ? [`--config.win.signtoolOptions.certificateSha1=${env.VIVID_SIGNING_CERT_SHA1}`] : [];
+run(builder, ['--projectDir', desktop, '--config', config, `--config.directories.output=${output}`, ...signingArgs, '--win', 'nsis', '--x64', '--publish', 'never'], sourceRoot);
 
 const artifact = `VividDesktop-Setup-${version}-x64.exe`;
 const installer = path.join(output, artifact);
+require('../desktop/build/verify-signature.cjs').verify(installer);
 const latest = path.join(output, 'VividDesktop-Setup-latest-x64.exe');
 const temporary = `${latest}.tmp`;
 fs.copyFileSync(installer, temporary);

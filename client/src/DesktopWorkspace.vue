@@ -62,6 +62,7 @@ import { useUIStore, useGalleryStore, useAuthStore } from '@/stores'
 import AccountPanel from '@/components/AccountPanel.vue'
 import Button from '@/ui/Button.vue'
 import ToastContainer from '@/components/ui/ToastContainer.vue'
+import { apiRequest } from '@/api/apiUtils.js'
 
 const uiStore = useUIStore()
 watchEffect(() => { document.documentElement.dataset.vividSkin = uiStore.skin })
@@ -72,6 +73,7 @@ const notice = ref('')
 let noticeTimer
 function announce(message) { notice.value = message; clearTimeout(noticeTimer); noticeTimer = setTimeout(() => { notice.value = '' }, 4500) }
 const capabilities = ref(null)
+const capabilitiesController = new AbortController()
 const runtimeSnapshot = ref(null)
 const runtimePanelOpen = ref(false)
 const accountPanelOpen = ref(false)
@@ -93,7 +95,7 @@ const engineReady = computed(() => {
   if (['downloading', 'verifying', 'installing', 'starting'].includes(runtimeCapability.value?.state)) return false
   return Boolean(capabilities.value?.capabilities?.render?.ready) || runtimeCapability.value?.state === 'ready'
 })
-const engineLabel = computed(() => runtimeCapability.value?.installed === false ? '运行包未安装' : engineReady.value ? '引擎已连接' : '引擎依赖未齐')
+const engineLabel = computed(() => runtimeCapability.value?.runtimeCompatible === false ? '引擎版本不兼容' : runtimeCapability.value?.installed === false ? '运行包未安装' : engineReady.value ? '引擎已连接' : '引擎依赖未齐')
 const accountLabel = computed(() => ({ signed_in: `账号：${authStore.user?.displayName || authStore.user?.nickname || authStore.user?.username || '已登录'}`, checking: '账号：检查中', signed_out: '账号：未登录', unavailable: '账号：待验证' }[authStore.accountStatus] || '账号：待验证'))
 let capabilitiesTimer, stopAgentTask
 function toggleUtility(kind) {
@@ -143,7 +145,7 @@ async function openOutput() {
 function onRuntimeStatus(status) {
   if (!status) return
   runtimeSnapshot.value = status
-  if (!didAutoOpenRuntime.value && !status.installed) {
+  if (!didAutoOpenRuntime.value && (!status.installed || status.runtimeCompatible === false)) {
     didAutoOpenRuntime.value = true
     runtimePanelOpen.value = true
   }
@@ -151,11 +153,8 @@ function onRuntimeStatus(status) {
 
 async function refreshCapabilities() {
   try {
-    const response = await fetch('/api/desktop/capabilities', { cache: 'no-store' })
-    if (response.ok) {
-      capabilities.value = await response.json()
-      if (capabilities.value.runtime) runtimeSnapshot.value = capabilities.value.runtime
-    }
+    capabilities.value = await apiRequest('/api/desktop/capabilities', { cache: 'no-store', signal: capabilitiesController.signal })
+    if (capabilities.value.runtime) runtimeSnapshot.value = capabilities.value.runtime
   } catch { /* runtimeStatus in the panel supplies actionable local state */ }
 }
 
@@ -182,6 +181,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', onResize)
   document.removeEventListener('keydown', closeUtilityOnEscape)
   clearInterval(capabilitiesTimer)
+  capabilitiesController.abort()
 })
 </script>
 

@@ -83,3 +83,8 @@ npm --prefix desktop run pack
 本机可用 `node tools/agent-client.cjs status`、`capabilities`、`tasks`、`submit 请求.json`、`show-task 任务ID`、`screenshot 结果.png`、`shutdown` 调用。工具在本地私有配置内读取令牌，不打印令牌；可用 `VIVID_AGENT_CONTROL_FILE` 指定已有配置文件。
 
 工作流使用私有原件构建并封装进客户端，构建前请阅读 [工作流封装与私有构建](docs/workflow-packaging.md)。公开源码不含本产品的完整工作流。
+
+## 许可
+
+本项目为专有软件，保留所有权利（All rights reserved），详见根目录 LICENSE。
+本仓库不含图像生成模型权重与渲染引擎二进制；第三方组件许可见 NOTICE、ENGINE-NOTICES.md 与 docs/licenses/（含各许可全文与引擎组件声明）。

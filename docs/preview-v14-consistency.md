@@ -1,5 +1,7 @@
 # 预览：v1.4 首步 + 一致性增强 0.7
 
+2026-10-24 的主图分析与场景配景接入见 [preview-main-scene.md](preview-main-scene.md)。本文的模型与采样设置继续沿用。
+
 2026-10-22，用户在 CF 可视化对比后选定本方案接入客户端 0.6.0 候选版。
 
 - 首步：`vivid_klein_v1.4_000076275.safetensors` 强度 1，加 `Klein 一致性增强.safetensors` 强度 0.7。

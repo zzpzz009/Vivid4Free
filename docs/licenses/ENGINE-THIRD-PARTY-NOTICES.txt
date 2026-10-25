@@ -1,0 +1,84 @@
+VividDesktop 引擎与模型第三方声明（VividCF Runtime 0.3.2）
+
+编制日期：2026-10-25。适用于 updates/engine.json 所列独立引擎包；本仓库不含任何模型权重与引擎二进制。
+字段说明：每个组件一块，固定六项——组件名称与版本、文件（引擎包内相对路径）、许可、著作权人、来源、仓库内许可全文文件名、修改说明。
+本文件的许可信息以引擎包内实际 LICENSE／NOTICE 文件为准；标「待核」的条目不得据任何推定填写，须在补齐证据后更新。
+
+被分发义务（全表适用）
+1. 分发引擎包时须同步提供对应源码：随包附源码，或提供书面要约（载明获取地址与有效期）；仅链接上游首页不能代替对应源代码交付。
+2. FLUX 组件的随包义务：附许可副本；保留并展示权利人署名通知（原文见 ATTRIBUTION-BFL.txt 第一节）；声明对模型的修改内容。
+3. 非商用限制：FLUX 系权重仅授权非商业、非生产用途，不得因客户端免费或前端依赖为 MIT 而视为可商用。
+
+一、ComfyUI（含自定义节点框架）
+组件名称与版本：ComfyUI，随引擎包 0.3.2 发布的版本（以引擎包内版本文件为准）
+文件：ComfyUI/、python/
+许可：GPL-3.0
+著作权人：ComfyUI 项目贡献者
+来源：github.com/comfyanonymous/ComfyUI
+仓库内许可全文文件名：COPYING-GPL-3.0.txt
+修改说明：未修改源码；另附本包对应源码获取地址（分发时按上文第 1 条随包提供或给出书面要约，含地址与有效期；当前条目待填）
+
+二、FLUX.2 klein 9B
+组件名称与版本：FLUX.2 [klein] 9B
+文件：models/diffusion_models/flux-2-klein-9b.safetensors
+许可：FLUX Non-Commercial License（仅限非商业用途；该模型许可原文 2026-10-25 未能取得，见 ATTRIBUTION-BFL.txt 第六节，待补）
+著作权人：Black Forest Labs
+来源：huggingface.co/black-forest-labs
+仓库内许可全文文件名：待补（klein 专用原文缺失）。同目录 LICENSE-FLUX-NONCOMMERCIAL.txt 为 FLUX [dev] 系 v2.0 许可原文，属不同模型，不可替代
+修改说明：未修改权重，以配置方式适配本软件工作流
+
+三、FLUX.1 [dev] 及其微调权重（四步出图 LoRA、一致性增强 LoRA）
+组件名称与版本：FLUX.1 [dev]（含 SRPO 衍生权重与 LoRA）
+文件：models/diffusion_models/flux.1-dev-SRPO-bf16.safetensors、models/loras/FLUX/Flux Dev模型4步出图lora_Flux Dev模型4步出图lora_Flux Dev 4-step.safetensors、models/loras/klein/Klein 一致性增强.safetensors
+许可：FLUX.1 [dev] Non-Commercial License（仅限非商业用途）；微调与 LoRA 权重作为衍生作品一并适用该许可，另须逐项核对各权重发布者的附加条款
+著作权人：Black Forest Labs（LoRA 及衍生权重作者见各自来源）
+来源：huggingface.co/black-forest-labs；SRPO 与各 LoRA 的来源与校验记录见 docs/model-sources.md 与引擎包内记录
+仓库内许可全文文件名：LICENSE-FLUX-NONCOMMERCIAL.txt；署名通知要求原文见 ATTRIBUTION-BFL.txt
+修改说明：本软件未修改上述权重文件；LoRA 文件按原样随包。分发衍生作品时须在 Attribution Notice 中声明已修改一事，按 ATTRIBUTION-BFL.txt 第五节第 3 条如实表述
+
+四、SEEDVR2
+组件名称与版本：SeedVR2（官方模型 + ComfyUI 节点，GGUF 量化版）
+文件：models/SEEDVR2/seedvr2_ema_7b-Q8_K_M.gguf、models/SEEDVR2/ema_vae_fp16.safetensors
+许可：Apache-2.0（引擎包内官方模型与节点 LICENSE 实测为 Apache-2.0）
+著作权人：ByteDance Seed 团队（节点为 numz/ComfyUI-SeedVR2_VideoUpscaler；GGUF 与 VAE 转换版为第三方转换作者）
+来源：github.com/ByteDance-Seed/SeedVR；转换版来源见 ENGINE-NOTICES.md
+仓库内许可全文文件名：LICENSE-APACHE-2.0.txt
+修改说明：未修改；GGUF 量化为第三方发布版本，须一并保留其上游客与转换作者声明
+
+五、待核条目（占位，不得凭猜测填写）
+5.1 qwen_3_8b_fp8mixed 文本编码器
+文件：models/text_encoders/qwen_3_8b_fp8mixed.safetensors
+许可：待核｜著作权人：待核｜来源：待核
+仓库内许可全文文件名：待补
+修改说明：待核
+
+5.2 flux2-vae
+文件：models/vae/flux2-vae.safetensors
+许可：待核｜著作权人：待核｜来源：待核
+仓库内许可全文文件名：待补
+修改说明：待核
+
+5.3 2xNomosUni_span 放大模型
+文件：models/upscale_models/2xNomosUni_span_multijpg_ldl.pth
+许可：待核（本仓库内仅出现文件名，未见任何许可声明，不得默认可商用）
+著作权人：待核｜来源：待核
+仓库内许可全文文件名：待补
+修改说明：待核
+
+5.4 Klein 一致性增强 LoRA
+文件：models/loras/klein/Klein 一致性增强.safetensors
+许可：来源不明、许可状态待权利人确认
+著作权人：待核｜来源：未知
+仓库内许可全文文件名：待补
+修改说明：待核
+
+5.5 其余权重（一并待核）
+models/loras/klein/vivid_klein_v1.4_000076275.safetensors、models/LLM/Qwen3.5-9B-Q4_K_M.gguf、models/LLM/mmproj-BF16.gguf、models/vae/ae.safetensors、models/text_encoders/SD3/clip_l.safetensors、models/text_encoders/SD3/t5xxl_fp16.safetensors
+许可：待核（若其中含本项目自训权重，应在根 LICENSE 项下单独声明，不与第三方条目混同）
+著作权人／来源／全文文件名／修改说明：待核
+
+六、自定义 ComfyUI 节点（单独成节）
+引擎包 comfyui/custom_nodes/ 下的第三方节点各自独立授权，须逐个核对，包括是否存在 AGPL 类传染性许可；在完成核对前不得对外声明整包许可状态。节点清单、版本、许可与源代码获取方式：待核。
+
+七、说明
+本文件是组件声明与取证记录，不是对组合产品法律属性、全部来源或再分发资格的认证。第三方组件就自身适用其许可，其许可优先于仓库 LICENSE。相关背景与逐项来源见 ENGINE-NOTICES.md、docs/model-sources.md、client/THIRD-PARTY-NOTICES.txt（前端依赖）与本目录各许可全文。

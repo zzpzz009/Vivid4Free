@@ -28,6 +28,7 @@
         <div v-if="status?.compatibilityMessage" class="notice notice-warning" role="alert">
           <strong>{{ compatibilityPending ? '兼容性待验证' : '版本不兼容' }}</strong>
           <span>{{ status.compatibilityMessage }}</span>
+          <span>{{ packageHint }}</span>
         </div>
         <p v-else-if="!status?.downloadConfigured" class="quiet-message" role="status">正式下载链接待配置，已有 ZIP 可直接导入。</p>
         <p v-if="bridgeUnavailable" class="quiet-message" role="status">请在桌面客户端安装运行包。</p>
@@ -48,6 +49,7 @@
         </div>
         <button type="button" class="button import-button" :disabled="locked || status?.availableCompatible === false" @click="importArchive">{{ busyAction === 'importing' ? '正在校验 / 安装…' : '导入 ZIP 并安装' }}</button>
         <p class="helper-text">用网盘官方客户端下载后导入，无需解压。</p>
+        <p v-if="status?.compatibilityNote" class="helper-text">{{ status.compatibilityNote }}</p>
         <p v-if="status?.available" class="helper-text">{{ packageHint }}</p>
         </section>
 
@@ -83,6 +85,7 @@ import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { Progress as IslandProgress } from 'animal-island-vue'
 import { useUIStore } from '@/stores/useUIStore.js'
 import { useRuntimeEnvironment } from '@/composables/useRuntimeEnvironment.js'
+import { runtimePackageHint } from '@/utils/runtimeGuidance.js'
 
 const props = defineProps({ open: { type: Boolean, default: false } })
 const emit = defineEmits(['close', 'status'])
@@ -101,20 +104,14 @@ const isBusy = computed(() => Boolean(busyAction.value))
 const isTransitioning = computed(() => ['checking', 'downloading', 'verifying', 'installing', 'starting'].includes(status.value?.state))
 const locked = computed(() => isBusy.value || isTransitioning.value || bridgeUnavailable.value)
 const supportedVersions = computed(() => status.value?.supportedRuntimeVersions?.join('、') || '待确认')
-const compatibilityPending = computed(() => status.value?.runtimeCompatible === false ? status.value?.runtimeCompatibilityState === 'unverified' : status.value?.availableCompatibilityState === 'unverified')
+const compatibilityPending = computed(() => (status.value?.failedCompatibilityState || (status.value?.runtimeCompatible === false ? status.value?.runtimeCompatibilityState : status.value?.availableCompatibilityState)) === 'unverified')
 const needsEnginePackage = computed(() => !status.value?.installed || status.value?.updateAvailable || status.value?.runtimeCompatible === false || !status.value?.available)
 const clientUpdateMessage = computed(() => {
   if (status.value?.updateCheckState === 'checking') return '正在检查客户端和引擎更新…'
   if (status.value?.updateCheckState === 'failed') return '暂时无法检查新版，可重试检查或导入已有引擎 ZIP。'
   return status.value?.clientRelease ? '当前客户端无需更新。' : '尚未获取客户端发布信息。'
 })
-const packageHint = computed(() => {
-  const current = status.value
-  const size = bytes => bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.ceil(bytes / 1e6)} MB`
-  return current?.recommendedPackage === 'incremental'
-    ? `建议下载 ${current.incrementalBaseVersion} → ${current.availableVersion} 增量包（${size(current.incrementalPackageBytes)}）；也可使用全量包。`
-    : `请下载全量包${current?.fullPackageBytes ? `（${size(current.fullPackageBytes)}）` : ''}，适合首次安装或跨版本升级。`
-})
+const packageHint = computed(() => runtimePackageHint(status.value))
 const sources = computed(() => ['quark', 'baidu'].map(provider => {
   const source = status.value?.downloadSources?.find(item => item.provider === provider)
   return { provider, label: provider === 'quark' ? '夸克网盘' : '百度网盘', ...source, configured: provider === 'quark' && Boolean(source) && source.enabled !== false }

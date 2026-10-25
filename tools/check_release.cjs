@@ -3,6 +3,7 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
+require('./generate-release-metadata.cjs').generate(true);
 const read = file => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
 const info = read('release-info.json');
 const version = read('desktop/package.json').version;

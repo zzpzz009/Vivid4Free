@@ -231,6 +231,7 @@ def create(source, version, archive_url, output, node_packs=NODE_PACKS, models=M
             raise ValueError(f'Missing model: {name}')
         entries['models/' + name] = path
     entries[ENTRY['launcher']] = ROOT / 'tools/start_comfy.py'
+    entries['ENGINE-NOTICES.md'] = Path(__file__).resolve().parents[1] / 'ENGINE-NOTICES.md'
     for name in ('start.cmd', 'stop.cmd', 'README.md'):
         if (source / name).is_file() and regular(source / name):
             entries[name] = source / name

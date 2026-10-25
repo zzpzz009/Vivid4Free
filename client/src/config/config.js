@@ -3,9 +3,6 @@
 export default {
   
   BASE_URL : '',
-  WS_URL : '',
-  
-  iframeurl: '/comfy',
   creativeIframeUrl: '',
   // Account integration is intentionally deferred in this local client.
   auth: {

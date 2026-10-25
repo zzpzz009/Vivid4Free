@@ -1,4 +1,5 @@
 import { onBeforeUnmount, ref } from 'vue'
+import { runtimePackageHint } from '@/utils/runtimeGuidance.js'
 
 const POLL_INTERVAL_MS = 1800
 const TRANSITION_STATES = new Set(['checking', 'downloading', 'verifying', 'installing', 'starting'])
@@ -68,7 +69,9 @@ export function createRuntimeEnvironmentController(bridge) {
       if (status.value?.state === 'paused') {
         error.value = ''
       } else {
-        error.value = status.value?.error || '运行包操作失败，请检查安装目录后重试。'
+        error.value = status.value?.compatibilityMessage
+          ? `${status.value.compatibilityMessage} ${runtimePackageHint(status.value)}`
+          : status.value?.error || '运行包操作失败，请检查安装目录后重试。'
       }
       return false
     } finally {

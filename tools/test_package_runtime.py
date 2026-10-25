@@ -66,6 +66,7 @@ class PackageTests(unittest.TestCase):
         with zipfile.ZipFile(archive['archive']) as bundle:
             self.assertNotIn('models/original.gguf.part', bundle.namelist())
             internal = json.loads(bundle.read('runtime.json'))
+            self.assertIn('ENGINE-NOTICES.md', bundle.namelist())
             self.assertEqual(internal['compatibleClientVersions'], manifest['compatibleClientVersions'])
             self.assertEqual(internal['customNodePacks'], ['vivid_nodes'])
             for item in internal['files']:

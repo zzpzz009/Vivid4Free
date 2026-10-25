@@ -1,4 +1,5 @@
-import { computed, ref } from 'vue'
+import { computed, ref, getCurrentScope, onScopeDispose } from 'vue'
+import { apiRequest } from '@/api/apiUtils.js'
 import { storeToRefs } from 'pinia'
 import { useJobStore } from '@/stores/useJobStore.js'
 import { useUIStore } from '@/stores/useUIStore.js'
@@ -28,6 +29,9 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
   let submitRequestId = null
   let activeSubmissionUnknown = false
   let stopped = false
+  const controller = new AbortController()
+  if (getCurrentScope()) onScopeDispose(() => { stopped = true; controller.abort() })
+  const request = (url, options = {}) => apiRequest(url, { ...options, signal: controller.signal })
 
   const notify = (message, type = 'info') => jobStore.setStatusMessage(message, type)
   const imageName = (fileRef, legacyName) => fileRef?.value?.comfyImageInfo?.filename
@@ -42,9 +46,8 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
       await pause(1000)
       if (stopped || activeTaskId !== taskId) return
       try {
-        const response = await fetch(`/api/desktop/tasks/${encodeURIComponent(taskId)}`, { cache: 'no-store' })
-        const payload = await response.json()
-        if (!response.ok) throw new Error(payload?.error || `HTTP ${response.status}`)
+        const payload = await request(`/api/desktop/tasks/${encodeURIComponent(taskId)}`, { cache: 'no-store' })
+        if (stopped) return
         const task = payload.task
         const progress = Number(task.progress || 0)
         jobStore.updateProgress({ jobId, percentage: progress, stage: task.stage || task.status, stageInfo: task.stage || task.status })
@@ -92,6 +95,7 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
           return
         }
       } catch (error) {
+        if (stopped) return
         if (!pollErrorNotified) {
           notify(`读取任务状态暂时失败，将继续查询同一任务：${error.message}`, 'warning')
           pollErrorNotified = true
@@ -135,19 +139,10 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
       input: { floorplanPath: `/view?filename=${encodeURIComponent(mainImage)}&type=input`, prompt: xm.tsc || '' }
     })
     try {
-      const response = await fetch('/api/desktop/tasks', {
+      const payload = await request('/api/desktop/tasks', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parameters)
       })
-      const payload = await response.json()
-      if (!response.ok) {
-        createJobRecord(jobId, 'failed', '提交失败', payload?.error || `HTTP ${response.status}`)
-        jobStore.failGeneration(jobId, payload?.error || `HTTP ${response.status}`)
-        activeTaskId = null
-        submitRequestId = null
-        activeSubmissionUnknown = false
-        jobStore.resetPreviewUpscaleRunState()
-        return
-      }
+      if (stopped) return
       const task = payload.task
       if (!task || typeof task.id !== 'string') throw new Error('本地任务响应缺少 task id')
       const recordId = task.id || jobId
@@ -185,14 +180,24 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
         notify('提交状态待确认；当前任务保持待核对状态，不会自动重新提交', 'warning')
       }
     } catch (error) {
+      if (stopped) return
+      if (error.response?.ok === false) {
+        createJobRecord(jobId, 'failed', '提交失败', error.message)
+        jobStore.failGeneration(jobId, error.message)
+        activeTaskId = null
+        submitRequestId = null
+        activeSubmissionUnknown = false
+        jobStore.resetPreviewUpscaleRunState()
+        return
+      }
       // The request may have reached the host before the connection failed. Reconcile by
       // requestId; never submit it again automatically.
       let found = null
       try {
-        const response = await fetch('/api/desktop/tasks', { cache: 'no-store' })
-        const payload = await response.json()
+        const payload = await request('/api/desktop/tasks', { cache: 'no-store' })
         found = (payload.tasks || []).find((task) => task.requestId === requestId) || null
       } catch {}
+      if (stopped) return
       const recordId = found?.id || jobId
       const reconciledUnknown = !found || found.status === 'submission_unknown'
       const recordStatus = reconciledUnknown ? 'submission_unknown' : (['failed', 'cancelled', 'completed'].includes(found.status) ? found.status : 'queued')
@@ -223,9 +228,7 @@ export const useWorkspaceTaskOrchestrator = ({ uploadedImage, uploadedReferenceF
     }
     jobStore.setPreviewUpscaleRunState('cancelling')
     try {
-      const response = await fetch(`/api/desktop/tasks/${encodeURIComponent(activeTaskId)}/cancel`, { method: 'POST' })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload?.error || `HTTP ${response.status}`)
+      await request(`/api/desktop/tasks/${encodeURIComponent(activeTaskId)}/cancel`, { method: 'POST' })
       notify('正在取消当前任务')
     } catch (error) {
       notify(`取消失败：${error.message}`, 'error')

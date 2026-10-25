@@ -28,8 +28,19 @@
   "win": {
     "target": [{ "target": "nsis", "arch": ["x64"] }],
     "icon": "assets/app-icon.ico",
-    "signExecutable": false
+    "signExecutable": true,
+    "forceCodeSigning": true,
+    "signtoolOptions": {
+      "signingHashAlgorithms": ["sha256"],
+      "rfc3161TimeStampServer": "http://timestamp.digicert.com"
+    }
   },
+  "afterSign": "./desktop/build/verify-signature.cjs",
+  "artifactBuildCompleted": "./desktop/build/verify-signature.cjs",
+  "extraFiles": [
+    { "from": "../LICENSE", "to": "LICENSE" },
+    { "from": "../ENGINE-NOTICES.md", "to": "ENGINE-NOTICES.md" }
+  ],
   "nsis": {
     "oneClick": false,
     "perMachine": false,

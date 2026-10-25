@@ -424,9 +424,12 @@ test('unknown engine combinations stay unverified and cannot stop or replace the
   assert.match(upgraded.status().compatibilityMessage, /组合待验证/);
   const incompatible = path.join(tempRoot, 'not-compatible'); writeActivatedRuntime(incompatible, '3.0.0');
   await assert.rejects(upgraded.connectDirectory(incompatible), /未声明兼容/);
+  assert.match(upgraded.status().compatibilityMessage, /引擎 3.0.0/);
+  assert.equal(upgraded.status().failedCompatibilityState, 'unverified');
   assert.equal(switches, 0); assert.equal(upgraded.getRuntimeRoot(), old);
   const compatible = path.join(tempRoot, 'compatible'); writeActivatedRuntime(compatible, '2.0.0');
   await upgraded.connectDirectory(compatible); assert.equal(upgraded.status().runtimeCompatible, true); assert.equal(switches, 1);
+  assert.equal(upgraded.status().failedCompatibilityState, null);
 });
 
 test('cloud CF requiring a different front-end is shown but rejected before ZIP inspection and activation', async () => {

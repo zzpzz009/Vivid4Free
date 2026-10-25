@@ -1,0 +1,31 @@
+Black Forest Labs 署名与随包义务（摘自官方许可原文）
+
+[取回说明｜非许可正文]
+来源：https://bfl.ai/legal/non-commercial-license-terms（FLUX [dev] Non-Commercial License v2.0，Last Updated: November 25, 2025），取回日期 2026-10-25。
+本文件只做原文摘录与出处标注，不新增、不改写任何许可条款；完整条款见同级目录 LICENSE-FLUX-NONCOMMERCIAL.txt。
+
+一、署名通知（Attribution Notice）原文，§3.b
+许可原文要求：分发 FLUX [dev] 模型或衍生作品时，须在该分发旁显著展示下述通知（例如以随包 NOTICE 文本文件的形式）。以下为原文照录：
+
+"The FLUX [dev] Model is licensed by Black Forest Labs Inc. under the FLUX [dev] Non-Commercial License. Copyright Black Forest Labs Inc.
+
+IN NO EVENT SHALL BLACK FOREST LABS INC. BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH USE OF THIS MODEL."
+
+二、附许可副本与授权来源声明，§3.a 原文
+"a. you must make available a copy of this License to third-party recipients of the FLUX [dev] Models and/or Derivatives you Distribute, and specify that any rights to use the FLUX [dev] Models and/or Derivatives shall be directly granted by Company to said third-party recipients pursuant to this License;"
+
+三、衍生作品（含微调权重、LoRA）的附加义务，§3.c 原文
+"c. in the case of Distribution of Derivatives made by you: (i) you must also include in the Attribution Notice a statement that you have modified the applicable FLUX [dev] Model; (ii) any terms and conditions you impose on any third-party recipients relating to Derivatives made by or for you shall neither limit such third-party recipients’ use of the FLUX [dev] Model or any Derivatives made by or for Company in accordance with this License nor conflict with any of its terms and conditions and must include disclaimer of warranties and limitation of liability provisions that are at least as protective of Company as those set forth herein; and (iii) you must not misrepresent or imply, through any means, that the Derivatives made by or for you and/or any modified version of the FLUX [dev] Model you Distribute under your name and responsibility is an official product of the Company or has been endorsed, approved or validated by the Company, unless you are authorized by Company to do so in writing."
+
+四、不得移除权利标识，§4 引导句与 §4.b 原文
+"You will not, and will not permit, assist or cause any third party to ... b. alter or remove copyright and other proprietary notices which appear on or in any portion of the FLUX [dev] Model;"
+
+五、与本软件分发方式的对应（落实说明，非许可正文）
+（1）引擎包随包或随客户端提供 LICENSE-FLUX-NONCOMMERCIAL.txt 副本，对应 §3.a；
+（2）引擎包内放置本文件及其第一节的 Attribution Notice 原文，并在客户端「第三方渲染组件与模型使用须知」中展示同一段通知，对应 §3.b；
+（3）凡随包分发的是微调权重或 LoRA（衍生作品），Attribution Notice 中须另行声明「已修改」，对应 §3.c(i)；本包内 flux.1-dev-SRPO 与各 LoRA 均为上游或第三方发布版本，本软件未对其权重作修改，此点须如实表述。
+
+六、FLUX.2 [klein] 9B 的许可原文（待补）
+该模型的许可原文位于其 Hugging Face 仓库：https://huggingface.co/black-forest-labs/FLUX.2-klein-9B/blob/main/LICENSE.md
+2026-10-25 取回尝试记录：直连 huggingface.co 不可达（连接超时）；经本机代理访问 raw 地址返回 HTTP 401，需登录鉴权；bfl.ai 的 /legal、/legal/flux-1-dev-non-commercial-license、/model-licenses 均 404，站内仅检索到 /legal/non-commercial-license-terms（即本文件与 LICENSE-FLUX-NONCOMMERCIAL.txt 的来源，属 FLUX [dev] 系许可）。
+待补：原文未能从官方渠道取得，取得后替换本节。klein 的许可状态与条款不得以本文件其他部分推定；在补齐前，按仅限非商业用途处理并注明来源待核。

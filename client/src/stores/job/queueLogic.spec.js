@@ -3,6 +3,28 @@ import { ref } from 'vue'
 import { createQueueLogic } from './queueLogic.js'
 
 describe('queueLogic', () => {
+  it('does not overlap slow queue reads or apply them after live sync stops', async () => {
+    let finish
+    const pending = new Promise(resolve => { finish = resolve })
+    const getQueuedJobs = vi.fn(() => pending)
+    const getProcessingJobs = vi.fn(() => pending)
+    const liveSyncEnabled = ref(true)
+    const updateJob = vi.fn()
+    const scheduleQueuePositionCommit = vi.fn()
+    const logic = createQueueLogic({ api: { jobs: { getQueuedJobs, getProcessingJobs } }, jobs: [],
+      liveSyncEnabled, comfyWsConnected: ref(false), historySyncHint: ref(''), queuePositionMap: ref({}),
+      scheduleQueuePositionCommit, normalizeJobStatus: status => status, updateJob, addJob: vi.fn(),
+      pullRecentHistory: vi.fn(), hasActiveQueueJobs: () => false, hydrateHistoryByIds: vi.fn() })
+    const first = logic.runQueueSyncTick()
+    await logic.runQueueSyncTick()
+    expect(getQueuedJobs).toHaveBeenCalledTimes(1)
+    expect(getProcessingJobs).toHaveBeenCalledTimes(1)
+    liveSyncEnabled.value = false
+    finish({ data: { jobs: [] } })
+    await first
+    expect(scheduleQueuePositionCommit).not.toHaveBeenCalled()
+    expect(updateJob).not.toHaveBeenCalled()
+  })
   it('backfills completed history before marking lost queue jobs as failed', async () => {
     const jobs = [
       {

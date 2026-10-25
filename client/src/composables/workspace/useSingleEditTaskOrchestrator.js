@@ -1,7 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import config from '@/config/config.js'
-import { connect } from '@/api/websocket.js'
 import xmAPI from '@/api/xmapi.js'
 import { useToast } from '@/utils/toast.js'
 import { useAssetStore, useJobStore } from '@/stores'
@@ -351,19 +350,6 @@ export const useSingleEditTaskOrchestrator = (options = {}) => {
         rejectIfBusy: true
       })
       activePromptId.value = created.promptId
-      connect(requestData.client_id, () => {}, (progressPromptId, progress, progressState = {}) => {
-        const normalizedPercentage = Number.isFinite(progressState?.percentage)
-          ? Math.round(progressState.percentage)
-          : parseInt(progress, 10)
-        jobStore.updateProgress({
-          jobId: progressPromptId,
-          percentage: normalizedPercentage,
-          stage: `${failureLabel}中`,
-          stageInfo: progressState?.stageInfo || `进度 ${progress}`
-        })
-      }, created.promptId, () => {}, {
-        totalNodes: getWorkflowNodeCount(requestData)
-      })
       await pollLegacyJobUntilFinished({
         promptId: created.promptId,
         outputNodeIds: [
