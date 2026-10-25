@@ -78,16 +78,25 @@
       "host": "127.0.0.1:{actualPort}",
       "origin": "must-be-absent-or-empty",
       "bearer": "exact-Bearer-control-token",
+      "clientOperations": ["status", "screenshot", "show-task", "shutdown", "runtime-status", "runtime-check", "runtime-connect", "account-refresh", "output-info", "open-output", "gallery-import"],
+      "controlMutation": { "group": "client-control", "conflictStatus": 409, "conflictsWith": ["client-control", "task-submission", "client-shutdown"], "releaseOnFailure": true },
       "routes": [
         { "method": "GET", "path": "/v1/capabilities", "account": "signed_in", "status": 200, "response": "Capabilities" },
         { "method": "GET", "path": "/v1/tasks", "account": "signed_in", "status": 200, "response": "{tasks:Task[]}" },
         { "method": "POST", "path": "/v1/tasks", "account": "signed_in", "body": "TaskInput", "status": 202, "response": "{task:Task}" },
         { "method": "GET", "path": "/v1/tasks/{id}", "account": "signed_in", "status": 200, "response": "{task:Task}" },
         { "method": "POST", "path": "/v1/tasks/{id}/cancel", "account": "signed_in", "body": "ignored", "status": 200, "response": "{task:Task}" },
-        { "method": "GET", "path": "/v1/client", "account": "not-required", "status": 200, "response": "{version:string,window:{available:boolean,visible:boolean},workflowSha256:string,operations:string[]}" },
+        { "method": "GET", "path": "/v1/client", "account": "not-required", "status": 200, "response": "{version:string,window:{available:boolean,visible:boolean,maximized:boolean,fullscreen:boolean,bounds:{x:number,y:number,width:number,height:number}|null},workflowSha256:string,operations:string[]}" },
         { "method": "GET", "path": "/v1/client/screenshot", "account": "not-required", "status": 200, "response": "PNG-bytes", "responseType": "binary", "contentType": "image/png" },
         { "method": "POST", "path": "/v1/client/show-task", "account": "signed_in", "body": "{taskId:string}; exactly one key", "status": 200, "response": "{selectedTaskId:string}" },
-        { "method": "POST", "path": "/v1/client/shutdown", "account": "not-required", "body": "{} recommended; current guard also accepts true and nonzero JSON numbers", "bodyGuard": "!input || Array.isArray(input) || Object.keys(input).length => reject", "status": 202, "response": "{exiting:true}" }
+        { "method": "POST", "path": "/v1/client/shutdown", "account": "not-required", "body": "{} recommended; current guard also accepts true and nonzero JSON numbers", "bodyGuard": "!input || Array.isArray(input) || Object.keys(input).length => reject", "status": 202, "response": "{exiting:true}" },
+        { "method": "GET", "path": "/v1/client/runtime", "account": "signed_in", "status": 200, "response": "RuntimeStatus", "command": "runtime-status" },
+        { "method": "POST", "path": "/v1/client/runtime/check", "account": "signed_in", "body": "{}; empty object only", "bodyKind": "empty-object", "mutationGroup": "client-control", "status": 200, "response": "RuntimeStatus", "command": "runtime-check" },
+        { "method": "POST", "path": "/v1/client/runtime/connect-directory", "account": "signed_in", "body": "{directory:absolutePath}; exactly one key; nonempty string without NUL", "bodyKind": "directory-object", "mutationGroup": "client-control", "status": 200, "response": "RuntimeStatus", "command": "runtime-connect" },
+        { "method": "POST", "path": "/v1/client/account/refresh", "account": "signed_in", "body": "{}; empty object only", "bodyKind": "empty-object", "mutationGroup": "client-control", "status": 200, "response": "{status:AccountStatus,signedIn:boolean}", "command": "account-refresh" },
+        { "method": "GET", "path": "/v1/client/output", "account": "signed_in", "status": 200, "response": "{path:string,exists:boolean}", "command": "output-info" },
+        { "method": "POST", "path": "/v1/client/output/open", "account": "signed_in", "body": "{}; empty object only", "bodyKind": "empty-object", "mutationGroup": "client-control", "status": 200, "response": "{path:string,exists:boolean,opened:boolean,error:string|null}", "command": "open-output" },
+        { "method": "POST", "path": "/v1/client/gallery/import", "account": "signed_in", "body": "{directory:absolutePath}; exactly one key; nonempty string without NUL", "bodyKind": "directory-object", "mutationGroup": "client-control", "status": 200, "response": "{added:number,total:number}", "command": "gallery-import" }
       ]
     },
     "upstream": {

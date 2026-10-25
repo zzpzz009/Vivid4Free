@@ -203,6 +203,78 @@ async function checkMappings(contract) {
   sameNames(sends, contract.events.map(item => item.channel), 'Native event channels differ from manifest');
 }
 
+function checkHttpManifest(contract) {
+  const { ui, agent } = contract.http;
+  const routeKey = route => `${route.method} ${route.path}`;
+  const taskRoutes = prefix => [`GET ${prefix}/capabilities`, `GET ${prefix}/tasks`, `POST ${prefix}/tasks`,
+    `GET ${prefix}/tasks/{id}`, `POST ${prefix}/tasks/{id}/cancel`];
+  const added = [
+    ['GET /v1/client/runtime', 'runtime-status', 'runtimeStatus', undefined, 'RuntimeStatus'],
+    ['POST /v1/client/runtime/check', 'runtime-check', 'checkRuntime', 'empty-object', 'RuntimeStatus'],
+    ['POST /v1/client/runtime/connect-directory', 'runtime-connect', 'connectRuntimeDirectory', 'directory-object', 'RuntimeStatus'],
+    ['POST /v1/client/account/refresh', 'account-refresh', 'refreshAccount', 'empty-object', '{status:AccountStatus,signedIn:boolean}'],
+    ['GET /v1/client/output', 'output-info', 'outputInfo', undefined, '{path:string,exists:boolean}'],
+    ['POST /v1/client/output/open', 'open-output', 'openOutput', 'empty-object', '{path:string,exists:boolean,opened:boolean,error:string|null}'],
+    ['POST /v1/client/gallery/import', 'gallery-import', null, 'directory-object', '{added:number,total:number}']
+  ];
+  sameNames(ui.routes.map(routeKey), [...taskRoutes('/api/desktop'), 'ANY /health', 'GET /api/jobs',
+    'GET /api/jobs/{id}', 'GET /api/jobs/{id}/logs', 'POST /api/jobs/{id}/cancel', 'GET /img/images',
+    'POST /img/meta', 'POST /img/filter-by-urls', 'GET /gallery/{filename}', 'GET /view',
+    'GET /system_stats', 'GET /queue', 'GET /object_info', 'GET /history', 'POST /upload/image',
+    'GET /', 'GET /*'], 'UI manifest must retain its 22 route entries');
+  sameNames(agent.routes.map(routeKey), [...taskRoutes('/v1'), 'GET /v1/client', 'GET /v1/client/screenshot',
+    'POST /v1/client/show-task', 'POST /v1/client/shutdown', ...added.map(item => item[0])],
+  'Agent manifest must enumerate exactly 16 route entries');
+  assert.equal(ui.defaultPort, 17860);
+  assert.equal(agent.defaultPort, 17861);
+  for (const surface of [ui, agent]) {
+    assert.equal(surface.bindAddress, '127.0.0.1');
+    assert.equal(surface.host, '127.0.0.1:{actualPort}');
+  }
+  assert.equal(agent.origin, 'must-be-absent-or-empty');
+  assert.equal(agent.bearer, 'exact-Bearer-control-token');
+  sameNames(agent.clientOperations, ['status', 'screenshot', 'show-task', 'shutdown', ...added.map(item => item[1])],
+    'Agent client operations differ from the supported command list');
+  const nativeAst = parseScript(read('desktop/electron-adapter.cjs'), 'desktop/electron-adapter.cjs');
+  const operationLists = [];
+  walk(nativeAst, node => {
+    if (node.type === 'Property' && (literal(node.key) || node.key.name) === 'operations' && node.value.type === 'ArrayExpression') {
+      operationLists.push(node.value.elements.map(literal));
+    }
+  });
+  assert.equal(operationLists.length, 1, 'Native client status must declare one operation list');
+  sameNames(operationLists[0], agent.clientOperations, 'Native client status operations differ from manifest');
+  assert.deepEqual(agent.controlMutation, { group: 'client-control', conflictStatus: 409,
+    conflictsWith: ['client-control', 'task-submission', 'client-shutdown'], releaseOnFailure: true });
+  for (const [key, command, , bodyKind, response] of added) {
+    const route = agent.routes.find(item => routeKey(item) === key);
+    assert.equal(route.account, 'signed_in', `${key}: account requirement changed`);
+    assert.equal(route.status, 200, `${key}: success status changed`);
+    assert.equal(route.command, command, `${key}: CLI command changed`);
+    assert.equal(route.bodyKind, bodyKind, `${key}: strict body classification changed`);
+    assert.equal(route.response, response, `${key}: response shape changed`);
+    assert.equal(route.mutationGroup, bodyKind ? 'client-control' : undefined, `${key}: mutation group changed`);
+  }
+  // Check the actual literal dispatch table, not merely matching route strings
+  // in comments. Runtime tests prove authorization, validation and exclusion.
+  const serverAst = parseScript(read('desktop/server.cjs'), 'desktop/server.cjs');
+  const tables = [];
+  walk(serverAst, node => {
+    if (node.type === 'VariableDeclarator' && node.id.name === 'operations' && node.init?.type === 'ObjectExpression') {
+      tables.push(node.init.properties);
+    }
+  });
+  assert.equal(tables.length, 1, 'Server must have one explicit client operation dispatch table');
+  sameNames(tables[0].map(property => literal(property.key)), added.map(item => item[0]),
+    'Server client operation routes differ from manifest');
+  for (const [key, , hostMethod, bodyKind] of added) {
+    const property = tables[0].find(item => literal(item.key) === key);
+    assert.equal(property.value.type, 'ArrayExpression', `${key}: unsupported dispatch declaration`);
+    assert.deepEqual(property.value.elements.map(literal), bodyKind === 'directory-object' ? [hostMethod, 'directory'] : [hostMethod],
+      `${key}: server host method or argument mapping changed`);
+  }
+}
+
 async function main() {
   const rendererFiles = sourceFiles('client/src', true);
   const nativeFiles = sourceFiles('desktop');
@@ -210,12 +282,15 @@ async function main() {
   nativeFiles.forEach(inspectFile);
   counts.rendererFiles = rendererFiles.length;
   counts.nativeFiles = nativeFiles.length;
-  await checkMappings(JSON.parse(read('contracts/shell-contract.json')));
+  const contract = JSON.parse(read('contracts/shell-contract.json'));
+  await checkMappings(contract);
+  checkHttpManifest(contract);
   const packaging = JSON.parse(read('tools/installer/electron-builder.json'));
   assert.ok(packaging.files.includes('electron-adapter.cjs'), 'Installer files must include electron-adapter.cjs');
   console.log(`Shell contract PASS: ${counts.rendererFiles} renderer source files, ${counts.nativeFiles} desktop source files; tests/builds excluded.`);
   console.log(`Parsed ${counts.scriptBlocks} Vue script blocks, ${counts.vueTemplates} Vue templates, ${counts.typescript} TypeScript sources/blocks with installed parsers.`);
   console.log('Verified 22 request names/signatures/channels/argument identities and 2 event channels/payload-only/idempotent unsubscribe mappings.');
+  console.log('Verified UI 22 / Agent 16 manifest routes, 7 explicit server dispatch mappings, and declared Agent authorization/body/mutation policy.');
   console.log('Verified renderer/native Electron boundaries, native IPC registrations, and installer adapter inclusion. Authorization behavior is covered by desktop runtime tests.');
 }
 

@@ -26,7 +26,7 @@ async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus,
   const service = createTaskService(root, comfyUrl, { workflows, runtimeRoot, runtimeStatus, accountStatus: () => accountStatus?.() });
   let actualPort = port, actualAgentPort = agentPort;
   let origin = `http://127.0.0.1:${actualPort}`;
-  let clientShuttingDown = false, activeSubmissions = 0;
+  let clientShuttingDown = false, activeSubmissions = 0, activeClientActions = 0;
   const requireAccount = () => {
     if (accountStatus?.().status !== 'signed_in') throw fail(401, '请先登录客户端');
   };
@@ -53,6 +53,18 @@ async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus,
     }
     saveGallery(); return { added, total: gallery.length };
   };
+  const requireDirectory = directory => {
+    if (typeof directory !== 'string' || !directory.trim() || directory.includes('\0') || !path.isAbsolute(directory)) throw fail(400, '需要绝对目录路径');
+    return directory;
+  };
+  const importGalleryDirectory = directory => {
+    requireAccount();
+    requireDirectory(directory);
+    let entries;
+    try { entries = fs.readdirSync(directory, { withFileTypes: true }); }
+    catch { throw fail(400, '图库目录不存在或无法读取'); }
+    return importGallery(entries.filter(item => item.isFile()).map(item => path.join(directory, item.name)));
+  };
   const taskRoutes = async (req, res, url, prefix) => {
     requireAccount();
     if (!url.pathname.startsWith(`${prefix}/`)) throw fail(404, '接口版本不存在');
@@ -60,7 +72,7 @@ async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus,
     if (req.method === 'GET' && endpoint === '/capabilities') return json(res, 200, await service.capabilities());
     if (req.method === 'GET' && endpoint === '/tasks') return json(res, 200, { tasks: await service.list() });
     if (req.method === 'POST' && endpoint === '/tasks') {
-      if (clientShuttingDown) throw fail(409, '客户端正在退出');
+      if (clientShuttingDown || activeClientActions) throw fail(409, '客户端正在退出或执行控制操作');
       activeSubmissions++;
       try { return json(res, 202, { task: await service.submit(await body(req)) }); }
       finally { activeSubmissions--; }
@@ -135,6 +147,30 @@ async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus,
       if (url.pathname.startsWith('/v1/client')) {
         if (!clientControl) throw fail(503, '当前宿主未提供客户端控制');
         if (req.method === 'GET' && url.pathname === '/v1/client') return json(res, 200, await clientControl.status());
+        const operations = {
+          'GET /v1/client/runtime': ['runtimeStatus'],
+          'POST /v1/client/runtime/check': ['checkRuntime'],
+          'POST /v1/client/runtime/connect-directory': ['connectRuntimeDirectory', 'directory'],
+          'POST /v1/client/account/refresh': ['refreshAccount'],
+          'GET /v1/client/output': ['outputInfo'],
+          'POST /v1/client/output/open': ['openOutput'],
+          'POST /v1/client/gallery/import': [null, 'directory']
+        };
+        const operation = operations[`${req.method} ${url.pathname}`];
+        if (operation) {
+          requireAccount();
+          const [name, argument] = operation;
+          if (name && typeof clientControl[name] !== 'function') throw fail(503, '当前宿主未提供此控制能力');
+          if (req.method === 'GET') return json(res, 200, await clientControl[name]());
+          const input = await body(req);
+          if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).length !== (argument ? 1 : 0) || (argument && !Object.hasOwn(input, argument))) throw fail(400, argument ? '只接受 directory' : '此操作不接受参数');
+          if (argument) requireDirectory(input.directory);
+          if (clientShuttingDown || activeSubmissions || activeClientActions) throw fail(409, '客户端正在提交、退出或执行控制操作');
+          activeClientActions++;
+          try {
+            return json(res, 200, name ? await clientControl[name](argument ? input[argument] : undefined) : importGalleryDirectory(input.directory));
+          } finally { activeClientActions--; }
+        }
         if (req.method === 'GET' && url.pathname === '/v1/client/screenshot') {
           const png = await clientControl.screenshot();
           res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' }); return res.end(png);
@@ -150,7 +186,7 @@ async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus,
         if (req.method === 'POST' && url.pathname === '/v1/client/shutdown') {
           const input = await body(req);
           if (!input || Array.isArray(input) || Object.keys(input).length) throw fail(400, '退出不接受参数');
-          if (clientShuttingDown || activeSubmissions) throw fail(409, '仍有任务提交或退出正在处理');
+          if (clientShuttingDown || activeSubmissions || activeClientActions) throw fail(409, '仍有任务提交、控制操作或退出正在处理');
           clientShuttingDown = true;
           try {
             const tasks = await service.list();
@@ -180,7 +216,7 @@ async function startServer({ root, uiDir, workflows, runtimeRoot, runtimeStatus,
     actualAgentPort = await listen(control, agentPort);
   }
   catch (error) { app.close(); control.close(); service.close(); throw error; }
-  return { origin, agentOrigin: `http://127.0.0.1:${actualAgentPort}`, service, importGallery, close: async () => {
+  return { origin, agentOrigin: `http://127.0.0.1:${actualAgentPort}`, service, importGallery, importGalleryDirectory, close: async () => {
     service.close(); app.closeAllConnections(); control.closeAllConnections();
     await Promise.all([new Promise(resolve => app.close(resolve)), new Promise(resolve => control.close(resolve))]);
   } };

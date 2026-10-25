@@ -147,7 +147,7 @@ host.run(async () => {
   server = await startServer({ root, uiDir: path.join(__dirname, 'ui'), workflows,
     runtimeRoot, runtimeStatus: () => ({ ...manager.status(), engineReady }), accountStatus: () => account.status(), agentToken: token,
     port: listenPort('VIVID_TEST_UI_PORT', 17860), agentPort: listenPort('VIVID_TEST_AGENT_PORT', 17861),
-    clientControl: host.clientControl(workflows) });
+    clientControl: host.clientControl(workflows, { account, manager, runtimeRoot, root, clientPolicy, getEngineReady: () => engineReady }) });
   fs.writeFileSync(tokenPath, JSON.stringify({ endpoint: `${server.agentOrigin}/v1`, token, protocolVersion: '1.0' }, null, 2));
   await host.openWorkspace({ server, account, manager, clientPolicy, runtimeRoot, root, tokenPath,
     startEngine, getEngineReady: () => engineReady });

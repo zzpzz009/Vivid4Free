@@ -2,6 +2,8 @@
 
 契约版本 `1.0`；机器清单 schemaVersion `1`。抽取基线为 `30888a98217e7051c977ee5a30a3525f152e7516`。本文是行为语义的权威说明，`contracts/shell-contract.json` 是可机器核对的传输清单，不是完整 JSON Schema。目标是让 UI 通过宿主适配器使用相同能力；不以抽取契约为由修改现有业务、账号、CF 包或私有工作流。
 
+2026-10-25 接口优先扩展：在原9个Agent路由记录上新增7个明确路由，共16个；原22个宿主请求、2个事件及22个UI路由记录保持不变。新增能力复用现有业务，显式路径替代目录选择器提供路径这一步；不提供任意脚本执行或通用文件读写。操作和验收优先使用Agent接口与CLI，不使用Computer Use或系统弹窗代点；界面交互细节由已有自动测试及截图能力说明覆盖。
+
 本文中的 MUST/必须约束兼容实现。标为“现状/缺口”的行为也必须保留，直到单独批准的版本变更。源码依据：`desktop/preload.cjs`、`main.cjs`、`server.cjs`、`task-service.cjs`、`runtime-manager.cjs`、`account-service.cjs`；消费者依据为 `client/src/api`、账号 store、桌面入口、工具栏、运行包控制器和工作台任务编排器。没有读取实际凭据、用户数据或在线服务，也没有验证正式账号、下载源或真实出图可用性。
 
 ## 1. 边界、传输与权限
@@ -75,6 +77,8 @@ UI 卸载必须退订、清 timer、停止本地轮询与回调写状态。运�
 
 `AccountSnapshot = {status:'signed_out'|'checking'|'signed_in'|'unavailable',profile:AccountProfile|null,persistent:boolean,message:string,retryAfterSeconds:number,lastCheckedAt:string|null}`。
 
+`AccountStatus = 'signed_out'|'checking'|'signed_in'|'unavailable'`，供脱敏Agent账号刷新响应复用。
+
 `AccountProfile` 的宿主白名单为 `id,username,nickname,email,companyName,userNameComplete`，各可能为 string/number/boolean（字符串最多 250 字符）；上游 company.name 可映射 companyName。至少有有限 number id、非空 string id 或非空 username 才构成有效身份。这里是现有宽类型，不应编造成固定完整用户实体。UI 的 `desktopAccount.safeSnapshot` 另行只保留 `userId,id,username,displayName,nickname,avatarUrl,emailMasked,role,companyName` 中 string/number 字段，故宿主 email/userNameComplete 不进入该 UI snapshot；本次不合并两套白名单。
 
 登录恢复先 checking，context 验证才 signed_in；401/403 清本机会话到 signed_out，其余刷新异常 unavailable；429 退避 1–3600 秒。revision 防止 logout 后旧登录/刷新覆盖新状态。persistent 仅表示本机安全存储成功，不能用于授权。signed_in 由最近验证的本机状态决定，并非每次任务都在线校验；lastCheckedAt 可供显示，当前未实现固定离线过期时间。
@@ -104,8 +108,8 @@ UI 卸载必须退订、清 timer、停止本地轮询与回调写状态。运�
 | `incrementalBaseVersion` | string|null。 |
 | `fullPackageBytes,incrementalPackageBytes` | number|null。 |
 | `downloadConfigured` | boolean；配置存在不证明网络可用。 |
-| `engineReady?` | boolean；runtimeStatus IPC 和 HTTP capabilities.runtime 包含；其他 manager 返回未必包含。 |
-| `clientUpdateConfigured?` | boolean；仅 runtimeStatus IPC 加入，HTTP runtime 当前不加入。 |
+| `engineReady?` | boolean；runtimeStatus IPC、Agent GET runtime 和 HTTP capabilities.runtime 包含；其他 manager 返回未必包含。 |
+| `clientUpdateConfigured?` | boolean；runtimeStatus IPC 与 Agent GET runtime 加入；HTTP capabilities.runtime 及其他 manager 返回未必包含。 |
 
 校验/安装/接入互斥；操作结束应重新读取 runtimeStatus。runtime 状态转换不是严格无环状态机：检查结束可能把 ready 改为 installed，进度在各阶段重置。切包仅允许独立目录、受支持的协议/平台和明确客户端兼容组合；需要校验文件、空间和包完整性。切换前若旧引擎在运行，必须证明归本宿主所有；未知/外部引擎阻止切换。现有队列门闩在 HTTP 成功并解析 JSON 后只检查 `(queue.queue_running || []).length || (queue.queue_pending || []).length`，**未校验两个字段均为数组**：`{}` 或两个字段为 null 都会放行并进入停止旧引擎步骤。因此不能宣称切包已经严格证明队列为空；这与 Agent shutdown 的显式数组校验不同。新包激活保留输入/输出，启动失败尝试恢复旧设置和旧引擎；恢复失败可合并文案返回，不可报告自动回退保证成功。
 
@@ -184,12 +188,29 @@ JSON body 解析器要求 Content-Type 以 `application/json` 开头，最大 1 
 | POST | `/v1/tasks` | 必须 | JSON `TaskInput` | 202 `{task:Task}`。 |
 | GET | `/v1/tasks/{id}` | 必须 | 无 | 200 `{task:Task}`。 |
 | POST | `/v1/tasks/{id}/cancel` | 必须 | 不解析 | 200 `{task:Task}`。 |
-| GET | `/v1/client` | 不要求 | 无 | 200 `{version:string,window:{available:boolean,visible:boolean},workflowSha256:string,operations:['status','screenshot','show-task','shutdown']}`。 |
+| GET | `/v1/client` | 不要求 | 无 | 200 `ClientStatus`；窗口状态新增maximized/fullscreen/bounds，详见下文，旧字段保留。 |
 | GET | `/v1/client/screenshot` | 不要求 | 无 | 200 **PNG 字节**，Content-Type image/png、Cache-Control no-store；窗口不存在503。截图可能包含当前登录页或用户内容，不适用于网页访问。 |
 | POST | `/v1/client/show-task` | 必须 | 严格 JSON `{taskId:string}`，仅一个键，id 同上 | 200 `{selectedTaskId:string}`；任务必须 completed 且 resultImages 非空，否则409；窗口不存在503。返回只证明宿主已发事件/显示窗口，不是 UI 已渲染确认。 |
 | POST | `/v1/client/shutdown` | **不要求** | 推荐空 JSON 对象 `{}`；现状判断为 `!input`、数组或有可枚举键则拒绝，未校验对象类型，因此 `true` 和非零 JSON 数字（如 `1`）也被接纳；null、false、0、字符串、数组、非空对象被拒绝 | 202 `{exiting:true}`；body 通过后仍须通过任务/队列门闩。响应完成后安排退出，进程实际退出须外部观察。详见安全退出。 |
+| GET | `/v1/client/runtime` | 必须 | 无 | 200 `RuntimeStatus`；实际运行包状态，不以模拟ready替代。CLI `runtime-status`。 |
+| POST | `/v1/client/runtime/check` | 必须 | 严格 `{}` | 200 `RuntimeStatus`；复用原更新检查，不下载安装。CLI `runtime-check`。 |
+| POST | `/v1/client/runtime/connect-directory` | 必须 | 严格 `{directory:absolutePath}` | 200 `RuntimeStatus`，保留manager.connectDirectory原返回；复用校验和激活/回退，不绕过现有包完整性失败。同当前activePath时，原方法完成目录/runtime.json验证后直接返回状态，不重新哈希全部文件。CLI `runtime-connect 绝对目录`。 |
+| POST | `/v1/client/account/refresh` | 必须 | 严格 `{}` | 200 `{status:AccountStatus,signedIn:boolean}`；只回脱敏状态，不回profile、message或凭据；业务刷新失败可返回unavailable/signed_out，signedIn仅当status为signed_in才true。CLI `account-refresh`。 |
+| GET | `/v1/client/output` | 必须 | 无 | 200 `{path:string,exists:boolean}`；path为已有输出目录逻辑计算的本机绝对路径；查询不创建/修改目录、不返回目录内容。CLI `output-info`。 |
+| POST | `/v1/client/output/open` | 必须 | 严格 `{}` | 200 `{path:string,exists:boolean,opened:boolean,error:string\|null}`；原生打开成功时opened=true/error=null，失败文案为字符串，不含Error对象；没有UI确认回执。CLI `open-output`。 |
+| POST | `/v1/client/gallery/import` | 必须 | 严格 `{directory:absolutePath}` | 200 `{added:number,total:number}`；复用已有图库导入，仅直接子文件、相同格式限制与内容去重；不递归。CLI `gallery-import 绝对目录`。 |
 
-所有 `/v1/client*` 均先要求宿主提供 clientControl，否则503；未知 client 控制路径404。其余 Agent 路径进入任务路由，先账号检查，再验证 `/v1/` 前缀和路由，未知版本/路径404。Agent 不提供图库、静态文件、图片上传或图片下载路由，不能将 `/view` 相对 URL 直接拼到 17861；访问图像需使用满足 UI 来源/账号规则的 UI origin。
+`ClientStatus = {version:string,window:{available:boolean,visible:boolean,maximized:boolean,fullscreen:boolean,bounds:{x:number,y:number,width:number,height:number}|null},workflowSha256:string,operations:string[]}`。bounds为窗口屏幕坐标和大小（宿主逻辑像素），窗口不可用时为null；新增字段只描述状态，不开放任意窗口动作。operations列出 `status,screenshot,show-task,shutdown,runtime-status,runtime-check,runtime-connect,account-refresh,output-info,open-output,gallery-import`。CLI的 `task 任务ID` 和 `cancel 任务ID` 仅映射原有GET任务/POST定向取消，不增加路由。
+
+`tools/agent-client.cjs` 的runtime-connect等待上限为300秒，其余命令30秒；超时只中止HTTP等待，不是业务取消或失败证明。新路由的成功body均直接返回表中对象，不包裹data/result。
+
+新增7路由一律保持loopback Host、禁止网页Origin、Bearer及signed_in四重条件，不因读取输出路径或刷新账号而免登录。新POST的严格对象校验拒绝null、数组及所有primitive；`{}`只允许零个键，directory对象只允许directory一个键，值须为非空string、无NUL、满足宿主绝对路径规则，relative/空值/多余键返回400。JSON解析器仍将空body按`{}`解析；严格body约束只对新增路由生效，不顺便修正旧shutdown接纳primitive的现状。目录存在性、文件类型、运行包完整性及业务兼容性继续由原业务校验，不把路径格式合法等同于可接入。
+
+新5个控制POST（check/connect-directory/account refresh/output open/gallery import）共享互斥门闩，并与任务提交和客户端退出互斥，冲突返回409。任何新控制POST进行中不能接受新的UI/Agent任务提交或shutdown；提交/退出/另一新控制POST正在处理时也不能开始新控制POST。成功或失败都须释放控制门闩；已有运行任务仍按原运行时激活队列/所有权规则保护，不能把“无正在提交HTTP请求”当作引擎空闲。GET状态查询不占该门闩；这不是对其他进程、所有原生IPC调用或共享引擎的全局事务锁。
+
+新路由异常继续使用公共HTTP错误包络；参数错误400、账号状态不满足401、互斥409、宿主能力缺失503，未分类业务异常500且不泄露内部异常。HTTP200的account refresh必须读取status/signedIn，output open必须读取opened/error，不能一律判业务成功；取消本地HTTP等待也不保证接入/导入副作用未发生。目录接入与图库导入不是通用任意文件写入或读取接口；只向既有受控目录写已有业务输出。
+
+所有 `/v1/client*` 均先要求宿主提供 clientControl，否则503；未知 client 控制路径404。其余 Agent 路径进入任务路由，先账号检查，再验证 `/v1/` 前缀和路由，未知版本/路径404。Agent新增的是本机图库目录导入，不提供图库文件、静态文件、图片上传或图片下载路由，不能将 `/view` 相对 URL 直接拼到17861；访问图像需使用满足UI来源/账号规则的UI origin。
 
 ## 6. 图片、上游与未开放接口
 
@@ -211,7 +232,7 @@ JSON body 解析器要求 Content-Type 以 `application/json` 开头，最大 1 
 
 取消只针对本客户端已记录 id。不存在404；终态直接返回原任务；无 promptId 返回409“提交状态尚未确认，不能中断其他任务”。原子取消上游返回 cancelled:true 才标 cancelled，完成结果优先于稍后取消；未确认则查历史，仍不能确认409。不调用全局 interrupt，也不取消碰巧正在运行的其他任务。浏览器 Abort、轮询停止、登出、runtimePause 都不能替代 task cancel。
 
-Agent shutdown 在设置退出门闩前检查无并发提交；有并发提交/已在退出409。设置门闩后拒绝新的任务 POST；刷新任务列表，存在任何非终态（包括 submitting/submission_unknown）409；再检查上游 queue_running/queue_pending 都是数组且为空。队列非空409，不可获取/非预期结构503，失败撤销门闩；成功发送202，响应 finish 后请求宿主退出。此流程不是对外部进程的原子队列锁，无法阻止别的客户端随后向引擎提交。
+Agent shutdown 在设置退出门闩前检查无并发提交和新控制POST；有并发提交/控制操作/已在退出409。设置门闩后拒绝新的任务POST和新控制POST；刷新任务列表，存在任何非终态（包括 submitting/submission_unknown）409；再检查上游 queue_running/queue_pending 都是数组且为空。队列非空409，不可获取/非预期结构503，失败撤销门闩；成功发送202，响应 finish 后请求宿主退出。此流程不是对外部进程的原子队列锁，无法阻止别的客户端随后向引擎提交。
 
 **窗口 close/系统退出现状与 Agent shutdown 不同**：窗口 close 不执行上述任务/队列门闩。宿主退出路径尝试 pause → 关闭本地服务 → 只停止本宿主启动并拥有的引擎；已有外部引擎不应被停止。此清理为 best-effort，捕获失败后仍退出；不能宣称每次关闭都确保任务安全结束。本次只记录差异，不改变窗口交互。
 

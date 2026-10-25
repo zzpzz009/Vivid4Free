@@ -6,6 +6,10 @@ const path = require('node:path');
 function createElectronAdapter(electron = require('electron')) {
   const { app, BrowserWindow, dialog, ipcMain, shell, safeStorage, net } = electron;
   let window, closing = false;
+  const runtimeSnapshot = ({ manager, getEngineReady, clientPolicy }) => ({
+    ...manager.status(), engineReady: getEngineReady(), clientUpdateConfigured: Boolean(clientPolicy.clientDownloadUrl)
+  });
+  const outputDirectory = ({ runtimeRoot, root }) => path.join(runtimeRoot() || root, 'output');
   return {
     get isPackaged() { return app.isPackaged; },
     userData: () => app.getPath('userData'),
@@ -17,10 +21,31 @@ function createElectronAdapter(electron = require('electron')) {
       encryptString: value => safeStorage.encryptString(value),
       decryptString: value => safeStorage.decryptString(value)
     },
-    clientControl: workflows => ({
+    clientControl: (workflows, services = {}) => ({
       status: () => ({ version: app.getVersion(), window: { available: Boolean(window && !window.isDestroyed()),
-        visible: Boolean(window && !window.isDestroyed() && window.isVisible()) },
-        workflowSha256: workflows.sha256('render'), operations: ['status', 'screenshot', 'show-task', 'shutdown'] }),
+        visible: Boolean(window && !window.isDestroyed() && window.isVisible()),
+        maximized: Boolean(window && !window.isDestroyed() && window.isMaximized()),
+        fullscreen: Boolean(window && !window.isDestroyed() && window.isFullScreen()),
+        bounds: window && !window.isDestroyed() ? window.getBounds() : null },
+        workflowSha256: workflows.sha256('render'), operations: ['status', 'screenshot', 'show-task', 'shutdown',
+          'runtime-status', 'runtime-check', 'runtime-connect', 'account-refresh', 'output-info', 'open-output', 'gallery-import'] }),
+      runtimeStatus: () => runtimeSnapshot(services),
+      checkRuntime: () => services.manager.check(),
+      connectRuntimeDirectory: directory => services.manager.connectDirectory(directory),
+      refreshAccount: async () => {
+        const { status } = await services.account.refresh();
+        return { status, signedIn: status === 'signed_in' };
+      },
+      outputInfo: () => {
+        const directory = outputDirectory(services);
+        return { path: directory, exists: fs.existsSync(directory) };
+      },
+      openOutput: async () => {
+        const directory = outputDirectory(services);
+        const exists = fs.existsSync(directory);
+        const error = await shell.openPath(directory);
+        return { path: directory, exists, opened: error === '', error: error || null };
+      },
       screenshot: async () => {
         if (!window || window.isDestroyed()) throw Object.assign(new Error('客户端窗口不可用'), { status: 503 });
         return (await window.webContents.capturePage()).toPNG();
@@ -91,12 +116,11 @@ function createElectronAdapter(electron = require('electron')) {
         signedInSender(event);
         const result = await dialog.showOpenDialog(window, { title: '导入本地图库文件夹', properties: ['openDirectory'] });
         if (result.canceled) return { added: 0, cancelled: true };
-        const files = fs.readdirSync(result.filePaths[0], { withFileTypes: true }).filter(item => item.isFile()).map(item => path.join(result.filePaths[0], item.name));
-        return server.importGallery(files);
+        return server.importGalleryDirectory(result.filePaths[0]);
       });
       ipcMain.handle('agent:info', event => { signedInSender(event); return { endpoint: `${server.agentOrigin}/v1`, tokenFile: tokenPath, version: '1.0' }; });
-      ipcMain.handle('output:open', event => { signedInSender(event); return shell.openPath(path.join(runtimeRoot() || root, 'output')); });
-      ipcMain.handle('runtime:status', event => { signedInSender(event); return { ...manager.status(), engineReady: getEngineReady(), clientUpdateConfigured: Boolean(clientPolicy.clientDownloadUrl) }; });
+      ipcMain.handle('output:open', event => { signedInSender(event); return shell.openPath(outputDirectory({ runtimeRoot, root })); });
+      ipcMain.handle('runtime:status', event => { signedInSender(event); return runtimeSnapshot({ manager, getEngineReady, clientPolicy }); });
       ipcMain.handle('client:open-update', async event => {
         signedInSender(event);
         try {

@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 const vm = require('node:vm');
 const { EventEmitter } = require('node:events');
 const { createElectronAdapter } = require('../electron-adapter.cjs');
@@ -26,6 +27,7 @@ function fixture() {
     isVisible() { return this.visible; }
     isMaximized() { return this.maximized; }
     isFullScreen() { return this.fullscreen; }
+    getBounds() { return { x: 10, y: 20, width: 1500, height: 960 }; }
     maximize() { this.maximized = true; this.emit('maximize'); }
     unmaximize() { this.maximized = false; this.emit('unmaximize'); }
     setFullScreen(value) { this.fullscreen = value; this.emit(value ? 'enter-full-screen' : 'leave-full-screen'); }
@@ -49,7 +51,7 @@ function fixture() {
     install: async () => { engineReady = true; return runtime; }, importArchive: async file => ({ ...runtime, file }),
     connectDirectory: async directory => ({ ...runtime, directory }), setStorageDirectory: directory => ({ ...runtime, directory }),
     downloadSource: () => ({ label: '夸克', url: 'https://pan.quark.cn/s/fixture' }) };
-  const services = { server: { origin: 'http://127.0.0.1:27860', agentOrigin: 'http://127.0.0.1:27861', importGallery: () => ({ added: 0, total: 0 }) },
+  const services = { server: { origin: 'http://127.0.0.1:27860', agentOrigin: 'http://127.0.0.1:27861', importGalleryDirectory: () => ({ added: 0, total: 0 }) },
     root: '/fixture/user', tokenPath: '/fixture/control.json', clientPolicy: { clientDownloadUrl: 'https://example.com/download' },
     account, manager, runtimeRoot: () => null, startEngine: async () => ({ ready: engineReady }), getEngineReady: () => engineReady };
   return { host, services, app, dialog, shell, handlers, opened, sent, runtime, account, manager,
@@ -150,10 +152,101 @@ test('account failures remain sanitized and concurrent registration opens once',
 
 test('client controls expose native status, image bytes and only task payload events', async () => {
   const f = fixture(); const control = f.host.clientControl({ sha256: () => 'workflow-hash' });
+  assert.deepEqual(control.status().window, { available: false, visible: false, maximized: false, fullscreen: false, bounds: null });
+  assert.deepEqual(control.status().operations, ['status', 'screenshot', 'show-task', 'shutdown',
+    'runtime-status', 'runtime-check', 'runtime-connect', 'account-refresh', 'output-info', 'open-output', 'gallery-import']);
   await assert.rejects(control.screenshot(), { status: 503 }); await f.open();
   assert.equal(control.status().window.available, true); assert.deepEqual(await control.screenshot(), Buffer.from('png'));
+  f.win.maximize(); f.win.setFullScreen(true); f.win.visible = false;
+  assert.deepEqual(control.status().window, { available: true, visible: false, maximized: true, fullscreen: true, bounds: f.win.getBounds() });
   const task = { id: 'task-fixture', status: 'completed', resultImages: ['/view?filename=result.png'] };
   control.showTask(task); assert.deepEqual(f.sent.at(-1), ['agent:show-task', task]);
+  control.shutdown(); assert.equal(f.app.quits, 1);
+  f.win.isDestroyed = () => true;
+  assert.deepEqual(control.status().window, { available: false, visible: false, maximized: false, fullscreen: false, bounds: null });
+  assert.throws(() => control.showTask(task), { status: 503 });
+});
+
+test('client runtime ports share native snapshots and existing manager methods', async () => {
+  const f = fixture(); await f.open(); f.setSignedIn(true);
+  const control = f.host.clientControl({ sha256: () => 'workflow-hash' }, f.services);
+  f.runtime.additionalRuntimeField = { preserved: true };
+  assert.deepEqual(control.runtimeStatus(), await f.invoke('runtime:status'));
+  assert.equal(control.runtimeStatus().engineReady, false);
+  await f.invoke('runtime:install');
+  assert.equal(control.runtimeStatus().engineReady, true);
+  assert.strictEqual(control.runtimeStatus().additionalRuntimeField, f.runtime.additionalRuntimeField);
+  f.services.clientPolicy.clientDownloadUrl = '';
+  assert.equal(control.runtimeStatus().clientUpdateConfigured, false);
+  let checks = 0; const checkResult = { updateCheckState: 'checked' };
+  f.manager.check = function () { assert.strictEqual(this, f.manager); checks++; return Promise.resolve(checkResult); };
+  assert.strictEqual(await control.checkRuntime(), checkResult);
+  assert.strictEqual(await f.invoke('runtime:check'), checkResult); assert.equal(checks, 2);
+  const directory = path.join('C:', '官方 引擎', 'version'); const connected = { installed: true };
+  let connections = 0;
+  f.manager.connectDirectory = function (input) {
+    assert.strictEqual(this, f.manager); assert.equal(input, directory); connections++; return Promise.resolve(connected);
+  };
+  assert.strictEqual(await control.connectRuntimeDirectory(directory), connected);
+  f.dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [directory] });
+  assert.strictEqual(await f.invoke('runtime:connect-directory'), connected); assert.equal(connections, 2);
+  const failure = new Error('runtime validation failed');
+  f.manager.connectDirectory = async () => { throw failure; };
+  await assert.rejects(control.connectRuntimeDirectory(directory), error => error === failure);
+  f.manager.check = async () => { throw failure; };
+  await assert.rejects(control.checkRuntime(), error => error === failure);
+});
+
+test('client account refresh awaits the real operation and exposes status only', async () => {
+  const f = fixture(); const control = f.host.clientControl({ sha256: () => 'workflow-hash' }, f.services);
+  for (const status of ['signed_in', 'signed_out', 'unavailable']) {
+    let release;
+    f.account.refresh = function () {
+      assert.strictEqual(this, f.account);
+      return new Promise(resolve => { release = resolve; });
+    };
+    let settled = false; const pending = control.refreshAccount().then(result => { settled = true; return result; });
+    await new Promise(resolve => setImmediate(resolve)); assert.equal(settled, false);
+    release({ status, profile: { username: 'private-name' }, token: 'private-token', message: 'private-message', rawaccountfield: 'private' });
+    assert.deepEqual(await pending, { status, signedIn: status === 'signed_in' });
+  }
+  const failure = new Error('refresh failed');
+  f.account.refresh = async () => { throw failure; };
+  await assert.rejects(control.refreshAccount(), error => error === failure);
+});
+
+test('output ports share the native path and report actual existence and shell result', async t => {
+  const f = fixture(); const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'vivid-output-port-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  f.services.root = directory;
+  let activeRoot = null; f.services.runtimeRoot = () => activeRoot;
+  await f.open(); f.setSignedIn(true);
+  const control = f.host.clientControl({ sha256: () => 'workflow-hash' }, f.services);
+  const fallback = path.join(directory, 'output');
+  assert.deepEqual(control.outputInfo(), { path: fallback, exists: false });
+  assert.deepEqual(await control.openOutput(), { path: fallback, exists: false, opened: true, error: null });
+  assert.equal(await f.invoke('output:open'), ''); assert.equal(f.opened.at(-1), fallback);
+  activeRoot = path.join(directory, 'runtime'); const output = path.join(activeRoot, 'output');
+  fs.mkdirSync(output, { recursive: true });
+  assert.deepEqual(control.outputInfo(), { path: output, exists: true });
+  assert.deepEqual(await control.openOutput(), { path: output, exists: true, opened: true, error: null });
+  assert.equal(f.opened.at(-1), output);
+  f.shell.openPath = async target => { assert.equal(target, output); return 'OS refused to open directory'; };
+  assert.deepEqual(await control.openOutput(), { path: output, exists: true, opened: false, error: 'OS refused to open directory' });
+  assert.equal(await f.invoke('output:open'), 'OS refused to open directory');
+});
+
+test('native gallery picker delegates its chosen directory to the shared import service', async () => {
+  const f = fixture(); await f.open(); f.setSignedIn(true);
+  const directory = path.join('C:', '图库 空格'); const imported = { added: 2, total: 3 };
+  let calls = 0;
+  f.services.server.importGalleryDirectory = input => { assert.equal(input, directory); calls++; return imported; };
+  assert.deepEqual(await f.invoke('gallery:import'), { added: 0, cancelled: true }); assert.equal(calls, 0);
+  f.dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [directory] });
+  assert.strictEqual(await f.invoke('gallery:import'), imported); assert.equal(calls, 1);
+  const failure = new Error('directory validation failed');
+  f.services.server.importGalleryDirectory = () => { throw failure; };
+  await assert.rejects(f.invoke('gallery:import'), error => error === failure);
 });
 
 test('native lifecycle runs cleanup once and uses isolated native storage/network ports', async () => {
